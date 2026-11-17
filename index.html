@@ -35,6 +35,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dongle:wght@300;400;700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbit&display=swap">
 <style>
+@font-face{font-family:'KoPubDotum';font-weight:300;font-style:normal;font-display:swap;src:local('KoPubDotum Light'),url('fonts/KoPubDotum-Light.woff') format('woff')}
+@font-face{font-family:'KoPubDotum';font-weight:500;font-style:normal;font-display:swap;src:local('KoPubDotum Medium'),url('fonts/KoPubDotum-Medium.woff') format('woff')}
+@font-face{font-family:'KoPubDotum';font-weight:700;font-style:normal;font-display:swap;src:local('KoPubDotum Bold'),url('fonts/KoPubDotum-Bold.woff') format('woff')}
+@font-face{font-family:'KoPubBatang';font-weight:300;font-style:normal;font-display:swap;src:local('KoPubBatang Light'),url('fonts/KoPubBatang-Light.woff') format('woff')}
+@font-face{font-family:'KoPubBatang';font-weight:500;font-style:normal;font-display:swap;src:local('KoPubBatang Medium'),url('fonts/KoPubBatang-Medium.woff') format('woff')}
+@font-face{font-family:'KoPubBatang';font-weight:700;font-style:normal;font-display:swap;src:local('KoPubBatang Bold'),url('fonts/KoPubBatang-Bold.woff') format('woff')}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:"Malgun Gothic","맑은 고딕","Noto Sans KR",sans-serif;font-size:13px;color:#222}
 body{display:flex}
@@ -155,6 +161,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .bi.off .bn{color:#889}
 .bi input[type=range]{width:80px}
 .bi button{padding:0 5px;font-size:10px}
+.bi .gr{font-size:11px;color:#567;display:flex;align-items:center;gap:1px}
 .psize{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin:6px 0}
 .psize .fld{display:flex;align-items:center;gap:4px;border:1px solid #ccd;border-radius:6px;padding:4px 8px;background:#fff}
 .psize .fld span{color:#789;font-size:12px}
@@ -189,7 +196,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v0.8</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v0.9</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -197,7 +204,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
     <h2>1. 배경지도</h2>
     <p class="hint" id="keyState"></p>
     <div id="baseList"></div>
-    <p class="hint">여러 개를 켜서 겹칠 수 있습니다. 위쪽 지도가 위에 겹쳐집니다. 예) 브이월드 일반지도 40% 위, 영상지도 100% 아래</p>
+    <p class="hint">여러 개를 켜서 겹칠 수 있습니다. 위쪽 지도가 위에 겹쳐집니다. 예) 브이월드 일반지도 40% 위, 영상지도 100% 아래<br>'회색'에 체크하면 그 지도만 흑백으로 바뀌고, 저장한 도면에도 흑백으로 나옵니다.</p>
     <div class="row"><label><input type="checkbox" id="attrOn" checked> 지도 오른쪽 아래 출처 글씨(© 브이월드 등) 보이기</label></div>
   </div>
 
@@ -441,10 +448,13 @@ const FONT_GROUPS = [
     ['Gowun Dodum', '고운돋움'], ['Gowun Batang', '고운바탕'], ['Hahmlet', '함렛'], ['Black Han Sans', '검은고딕'], ['Do Hyeon', '도현'],
     ['Jua', '주아'], ['Sunflower', '해바라기'], ['Song Myung', '송명'], ['Nanum Pen Script', '나눔손글씨 펜'], ['Nanum Brush Script', '나눔손글씨 붓'],
     ['Dongle', '동글'], ['Orbit', '오르빗']]],
+  ['KoPub 글꼴 (사이트에 포함)', [['KoPubDotum', 'KoPub 돋움'], ['KoPubBatang', 'KoPub 바탕']]],
   ['윈도우 기본 글꼴', [['Malgun Gothic', '맑은 고딕'], ['굴림', '굴림'], ['돋움', '돋움'], ['바탕', '바탕'], ['궁서', '궁서'],
     ['Arial', 'Arial'], ['Times New Roman', 'Times New Roman']]],
   ['PC에 설치되어 있을 때만', [['HY견고딕', 'HY견고딕'], ['HY헤드라인M', 'HY헤드라인M'], ['HY견명조', 'HY견명조'], ['함초롬돋움', '함초롬돋움'],
-    ['함초롬바탕', '함초롬바탕'], ['나눔바른고딕', '나눔바른고딕'], ['나눔스퀘어', '나눔스퀘어']]]
+    ['함초롬바탕', '함초롬바탕'], ['나눔바른고딕', '나눔바른고딕'], ['나눔스퀘어', '나눔스퀘어'],
+    ['KoPubWorld돋움체 Medium', 'KoPubWorld 돋움 Medium'], ['KoPubWorld돋움체 Bold', 'KoPubWorld 돋움 Bold'],
+    ['KoPubWorld바탕체 Medium', 'KoPubWorld 바탕 Medium'], ['KoPubWorld바탕체 Bold', 'KoPubWorld 바탕 Bold']]]
 ];
 const fontStack = f => `'${f || 'Malgun Gothic'}','Malgun Gothic','맑은 고딕',sans-serif`;
 const fontOptions = sel => FONT_GROUPS.map(([g, list]) => `<optgroup label="${g}">${opts(list, sel)}</optgroup>`).join('');
@@ -792,34 +802,57 @@ $('#attrOn').onchange = applyAttr;
 
 /* 배경지도: 여러 장을 겹칠 수 있음 (목록 위쪽이 위에 그려짐) */
 const BASES = [
-  ['vBase', '브이월드 일반지도', true], ['vWhite', '브이월드 백지도', true], ['vGray', '브이월드 회색지도', true],
+  ['vBase', '브이월드 일반지도', true], ['vWhite', '브이월드 백지도', true],
   ['vSat', '브이월드 영상지도', true], ['vHyb', '브이월드 지명·도로 (영상 위 글씨)', true],
-  ['cVoy', '카토 일반지도', false], ['cLight', '카토 밝은지도', false], ['esriSat', '에스리 영상지도', false], ['osm', '오픈스트리트맵', false]
+  ['esriSat', '에스리 영상지도', false], ['osm', '오픈스트리트맵', false]
 ];
 const baseName = id => (BASES.find(b => b[0] === id) || [id, id])[1];
 function defaultBaseState(){
   const key = !!store.get('vworldKey', '');
-  return BASES.map(([id]) => ({ id, on: key ? id === 'vBase' : id === 'cVoy', op: id === 'vSat' || id === 'esriSat' || id === 'vHyb' ? 100 : 70 }));
+  return BASES.map(([id]) => ({ id, on: key ? id === 'vBase' : id === 'osm', op: id === 'vSat' || id === 'esriSat' || id === 'vHyb' ? 100 : 70, gray: 0 }));
 }
 let baseState;
 try { baseState = JSON.parse(store.get('baseState', 'null')); } catch(e){ baseState = null; }
 if (!Array.isArray(baseState)) baseState = defaultBaseState();
 BASES.forEach(([id]) => { if (!baseState.some(b => b.id === id)) baseState.push({ id, on: false, op: 70 }); });
 baseState = baseState.filter(b => BASES.some(x => x[0] === b.id));
+if (!baseState.some(b => b.on)) (baseState.find(b => b.id === (store.get('vworldKey', '') ? 'vBase' : 'osm')) || {}).on = true;
 let baseLayers = {};
-function makeBase(id, op){
+/* 회색조 타일: 그림을 캔버스에 옮겨 색을 빼므로 저장(JPEG·PDF)에도 그대로 나옴 */
+const GrayTileLayer = L.TileLayer.extend({
+  createTile(coords, done){
+    const tile = document.createElement('canvas'), sz = this.getTileSize();
+    tile.width = sz.x; tile.height = sz.y;
+    const img = new Image(), k = (this.options.gray || 0) / 100;
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const ctx = tile.getContext('2d'); ctx.drawImage(img, 0, 0, sz.x, sz.y);
+      try {
+        const d = ctx.getImageData(0, 0, sz.x, sz.y), a = d.data;
+        for (let i = 0; i < a.length; i += 4){
+          const y = 0.299 * a[i] + 0.587 * a[i + 1] + 0.114 * a[i + 2];
+          a[i] += (y - a[i]) * k; a[i + 1] += (y - a[i + 1]) * k; a[i + 2] += (y - a[i + 2]) * k;
+        }
+        ctx.putImageData(d, 0, 0);
+      } catch(e){}
+      done(null, tile);
+    };
+    img.onerror = e => done(e, tile);
+    img.src = this.getTileUrl(coords);
+    return tile;
+  }
+});
+function makeBase(id, op, gray){
   const key = getKey();
-  const vw = (lyr, ext) => L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${key}/${lyr}/{z}/{y}/{x}.${ext}`, { maxNativeZoom: 18, maxZoom: 20, opacity: op, attribution: '© 브이월드' });
+  const T = (url, o) => gray > 0 ? new GrayTileLayer(url, Object.assign({ gray }, o)) : L.tileLayer(url, o);
+  const vw = (lyr, ext) => T(`https://api.vworld.kr/req/wmts/1.0.0/${key}/${lyr}/{z}/{y}/{x}.${ext}`, { maxNativeZoom: 18, maxZoom: 20, opacity: op, attribution: '© 브이월드' });
   switch (id){
     case 'vBase': return vw('Base', 'png');
     case 'vWhite': return vw('white', 'png');
-    case 'vGray': return vw('gray', 'png');
     case 'vSat': return vw('Satellite', 'jpeg');
     case 'vHyb': return vw('Hybrid', 'png');
-    case 'osm': return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxNativeZoom: 19, maxZoom: 20, opacity: op, attribution: '© OpenStreetMap' });
-    case 'cVoy': case 'cLight': return L.tileLayer(`https://{s}.basemaps.cartocdn.com/${id === 'cVoy' ? 'rastertiles/voyager' : 'light_all'}/{z}/{x}/{y}.png`,
-      { subdomains: 'abcd', maxNativeZoom: 19, maxZoom: 20, opacity: op, attribution: '© OpenStreetMap © CARTO' });
-    case 'esriSat': return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 18, maxZoom: 20, opacity: op, attribution: '© Esri' });
+    case 'osm': return T('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxNativeZoom: 19, maxZoom: 20, opacity: op, attribution: '© OpenStreetMap' });
+    case 'esriSat': return T('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 18, maxZoom: 20, opacity: op, attribution: '© Esri' });
   }
 }
 function setBase(){
@@ -827,7 +860,7 @@ function setBase(){
   const key = getKey(), n = baseState.length;
   baseState.forEach((b, i) => {
     if (!b.on || (b.id.startsWith('v') && !key)) return;
-    const l = makeBase(b.id, b.op / 100); if (!l) return;
+    const l = makeBase(b.id, b.op / 100, b.gray || 0); if (!l) return;
     l.setZIndex(n - i);
     let err = 0;
     l.on('tileerror', () => {
@@ -848,7 +881,9 @@ function buildBaseList(){
     d.innerHTML = `<input type="checkbox" ${b.on ? 'checked' : ''} ${needKey ? 'disabled' : ''}>
       <span class="bn">${esc(baseName(b.id))}${needKey ? ' <small class="hint">(키 필요)</small>' : ''}</span>
       <input type="range" min="5" max="100" value="${b.op}" title="진하기"><span class="pv">${b.op}%</span>
+      <label class="gr" title="회색조"><input type="checkbox" class="gcb" ${b.gray ? 'checked' : ''}>회색</label>
       <button data-a="up" title="위로">▲</button><button data-a="down" title="아래로">▼</button>`;
+    d.querySelector('.gcb').onchange = e => { b.gray = e.target.checked ? 100 : 0; setBase(); buildBaseList(); };
     d.querySelector('input[type=checkbox]').onchange = e => { b.on = e.target.checked; $('#msg').hidden = true; setBase(); buildBaseList(); };
     const rg = d.querySelector('input[type=range]');
     rg.oninput = () => { b.op = +rg.value; d.querySelector('.pv').textContent = b.op + '%'; if (baseLayers[b.id]) baseLayers[b.id].setOpacity(b.op / 100); store.set('baseState', JSON.stringify(baseState)); };
@@ -1694,7 +1729,7 @@ function updateInset(rebuildBase){
     if (insetBase) insetMap.removeLayer(insetBase);
     const key = getKey();
     insetBase = key ? L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${key}/white/{z}/{y}/{x}.png`, { maxNativeZoom: 18 })
-                    : L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', { subdomains: 'abcd' });
+                    : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxNativeZoom: 19 });
     insetBase.addTo(insetMap);
   }
   insetMap.invalidateSize();
@@ -2158,9 +2193,13 @@ async function loadProject(d){
   if (d.app !== 'eia-map') throw new Error('이 도구의 작업 파일이 아닙니다.');
   layers.forEach(o => map.removeLayer(o.group)); layers.length = 0; legendItems = [];
   anns.forEach(a => map.removeLayer(a.marker)); anns.length = 0; selAnn = null;
-  if (Array.isArray(d.baseState)) baseState = d.baseState.filter(b => BASES.some(x => x[0] === b.id));
+  if (Array.isArray(d.baseState)){
+    baseState = d.baseState.filter(b => BASES.some(x => x[0] === b.id));
+    if (d.baseState.some(b => b.on && /^(cVoy|cLight)$/.test(b.id)) && !baseState.some(b => b.on)) baseState.push({ id: 'osm', on: true, op: 70, gray: 0 });
+    if (d.baseState.some(b => b.on && b.id === 'vGray')){ const v = baseState.find(b => b.id === 'vBase'); if (v){ v.on = true; v.gray = 100; } }
+  }
   else if (d.base){
-    const map1 = { vHyb: ['vSat', 'vHyb'] }, ids = map1[d.base] || [d.base];
+    const map1 = { vHyb: ['vSat', 'vHyb'], vGray: ['vBase'], cVoy: ['osm'], cLight: ['osm'] }, ids = map1[d.base] || [d.base];
     baseState.forEach(b => { b.on = ids.includes(b.id); if (b.on && d.baseOp && b.id !== 'vHyb') b.op = +d.baseOp; });
   }
   BASES.forEach(([id]) => { if (!baseState.some(b => b.id === id)) baseState.push({ id, on: false, op: 70 }); });
