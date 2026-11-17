@@ -204,7 +204,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.1</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.2</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -1392,9 +1392,25 @@ function ecoUrl(minX, minY, maxX, maxY, W, H){
     + `?ServiceKey=${key}&layers=${ECO_CODE}&srs=EPSG:5186&bbox=${bbox.map(v => v.toFixed(2)).join(',')}`
     + `&width=${W}&height=${H}&format=png&transparent=true`;
 }
+/* 공공데이터포털은 초당 요청 수가 제한되어 있어, 요청을 줄 세워 1초에 몇 개씩만 보냄 */
+const ECO_RPS = 3;                       // 1초에 보낼 최대 요청 수
+let ecoCors = null;                      // 다른 사이트 그림 사용 허용 여부 (처음 한 번 확인)
+const ecoQueue = []; let ecoSent = [];
+function ecoPump(){
+  const now = Date.now();
+  ecoSent = ecoSent.filter(t => now - t < 1000);
+  while (ecoQueue.length && ecoSent.length < ECO_RPS){
+    const job = ecoQueue.shift();
+    if (job.tile._cancel) continue;      // 이미 화면에서 사라진 조각은 요청하지 않음
+    ecoSent.push(Date.now()); job.run();
+  }
+  if (ecoQueue.length) setTimeout(ecoPump, 1000 / ECO_RPS);
+}
+function ecoEnqueue(tile, run){ ecoQueue.push({ tile, run }); ecoPump(); }
 /* 타일마다 EPSG:5186 범위의 그림을 받아, 웹지도 타일에 맞게 비틀어(아핀 변환) 그림 */
 const EcoWms = L.GridLayer.extend({
-  options: { tileSize: 512, minZoom: 7, maxZoom: 20, zIndex: 50 },
+  options: { tileSize: 1024, minZoom: 7, maxZoom: 20, zIndex: 50, updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 0 },
+  onAdd(m){ L.GridLayer.prototype.onAdd.call(this, m); this.on('tileunload', e => { e.tile._cancel = true; }); },
   createTile(coords, done){
     const sz = this.getTileSize(), tile = document.createElement('canvas'); tile.width = sz.x; tile.height = sz.y;
     const nw = coords.scaleBy(sz), mp = this._map;
@@ -1410,20 +1426,22 @@ const EcoWms = L.GridLayer.extend({
       const ctx = tile.getContext('2d');
       ctx.setTransform(a00 * sx, a10 * sx, -a01 * sy, -a11 * sy, a00 * ox + a01 * oy, a10 * ox + a11 * oy);
       ctx.drawImage(img, 0, 0);
-      ecoErr = 0; done(null, tile);
+      ecoErr = 0; $('#eco_msg').textContent = ''; done(null, tile);
     };
-    const load = cors => {
-      const img = new Image();
+    let tries = 0;
+    const load = () => {
+      const cors = ecoCors !== false, img = new Image();
       if (cors) img.crossOrigin = 'anonymous';
-      img.onload = () => { if (!cors) layer._tainted = true; draw(img); };
+      img.onload = () => { if (cors) ecoCors = true; else layer._tainted = true; draw(img); };
       img.onerror = e => {
-        if (cors) return load(false);              // 다른 사이트 그림 사용이 막혀 있으면 화면 표시용으로 다시 받기
-        if (++ecoErr === 4) $('#eco_msg').textContent = '생태자연도를 받지 못했습니다. ⚙ 설정의 공공데이터포털 인증키(Decoding)를 확인하고, 아래 "문제가 있을 때"에서 요청을 열어 오류 내용을 확인해 주세요.';
+        if (cors && ecoCors === null){ ecoCors = false; return ecoEnqueue(tile, load); }   // 허용 안 됨 → 화면 표시용으로 한 번만 다시
+        if (++tries < 2) return setTimeout(() => ecoEnqueue(tile, load), 1500);            // 잠깐 쉬었다 한 번 더
+        if (++ecoErr === 3) $('#eco_msg').textContent = '생태자연도 일부를 받지 못했습니다. 잠시 뒤 지도를 조금 움직여 보세요. 계속 안 되면 "문제가 있을 때"에서 요청을 열어 오류 내용을 확인해 주세요.';
         done(e, tile);
       };
       img.src = url;
     };
-    load(true);
+    ecoEnqueue(tile, load);
     return tile;
   }
 });
