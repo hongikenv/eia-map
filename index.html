@@ -41,6 +41,12 @@
 @font-face{font-family:'KoPubBatang';font-weight:300;font-style:normal;font-display:swap;src:local('KoPubBatang Light'),url('fonts/KoPubBatang-Light.woff') format('woff')}
 @font-face{font-family:'KoPubBatang';font-weight:500;font-style:normal;font-display:swap;src:local('KoPubBatang Medium'),url('fonts/KoPubBatang-Medium.woff') format('woff')}
 @font-face{font-family:'KoPubBatang';font-weight:700;font-style:normal;font-display:swap;src:local('KoPubBatang Bold'),url('fonts/KoPubBatang-Bold.woff') format('woff')}
+@font-face{font-family:'KoPubWorldDotum';font-weight:300;font-style:normal;font-display:swap;src:local('KoPubWorldDotum Light'),url('fonts/KoPubWorldDotum-Light.woff') format('woff')}
+@font-face{font-family:'KoPubWorldDotum';font-weight:500;font-style:normal;font-display:swap;src:local('KoPubWorldDotum Medium'),url('fonts/KoPubWorldDotum-Medium.woff') format('woff')}
+@font-face{font-family:'KoPubWorldDotum';font-weight:700;font-style:normal;font-display:swap;src:local('KoPubWorldDotum Bold'),url('fonts/KoPubWorldDotum-Bold.woff') format('woff')}
+@font-face{font-family:'KoPubWorldBatang';font-weight:300;font-style:normal;font-display:swap;src:local('KoPubWorldBatang Light'),url('fonts/KoPubWorldBatang-Light.woff') format('woff')}
+@font-face{font-family:'KoPubWorldBatang';font-weight:500;font-style:normal;font-display:swap;src:local('KoPubWorldBatang Medium'),url('fonts/KoPubWorldBatang-Medium.woff') format('woff')}
+@font-face{font-family:'KoPubWorldBatang';font-weight:700;font-style:normal;font-display:swap;src:local('KoPubWorldBatang Bold'),url('fonts/KoPubWorldBatang-Bold.woff') format('woff')}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;font-family:"Malgun Gothic","맑은 고딕","Noto Sans KR",sans-serif;font-size:13px;color:#222}
 body{display:flex}
@@ -93,6 +99,8 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #mapbox{position:absolute;inset:0;overflow:hidden;background:#fff}
 #map{position:absolute;left:0;top:0;width:100%;height:100%;background:#fff}
 #map.annmode{cursor:crosshair}
+#map.locked,#map.locked .leaflet-interactive,#map.locked .aw{cursor:default}
+.lockbox{background:#eef6f0;border:1px solid #b9d8c3;border-radius:5px;padding:8px 10px;margin-bottom:10px}
 .ovl{position:absolute;z-index:1000;cursor:move;user-select:none;-webkit-user-select:none}
 .ovl:hover{outline:1px dashed #0a84ff}
 .exporting .ovl:hover{outline:none}
@@ -196,7 +204,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v0.9</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.0</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -312,6 +320,11 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 
   <div class="sheet" id="sheet3" hidden>
   <div class="sec">
+    <div class="lockbox">
+      <b>🔒 출력 시트에서는 지도가 고정됩니다</b>
+      <div class="row">출력 축척 1 : <input type="number" id="fixN" step="1000" min="100" style="width:100px"><button id="fixBtn">적용</button></div>
+      <p class="hint">용지 크기·여백을 바꿔도 축척은 그대로이고, 도면에 담기는 범위만 넓어지거나 좁아집니다. 지도 위치를 옮기거나 확대하려면 ① 작업 시트로 가세요.</p>
+    </div>
     <h2>1. 도면 크기</h2>
     <div class="row"><label>용지</label><select id="paperPreset">
       <option value="">직접 입력</option><option value="297x210">A4</option><option value="420x297">A3</option>
@@ -354,8 +367,6 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
         <label>글자</label><span><input type="number" data-cfg="scale.size" min="7" max="30"><select data-cfg="scale.weight" class="wSel" data-num></select></span>
         <label>막대 길이</label><input type="range" data-cfg="scale.len" min="100" max="420">
       </div>
-      <div class="row">축척 맞추기 1 : <input type="number" id="fixN" value="25000" step="1000" style="width:90px"><button id="fixBtn">적용</button></div>
-      <p class="hint">1:N은 위 도면 크기로 출력했을 때 기준입니다.</p>
     </details>
     <details><summary>방위표</summary>
       <div class="grid">
@@ -448,13 +459,11 @@ const FONT_GROUPS = [
     ['Gowun Dodum', '고운돋움'], ['Gowun Batang', '고운바탕'], ['Hahmlet', '함렛'], ['Black Han Sans', '검은고딕'], ['Do Hyeon', '도현'],
     ['Jua', '주아'], ['Sunflower', '해바라기'], ['Song Myung', '송명'], ['Nanum Pen Script', '나눔손글씨 펜'], ['Nanum Brush Script', '나눔손글씨 붓'],
     ['Dongle', '동글'], ['Orbit', '오르빗']]],
-  ['KoPub 글꼴 (사이트에 포함)', [['KoPubDotum', 'KoPub 돋움'], ['KoPubBatang', 'KoPub 바탕']]],
+  ['KoPub 글꼴 (사이트에 포함)', [['KoPubWorldDotum', 'KoPubWorld 돋움'], ['KoPubWorldBatang', 'KoPubWorld 바탕'], ['KoPubDotum', 'KoPub 돋움'], ['KoPubBatang', 'KoPub 바탕']]],
   ['윈도우 기본 글꼴', [['Malgun Gothic', '맑은 고딕'], ['굴림', '굴림'], ['돋움', '돋움'], ['바탕', '바탕'], ['궁서', '궁서'],
     ['Arial', 'Arial'], ['Times New Roman', 'Times New Roman']]],
   ['PC에 설치되어 있을 때만', [['HY견고딕', 'HY견고딕'], ['HY헤드라인M', 'HY헤드라인M'], ['HY견명조', 'HY견명조'], ['함초롬돋움', '함초롬돋움'],
-    ['함초롬바탕', '함초롬바탕'], ['나눔바른고딕', '나눔바른고딕'], ['나눔스퀘어', '나눔스퀘어'],
-    ['KoPubWorld돋움체 Medium', 'KoPubWorld 돋움 Medium'], ['KoPubWorld돋움체 Bold', 'KoPubWorld 돋움 Bold'],
-    ['KoPubWorld바탕체 Medium', 'KoPubWorld 바탕 Medium'], ['KoPubWorld바탕체 Bold', 'KoPubWorld 바탕 Bold']]]
+    ['함초롬바탕', '함초롬바탕'], ['나눔바른고딕', '나눔바른고딕'], ['나눔스퀘어', '나눔스퀘어']]]
 ];
 const fontStack = f => `'${f || 'Malgun Gothic'}','Malgun Gothic','맑은 고딕',sans-serif`;
 const fontOptions = sel => FONT_GROUPS.map(([g, list]) => `<optgroup label="${g}">${opts(list, sel)}</optgroup>`).join('');
@@ -1145,7 +1154,7 @@ function renderAdmNames(level){
     if (admHidden.has(e.id)) return;
     const st = admStyleOf(level, e.name);
     const mk = ll => {
-      const m = L.marker(ll, { draggable: true, keyboard: false, icon: L.divIcon({ className: 'admn', html: annHtml(st), iconSize: null }) });
+      const m = L.marker(ll, { draggable: !mapLocked, keyboard: false, icon: L.divIcon({ className: 'admn', html: annHtml(st), iconSize: null }) });
       m._adm = e;
       m.on('dragend', () => { const p = m.getLatLng(); admPos[e.id] = { lat: p.lat, lng: p.lng }; });
       m.on('contextmenu', ev => { L.DomEvent.preventDefault(ev.originalEvent); admHidden.add(e.id); g.removeLayer(m); updateHiddenRow(); });
@@ -1650,11 +1659,35 @@ function renderScale(){
   el.style.border = frameCss(c.frame);
   el.style.background = rgba(c.bgColor, c.bgOp);
 }
-$('#fixBtn').onclick = () => {
-  const N = +$('#fixN').value; if (!N) return;
-  const want = N / (pxPerMm() * 1000);
-  const z = map.getZoom() + Math.log2(curMpp() / want);
+/* 출력 시트: 지도 고정 + 축척 고정 */
+let mapLocked = false, lockRatio = null;
+function zoomToRatio(N){
+  const want = N / (pxPerMm() * 1000), z = map.getZoom() + Math.log2(curMpp() / want);
+  if (!isFinite(z) || Math.abs(z - map.getZoom()) < 1e-4) return;
   map.options.zoomSnap = 0; map.setZoom(z, { animate: false }); map.options.zoomSnap = 0.25;
+}
+function applyLockRatio(){
+  if (!mapLocked) return;
+  if (!lockRatio){
+    const r = ratioN(); if (!(r > 0 && isFinite(r))) return;
+    lockRatio = niceRatio(r); $('#fixN').value = lockRatio;
+  }
+  zoomToRatio(lockRatio);
+}
+function setMarkerDrag(m, on){ if (m && m.dragging) on ? m.dragging.enable() : m.dragging.disable(); }
+function setMapLock(on){
+  mapLocked = on;
+  ['dragging', 'scrollWheelZoom', 'doubleClickZoom', 'boxZoom', 'keyboard', 'touchZoom'].forEach(h => { if (map[h]) on ? map[h].disable() : map[h].enable(); });
+  if (map.zoomControl) map.zoomControl.getContainer().style.display = on ? 'none' : '';
+  anns.forEach(a => setMarkerDrag(a.marker, !on));
+  Object.values(admNameGroups).forEach(g => g.eachLayer(m => setMarkerDrag(m, !on)));
+  $('#map').classList.toggle('locked', on);
+  if (on){ if (typeof placing !== 'undefined' && placing) setPlacing(false); lockRatio = null; applyLockRatio(); }
+  else lockRatio = null;
+}
+$('#fixBtn').onclick = () => {
+  const N = Math.round(+$('#fixN').value); if (!(N >= 100)) return;
+  lockRatio = N; zoomToRatio(N);
 };
 
 /* ================= 방위표 ================= */
@@ -1798,7 +1831,7 @@ function layoutFrame(){
   frame.style.width = Math.floor(w) + 'px'; frame.style.height = Math.floor(h) + 'px';
   const m = Math.round(P.margin * w / P.w);
   Object.assign($('#mapbox').style, { left: m + 'px', top: m + 'px', right: m + 'px', bottom: m + 'px' });
-  map.invalidateSize(); renderScale(); updateInset(false); placeDefaults(); updateOutSize();
+  map.invalidateSize(); applyLockRatio(); renderScale(); updateInset(false); placeDefaults(); updateOutSize();
 }
 function outScale(){ return (cfg.paper.w / 25.4 * cfg.paper.dpi) / frame.clientWidth; }
 function updateOutSize(){
@@ -1865,7 +1898,7 @@ function applyAnnVis(){
   const all = $('#annShowAll').checked;
   anns.forEach(a => {
     const on = all && a.visible;
-    if (on && !map.hasLayer(a.marker)) a.marker.addTo(map);
+    if (on && !map.hasLayer(a.marker)){ a.marker.addTo(map); if (mapLocked) setMarkerDrag(a.marker, false); }
     if (!on && map.hasLayer(a.marker)) map.removeLayer(a.marker);
   });
   markSel();
@@ -1907,7 +1940,7 @@ document.addEventListener('keydown', e => {
   if (placing) setPlacing(false); else if (selAnn) deselectAnn();
 });
 map.on('click', e => {
-  if (!placing) return;
+  if (!placing || mapLocked) return;
   let t = String(annDraft.text || '').trim();
   if (!t) t = (prompt('넣을 글자를 입력하세요 (| 는 줄바꿈)') || '').trim();
   if (!t) return;
@@ -2250,6 +2283,7 @@ async function loadProject(d){
   setRotation(cfg.map.bearing || 0);
   Object.keys(ADM).forEach(lv => { admDrawn[lv] = -1; });
   updateAdmin(); buildThemeList(); updateThemes();
+  if (mapLocked){ lockRatio = null; applyLockRatio(); }
 }
 
 /* ================= 시트 ================= */
@@ -2257,6 +2291,7 @@ function showSheet(n){
   $$('#tabs .tab').forEach(b => b.classList.toggle('on', b.dataset.sheet === String(n)));
   $$('.sheet').forEach(el => el.hidden = el.id !== 'sheet' + n);
   $('#side').scrollTop = 0; store.set('sheet', String(n));
+  setMapLock(String(n) === '3');
 }
 $$('#tabs .tab').forEach(b => b.onclick = () => showSheet(b.dataset.sheet));
 $('#goSheet1').onclick = () => showSheet(1);
