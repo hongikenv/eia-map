@@ -211,7 +211,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.3</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.4</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -320,6 +320,13 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
         <div class="row"><button id="eco_test">지금 화면 요청을 새 창에서 열어보기</button></div>
         <p class="hint">새 창에 글자(오류 메시지)가 나오면 그 내용을 알려주세요. 주소창에 인증키가 보이니 캡처할 때는 가려주세요.</p>
       </details>
+    </div>
+    <div class="src" id="egisBox">
+      <div class="srch"><b>환경공간정보서비스 (기후에너지환경부)</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="hint">환경공간정보서비스 GeoServer WFS · 중계 서버 경유</div></div>
+      <details class="thgrp" open><summary><input type="checkbox" id="egis_all" title="전체 켜기/끄기"> 환경주제도 <small class="hint" id="egis_cnt"></small></summary>
+        <div id="egisList"></div>
+      </details>
+      <p class="hint" id="egis_msg"></p>
     </div>
     <div class="src soon"><div class="srch"><b>산림청 · 산줄기</b><span class="badge gray">연결 예정</span><div class="hint">백두대간·정맥 등</div></div></div>
     <p class="hint">지도를 옮기면 그 범위도 이어서 받아옵니다. 브이월드 주제도는 시군구가 보일 정도(1:10만 안팎), 생태자연도는 읍면동이 보일 정도로 확대해야 받아옵니다.</p>
@@ -432,6 +439,8 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   <p class="hint" id="keyHint"></p>
   <div class="grid"><label>공공데이터포털 인증키</label><span><input type="password" id="dkey" style="flex:1;min-width:230px" placeholder="일반 인증키(Decoding) 붙여넣기"><button id="dkeyShow">보기</button></span></div>
   <p class="hint">에코뱅크 생태자연도 등 공공데이터포털(data.go.kr) API에 씁니다. 이 키도 이 PC의 브라우저에만 저장됩니다.</p>
+  <div class="grid"><label>중계 서버 주소</label><span><input type="text" id="relayIn" style="flex:1;min-width:230px" placeholder="예: https://eia-relay.아이디.workers.dev"><button id="relayTest">확인</button></span></div>
+  <p class="hint" id="relayHint">환경공간정보서비스처럼 브라우저에서 바로 받을 수 없는 자료를 받아올 때 씁니다. 팀원 모두 같은 주소를 넣으면 됩니다.</p>
   <div class="mbtn"><button id="vkeyDel">키 모두 지우기</button> <button id="vkeySave" class="pri">저장</button> <button id="settingsClose">닫기</button></div>
 </div></div>
 <div id="busy" hidden>처리 중…</div>
@@ -819,6 +828,7 @@ const getDataKey = () => dataKey;
 $('#openSettings').onclick = () => {
   $('#vkey').value = vwKey; $('#vkey').type = 'password'; $('#vkeyShow').textContent = '보기';
   $('#dkey').value = dataKey; $('#dkey').type = 'password'; $('#dkeyShow').textContent = '보기';
+  $('#relayIn').value = relayUrl;
   $('#keyHint').innerHTML = `키는 이 PC의 브라우저에만 저장되고, GitHub나 작업 파일(.json)에는 들어가지 않습니다.<br>키를 발급받을 때 서비스 URL을 <b>${esc(location.origin)}</b> 로 등록해야 작동합니다.`;
   $('#settings').hidden = false;
 };
@@ -827,7 +837,11 @@ $('#vkeyShow').onclick = () => { const i = $('#vkey'); i.type = i.type === 'pass
 function applyKeyChange(){ store.set('vworldKey', vwKey); updateKeyState(); setBase(); buildBaseList(); updateAdmin(); updateThemes(); updateInset(true); }
 $('#dkeyShow').onclick = () => { const i = $('#dkey'); i.type = i.type === 'password' ? 'text' : 'password'; $('#dkeyShow').textContent = i.type === 'password' ? '보기' : '숨기기'; };
 function applyDataKey(){ store.set('dataGoKey', dataKey); ecoFetched = []; updateEcoBox(); updateEco(); }
-$('#vkeySave').onclick = () => { vwKey = $('#vkey').value.trim(); dataKey = $('#dkey').value.trim(); applyKeyChange(); applyDataKey(); $('#settings').hidden = true; };
+$('#vkeySave').onclick = () => {
+  vwKey = $('#vkey').value.trim(); dataKey = $('#dkey').value.trim();
+  const nr = $('#relayIn').value.trim(); if (nr !== relayUrl){ relayUrl = nr; store.set('relayUrl', relayUrl); layers.forEach(o => { if (o.src && o.src.kind === 'egis'){ o._fetched = []; o.src.err = ''; } }); }
+  applyKeyChange(); applyDataKey(); updateEgis(); buildEgisList(); $('#settings').hidden = true;
+};
 $('#vkeyDel').onclick = () => { if (!confirm('저장된 키(브이월드·공공데이터포털)를 모두 지울까요?')) return; vwKey = ''; dataKey = ''; $('#vkey').value = ''; $('#dkey').value = ''; applyKeyChange(); applyDataKey(); };
 function applyAttr(){ const c = map.attributionControl.getContainer(); if (c) c.style.display = $('#attrOn').checked ? '' : 'none'; store.set('attrOn', $('#attrOn').checked ? '1' : '0'); }
 $('#attrOn').checked = store.get('attrOn', '1') === '1';
@@ -1508,6 +1522,115 @@ $('#eco_test').onclick = () => {
 };
 function updateEcoBox(){ buildEcoList(); if (!getDataKey()) $('#eco_msg').textContent = '⚙ 설정에 공공데이터포털 인증키를 넣어야 쓸 수 있습니다.'; else if (/설정에 공공데이터포털/.test($('#eco_msg').textContent)) $('#eco_msg').textContent = ''; }
 
+/* ================= 환경공간정보서비스 (EGIS WFS, 중계 서버 경유) ================= */
+let relayUrl = store.get('relayUrl', '');
+const relayWrap = u => relayUrl ? relayUrl.replace(/\/+$/, '').replace(/\?url=?$/, '') + '/?url=' + encodeURIComponent(u) : u;
+const EGIS = [
+  ['eg_conserv', '생태·경관보전지역', 'polygon', '#2E7D32', { tn: 'me:na_plg_conservation', cql: "type_code IN ('ESCA','SCAW')" }],
+  ['eg_wetland', '내륙습지', 'polygon', '#26A69A', { tn: 'me:na_plg_wetland' }],
+  ['eg_riverside', '수변구역', 'polygon', '#29B6F6', { tn: 'me:wa_plg_quality_restrict', cql: "district='수변구역'" }],
+  ['eg_water', '상수원보호구역 (환경부)', 'polygon', '#1565C0', { tn: 'me:wa_plg_quality_restrict', cql: "district='상수원보호구역'" }],
+  ['eg_special', '상수원 수질보전 특별대책지역', 'polygon', '#00897B', { tn: 'me:wa_plg_quality_restrict', cql: "district='수질보전특별대책지역'" }],
+  ['eg_discharge', '폐수배출시설 설치제한지역', 'polygon', '#F4511E', { tn: 'me:wa_plg_quality_restrict', cql: "district='배출시설설치제한지역'" }],
+  ['eg_air', '대기환경규제지역', 'polygon', '#FFB300', { tn: 'me:ca_plg_air_restrict' }],
+  ['eg_smallriver', '소하천구역', 'polygon', '#7986CB', { tn: 'EGIS:K33UJC100', ows: true, minZ: 11 }]
+];
+const egisDef = id => EGIS.find(x => x[0] === id);
+const egisLayerOf = id => layers.find(o => o.src && o.src.kind === 'egis' && o.src.id === id);
+const snap02 = b => { const s = 0.02; return [Math.floor(b[0] / s) * s, Math.floor(b[1] / s) * s, Math.ceil(b[2] / s) * s, Math.ceil(b[3] / s) * s].map(v => +v.toFixed(4)); };
+function egisUrl(q, b){
+  const bb = b.join(',');
+  if (q.ows) return 'https://api.mcee.go.kr/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application/json&srsName=EPSG:4326'
+    + `&typeName=${q.tn}&bbox=${bb},EPSG:4326`;
+  const cql = (q.cql ? q.cql + ' AND ' : '') + `BBOX(geom,${bb},'EPSG:4326')`;
+  return 'https://api.mcee.go.kr/geoserver/me/wfs?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application/json&srsName=EPSG:4326'
+    + `&typeName=${q.tn}&CQL_FILTER=${encodeURIComponent(cql)}`;
+}
+async function egisFetch(url){
+  const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 60000);
+  try {
+    let r;
+    try { r = await fetch(relayWrap(url), { signal: ac.signal }); }
+    catch(e){
+      if (e.name === 'AbortError') throw new Error('시간 초과');
+      const err = new Error(relayUrl ? '중계 서버에 연결하지 못했습니다' : '중계 서버가 필요합니다'); err.needRelay = !relayUrl; throw err;
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch(e){ throw new Error('응답 형식 오류: ' + txt.replace(/<[^>]+>/g, ' ').trim().slice(0, 80)); }
+  } finally { clearTimeout(tm); }
+}
+let egisBusy = false;
+async function updateEgis(){
+  if (egisBusy) return;
+  const on = layers.filter(o => o.src && o.src.kind === 'egis' && o.visible); if (!on.length) return;
+  egisBusy = true;
+  try {
+    for (const o of on){
+      const q = egisDef(o.src.id)[4];
+      if (map.getZoom() < (q.minZ || 8)){ $('#egis_msg').textContent = '조금 더 확대하면 받아옵니다.'; continue; }
+      const v = map.getBounds().pad(0.05), b = snap02([v.getWest(), v.getSouth(), v.getEast(), v.getNorth()]);
+      const lb = L.latLngBounds([b[1], b[0]], [b[3], b[2]]);
+      o._fetched = o._fetched || [];
+      if (o._fetched.some(fb => fb.contains(lb))) continue;
+      o._keys = o._keys || new Set(o.gj.features.map(f => f._k).filter(Boolean));
+      $('#egis_msg').textContent = `'${o.name}' 받는 중…`;
+      try {
+        const j = await egisFetch(egisUrl(q, b));
+        let added = 0;
+        (j.features || []).forEach((f, i) => {
+          if (!f.geometry) return;
+          const k = f.id != null ? String(f.id) : JSON.stringify(f.properties || {}).slice(0, 200) + i;
+          if (o._keys.has(k)) return; o._keys.add(k);
+          o.gj.features.push({ type: 'Feature', geometry: f.geometry, properties: f.properties || {}, _k: k }); added++;
+        });
+        o._fetched.push(lb); o.src.err = '';
+        if (added){ renderLayer(o); refreshOrder(); }
+        $('#egis_msg').textContent = '';
+      } catch(e){
+        o.src.err = e.message;
+        $('#egis_msg').innerHTML = e.needRelay
+          ? '환경공간정보서비스는 <b>중계 서버</b>를 거쳐야 받을 수 있습니다. ⚙ 설정에 중계 서버 주소를 넣어주세요.'
+          : `'${esc(o.name)}' 자료를 받지 못했습니다: ${esc(e.message)}`;
+        break;
+      }
+    }
+  } finally {
+    egisBusy = false; buildEgisList();
+    $$('#themeLayerList .lyr').forEach(d => { const o = layerById(+d.dataset.lid); const fc = d.querySelector('.fcount'); if (o && fc) fc.textContent = o.gj.features.length + '개'; });
+  }
+}
+function toggleEgis(id, on, batch){
+  let o = egisLayerOf(id); const [, name, type, color] = egisDef(id);
+  if (!o){ if (!on) return; o = addLayer(name, { type: 'FeatureCollection', features: [] }, { type, style: themeStyle(type, color), src: { kind: 'egis', id }, quiet: true }); }
+  else o.visible = on;
+  if (!batch){ refreshOrder(); buildPanel(); renderLegendAll(); buildEgisList(); if (on) updateEgis(); }
+}
+function buildEgisList(){
+  const box = $('#egisList'); box.innerHTML = ''; let onCnt = 0;
+  EGIS.forEach(([id, name, type, color]) => {
+    const o = egisLayerOf(id), on = !!(o && o.visible); if (on) onCnt++;
+    const d = document.createElement('div'); d.className = 'thi' + (o && o.src.err ? ' err' : '');
+    d.innerHTML = `<input type="checkbox" id="egis_${id}" ${on ? 'checked' : ''}><span class="sw" style="background:${rgba(color, 40)};border-color:${color}"></span><label for="egis_${id}">${esc(name)}</label>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
+    d.querySelector('input').onchange = e => toggleEgis(id, e.target.checked);
+    box.appendChild(d);
+  });
+  $('#egis_cnt').textContent = `(${onCnt}/${EGIS.length})`;
+  $('#egis_all').checked = onCnt === EGIS.length; $('#egis_all').indeterminate = onCnt > 0 && onCnt < EGIS.length;
+}
+$('#egis_all').onclick = e => e.stopPropagation();
+$('#egis_all').onchange = e => { EGIS.forEach(([id]) => toggleEgis(id, e.target.checked, true)); refreshOrder(); buildPanel(); renderLegendAll(); buildEgisList(); if (e.target.checked) updateEgis(); };
+$('#relayTest').onclick = async () => {
+  const saved = relayUrl; relayUrl = $('#relayIn').value.trim();
+  $('#relayHint').textContent = '확인 중…';
+  try {
+    const c = map.getCenter(), b = snap02([c.lng - 0.01, c.lat - 0.01, c.lng + 0.01, c.lat + 0.01]);
+    const j = await egisFetch(egisUrl(EGIS[2][4], b));
+    $('#relayHint').textContent = `연결됨 ✓ (응답 정상, 이 범위 자료 ${(j.features || []).length}개). 저장을 눌러주세요.`;
+  } catch(e){ $('#relayHint').textContent = '연결 실패: ' + e.message; }
+  finally { relayUrl = saved; }
+};
+
 /* ================= 레이어 ================= */
 const PALETTE = ['#e60012', '#1f6feb', '#2e9d3a', '#f29900', '#8e44ad', '#00a6b4', '#d63384', '#795548'];
 const layerById = id => layers.find(o => o.id === id);
@@ -1618,7 +1741,7 @@ function deleteLayers(list){
     legendItems = legendItems.filter(x => x.lid !== o.id);
   });
   if (list.some(o => o.src && o.src.kind === 'ecowfs')){ ecoFetched = []; ecoSeen.clear(); }
-  refreshOrder(); buildPanel(); renderLegendAll(); buildThemeList(); buildEcoList();
+  refreshOrder(); buildPanel(); renderLegendAll(); buildThemeList(); buildEcoList(); buildEgisList();
 }
 function selToolbar(box, theme){
   const grp = layers.filter(o => !!o.src === theme); if (!grp.length) return;
@@ -1682,7 +1805,7 @@ function buildPanel(){
       else o._sel = val;
       lastSelId = o.id; buildPanel();
     };
-    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); buildEcoList(); if (o.visible){ updateThemes(); updateEco(); } } };
+    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); buildEcoList(); buildEgisList(); if (o.visible){ updateThemes(); updateEco(); updateEgis(); } } };
     d.querySelector('[data-k="name"]').onchange = e => {
       const it = legendItems.find(x => x.lid === o.id);
       if (it && it.label === o.name) it.label = e.target.value;
@@ -1956,7 +2079,7 @@ function updateInset(rebuildBase){
 }
 let themeTimer = null;
 map.on('moveend zoomend resize', () => { renderScale(); renderNorth(); updateInset(false); admSchedule(); placeDefaults();
-  clearTimeout(themeTimer); themeTimer = setTimeout(() => { updateThemes(); updateEco(); }, 450); });
+  clearTimeout(themeTimer); themeTimer = setTimeout(() => { updateThemes(); updateEco(); updateEgis(); }, 450); });
 
 /* ================= 요소 위치 ================= */
 const OVL = ['legend', 'scale', 'north', 'title', 'inset'];
@@ -2468,7 +2591,7 @@ async function loadProject(d){
   Object.keys(ADM).forEach(lv => { admDrawn[lv] = -1; });
   ecoFetched = []; ecoSeen.clear();
   layers.filter(o => o.src && o.src.kind === 'ecowfs').forEach(o => o.gj.features.forEach((f, i) => ecoSeen.add('saved' + o.id + '_' + i)));
-  updateAdmin(); buildThemeList(); updateThemes(); updateEcoBox();
+  updateAdmin(); buildThemeList(); updateThemes(); updateEcoBox(); buildEgisList(); updateEgis();
   if (mapLocked){ lockRatio = null; applyLockRatio(); }
 }
 
@@ -2488,6 +2611,7 @@ showSheet(store.get('sheet', '1'));
 buildPanel();
 updateKeyState();
 updateEcoBox();
+buildEgisList();
 buildBaseList();
 applyAttr();
 updateHiddenRow();
