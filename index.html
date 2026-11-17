@@ -148,11 +148,14 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #busy[hidden]{display:none}
 #msg{position:fixed;left:420px;right:20px;top:14px;background:#fff3cd;border:1px solid #e0b54a;color:#5a4300;padding:10px 14px;border-radius:4px;z-index:6000;line-height:1.5;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 #msg[hidden]{display:none}
+#msg{display:flex;gap:12px;align-items:flex-start;cursor:default}
+#msg #msgText{flex:1}
+#msg #msgClose{flex:none;background:#fff;border-color:#e0b54a;color:#5a4300}
 </style>
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v0.4</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v0.5</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
 
   <div class="sec">
     <h2>1. 배경지도 · 행정구역</h2>
@@ -184,11 +187,12 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
       <div class="row"><button id="admShowAll">숨긴 이름 다시 보이기</button><button id="admResetPos">이름 위치 되돌리기</button></div>
       <div class="row"><button id="anToAnn">현재 화면 이름을 '글자'로 옮기기</button></div>
     </details>
-    <p class="hint">이름은 지도에서 끌어서 옮기고, 우클릭하면 숨깁니다. 시도는 넓게, 시군구는 조금, 읍면동은 더 확대해야 나옵니다. (브이월드 키 필요)</p>
+    <p class="hint">출처: 브이월드 2D데이터 API (행정구역 시도·시군구·읍면동, 실시간 조회)<br>이름은 행정구역 안에 들어갈 자리가 있을 때만 표시됩니다. 끌어서 옮기고, 우클릭하면 숨깁니다. 시군구는 조금, 읍면동은 더 확대해야 나옵니다.</p>
   </div>
 
   <div class="sec">
-    <h2>2. 주제도 (브이월드 실시간)</h2>
+    <h2>2. 주제도</h2>
+    <p class="hint" style="margin-top:-4px">출처: 브이월드 2D데이터 API (국토교통부 · 실시간 조회)</p>
     <div id="themeList"></div>
     <details><summary>목록에 없는 브이월드 자료 직접 추가</summary>
       <div class="grid">
@@ -197,7 +201,8 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
         <label>종류</label><select id="thType"><option value="polygon">면</option><option value="line">선</option><option value="point">점</option></select>
       </div>
       <div class="row"><button id="thAdd">추가</button></div>
-      <p class="hint">코드는 브이월드 개발자센터의 2D 데이터 API · WMS/WFS 레퍼런스 표에 있습니다.</p>
+      <p class="hint" id="thMsg" style="color:#b33"></p>
+      <p class="hint">코드는 브이월드 홈페이지 → 오픈API → 2D데이터 API 레퍼런스의 데이터 목록에 있습니다. (예: LT_C_UQ114)</p>
     </details>
     <p class="hint">체크하면 지금 보이는 범위의 자료를 받아와 아래 레이어 목록에 들어갑니다. 지도를 옮기면 그 범위도 이어서 받아옵니다. 스타일·범례는 다른 레이어처럼 바꿀 수 있습니다.</p>
   </div>
@@ -332,7 +337,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   <div class="mbtn"><button id="vkeyDel">키 지우기</button> <button id="vkeySave" class="pri">저장</button> <button id="settingsClose">닫기</button></div>
 </div></div>
 <div id="busy" hidden>처리 중…</div>
-<div id="msg" hidden onclick="this.hidden=true" title="클릭하면 닫힙니다"></div>
+<div id="msg" hidden><span id="msgText"></span><button id="msgClose" title="닫기">확인 ✕</button></div>
 
 <script>
 (function(){
@@ -341,7 +346,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
     .filter(([k]) => !window[k]).map(([, n]) => n);
   if (miss.length){
     const m = document.getElementById('msg');
-    m.textContent = '다음 구성요소를 인터넷에서 받아오지 못했습니다: ' + miss.join(', ') +
+    document.getElementById('msgText').textContent = '다음 구성요소를 인터넷에서 받아오지 못했습니다: ' + miss.join(', ') +
       '. 인터넷 연결이나 회사 방화벽(unpkg.com 차단 여부)을 확인해 주세요.';
     m.hidden = false;
   }
@@ -358,7 +363,8 @@ const store = {
   set(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
 };
 const busy = on => { $('#busy').hidden = !on; };
-function showMsg(m){ const b = $('#msg'); b.textContent = m; b.hidden = false; }
+function showMsg(m){ $('#msgText').textContent = m; $('#msg').hidden = false; }
+document.getElementById('msgClose').onclick = () => { document.getElementById('msg').hidden = true; };
 function rgba(hex, op){
   let h = String(hex || '#000000').replace('#', '');
   if (h.length === 3) h = h.split('').map(c => c + c).join('');
@@ -895,6 +901,52 @@ function viewLabelPoint(geom, vb){
   polys.forEach(p => { const c = clipRing(p[0], box); if (c.length < 3) return; const ar = Math.abs(ringArea(c)); if (ar > ba){ ba = ar; best = c; } });
   return best ? labelPoint({ type: 'Polygon', coordinates: [best] }) : null;
 }
+/* 이름 글자 크기(px) 재기 */
+const labelSizeCache = new Map();
+function measureLabel(a){
+  const key = JSON.stringify(a);
+  if (labelSizeCache.has(key)) return labelSizeCache.get(key);
+  const d = document.createElement('div');
+  d.style.cssText = 'position:absolute;left:-9999px;top:-9999px;white-space:nowrap';
+  d.innerHTML = labelInner(a); document.body.appendChild(d);
+  const r = d.firstElementChild.getBoundingClientRect(), sz = [r.width, r.height];
+  d.remove(); labelSizeCache.set(key, sz); return sz;
+}
+function segDist(p, a, b){
+  const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+  let t = l2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2 : 0; t = Math.max(0, Math.min(1, t));
+  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+}
+/* 이름 상자(w×h px)가 행정구역 경계 안, 화면 안에 통째로 들어가는 자리 중 경계에서 가장 먼 곳 */
+function fitLabelPoint(geom, w, h){
+  const S = map.getSize(), polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+  const hw = w / 2 + 3, hh = h / 2 + 3;
+  let best = null, bestD = -1;
+  for (const poly of polys){
+    const px = [];
+    for (const c of poly[0]){
+      const p = map.latLngToContainerPoint([c[1], c[0]]), q = [p.x, p.y], last = px[px.length - 1];
+      if (!last || Math.abs(last[0] - q[0]) + Math.abs(last[1] - q[1]) > 1.5) px.push(q);
+    }
+    const pr = clipRing(px, [2, 2, S.x - 2, S.y - 2]);
+    if (pr.length < 3) continue;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    pr.forEach(([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); });
+    if (x1 - x0 < hw * 2 || y1 - y0 < hh * 2) continue;
+    const step = Math.max(4, Math.min(hw, hh) * 0.6);
+    const NX = Math.min(60, Math.ceil((x1 - x0) / step)), NY = Math.min(60, Math.ceil((y1 - y0) / step));
+    for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++){
+      const x = x0 + (x1 - x0) * (i + 0.5) / NX, y = y0 + (y1 - y0) * (j + 0.5) / NY;
+      if (!inRing([x, y], pr)) continue;
+      if (![[x - hw, y - hh], [x + hw, y - hh], [x + hw, y + hh], [x - hw, y + hh]].every(c => inRing(c, pr))) continue;
+      if (pr.some(([vx, vy]) => vx > x - hw && vx < x + hw && vy > y - hh && vy < y + hh)) continue;
+      let dmin = Infinity;
+      for (let k = 0, m = pr.length - 1; k < pr.length; m = k++){ const dd = segDist([x, y], pr[m], pr[k]); if (dd < dmin) dmin = dd; }
+      if (dmin > bestD){ bestD = dmin; best = [x, y]; }
+    }
+  }
+  return best ? map.containerPointToLatLng(best) : null;
+}
 function renderAdmNames(level){
   if (!admNameGroups[level]) admNameGroups[level] = L.layerGroup().addTo(map);
   const g = admNameGroups[level]; g.clearLayers();
@@ -903,11 +955,13 @@ function renderAdmNames(level){
   admCache[level].forEach(e => {
     if (admHidden.has(e.id)) return;
     let pos = admPos[e.id];
-    if (!pos){
-      if (e.lat != null && inner.contains([e.lat, e.lng])) pos = { lat: e.lat, lng: e.lng };
-      else if (e.geom){ const pt = viewLabelPoint(e.geom, inner); if (pt) pos = { lat: pt[1], lng: pt[0] }; }
+    if (pos && !vb.contains([pos.lat, pos.lng])) return;
+    if (!pos && e.geom && inner.intersects(e._b = e._b || L.geoJSON(e.geom).getBounds())){
+      const sz = measureLabel(Object.assign({}, admTs, { text: e.name, _t: undefined }));
+      const ll = fitLabelPoint(e.geom, sz[0], sz[1]);
+      if (ll) pos = { lat: ll.lat, lng: ll.lng };
     }
-    if (!pos || !vb.pad(0.1).contains([pos.lat, pos.lng])) return;
+    if (!pos) return;
     const m = L.marker([pos.lat, pos.lng], { draggable: true, keyboard: false,
       icon: L.divIcon({ className: 'admn', html: annHtml(Object.assign({}, admTs, { text: e.name })), iconSize: null }) });
     m._adm = e;
@@ -949,7 +1003,7 @@ function buildAdmLineEd(){
 }
 $('#admTsForm').innerHTML = tsFormHtml(false);
 fillTsForm($('#admTsForm'), admTs);
-bindTsForm($('#admTsForm'), () => admTs, () => { clearTimeout(admTs._t); admTs._t = setTimeout(() => Object.keys(ADM).forEach(renderAdmNames), 100); });
+bindTsForm($('#admTsForm'), () => admTs, () => { labelSizeCache.clear(); clearTimeout(admTs._t); admTs._t = setTimeout(() => Object.keys(ADM).forEach(renderAdmNames), 100); });
 $('#admShowAll').onclick = () => { admHidden.clear(); Object.keys(ADM).forEach(renderAdmNames); };
 $('#admResetPos').onclick = () => { if (confirm('옮긴 이름들을 원래 위치로 되돌릴까요?')){ admPos = {}; Object.keys(ADM).forEach(renderAdmNames); } };
 $('#anToAnn').onclick = () => {
@@ -974,10 +1028,9 @@ const THEMES = [
   ['용도지역 · 개발제한구역', [
     ['LT_C_UQ111', '도시지역', 'polygon', '#f4a6a6'], ['LT_C_UQ112', '관리지역', 'polygon', '#f2cf7e'],
     ['LT_C_UQ113', '농림지역', 'polygon', '#b8e08a'], ['LT_C_UQ114', '자연환경보전지역', 'polygon', '#5fae62'],
-    ['LT_C_UD801', '개발제한구역', 'polygon', '#8bc34a']]],
-  ['측정 · 조사 지점', [
-    ['LT_P_WEISSITETB', '수질자동측정망 지점', 'point', '#1f6feb'], ['LT_P_WEISTACCON', '수생태계 조사지점', 'point', '#00a6b4']]]
+    ['LT_C_UD801', '개발제한구역', 'polygon', '#8bc34a']]]
 ];
+const themeUnavail = new Set();
 const themeInfo = code => { for (const [, list] of THEMES){ const t = list.find(x => x[0] === code); if (t) return t; } return null; };
 const themeLayer = code => layers.find(o => o.src && o.src.code === code);
 function themeStyle(type, color){
@@ -990,6 +1043,7 @@ function buildThemeList(){
   THEMES.forEach(([grp, list]) => {
     const h = document.createElement('div'); h.className = 'thg'; h.textContent = grp; box.appendChild(h);
     list.forEach(([code, name, type, color]) => {
+      if (themeUnavail.has(code)) return;
       const o = themeLayer(code), d = document.createElement('div');
       d.className = 'thi' + (o && o.src.err ? ' err' : '');
       d.innerHTML = `<input type="checkbox" id="th_${code}" ${o && o.visible ? 'checked' : ''}>
@@ -1024,6 +1078,7 @@ $('#thAdd').onclick = () => {
   const code = $('#thCode').value.trim().toUpperCase(), name = $('#thName').value.trim() || code, type = $('#thType').value;
   if (!/^[A-Z0-9_]+$/.test(code)){ alert('자료 코드를 확인해 주세요. (영문·숫자·_ 만, 예: LT_C_UQ114)'); return; }
   if (themeLayer(code)){ alert('이미 추가된 자료입니다.'); return; }
+  themeUnavail.delete(code); $('#thMsg').textContent = '';
   $('#thCode').value = ''; $('#thName').value = '';
   toggleTheme(code, name, type, PALETTE[layers.length % PALETTE.length], true);
 };
@@ -1053,9 +1108,12 @@ async function updateThemes(){
           showMsg(`'${o.name}' 자료를 받지 못했습니다: ${msg} (브이월드 키에 2D 데이터 API가 허용되어 있는지, 등록 주소가 지금 사이트 주소와 같은지 확인해 주세요)`);
           o.src.err = msg;
         } else {
-          o.src.mode = 'wms'; o.src.err = '';
-          showMsg(`'${o.name}'은(는) 데이터로 받을 수 없어 브이월드 그림(WMS)으로 표시합니다. 이 경우 색·선 스타일은 바꿀 수 없습니다. (${msg})`);
-          renderLayer(o); refreshOrder();
+          /* 데이터로 제공되지 않는 자료는 목록과 레이어에서 뺌 */
+          themeUnavail.add(o.src.code);
+          map.removeLayer(o.group); layers.splice(layers.indexOf(o), 1);
+          legendItems = legendItems.filter(x => x.lid !== o.id);
+          if (!themeInfo(o.src.code)) $('#thMsg').textContent = `'${o.src.code}'는 브이월드 2D데이터 API에서 받을 수 없는 코드입니다. 코드를 확인해 주세요.`;
+          refreshOrder(); buildPanel(); renderLegendAll();
         }
         buildThemeList(); continue;
       }
@@ -1168,7 +1226,7 @@ function buildPanel(){
       <div class="lh">
         <input type="checkbox" data-k="visible" ${o.visible ? 'checked' : ''} title="보이기">
         <span class="sym">${legendSym(layerSymObj(o), 'P')}</span>
-        ${o.src ? `<span class="badge" title="브이월드 ${esc(o.src.code)}">브이월드</span>` : ''}
+        ${o.src ? `<span class="badge" title="브이월드 2D데이터 API · ${esc(o.src.code)}">브이월드 2D데이터</span>` : ''}
         <input class="nm" data-k="name" value="${esc(o.name)}" title="레이어 이름">
         <button data-a="up" title="위로">▲</button><button data-a="down" title="아래로">▼</button>
         <button data-a="zoom" title="이 레이어로 이동">◎</button><button data-a="del" title="삭제">✕</button>
