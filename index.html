@@ -128,7 +128,17 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .leaflet-tooltip.flabel{background:none;border:none;box-shadow:none;padding:0;white-space:nowrap;line-height:1.2}
 .leaflet-tooltip.flabel:before{display:none}
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:5000;display:flex;align-items:center;justify-content:center}
-#modal[hidden]{display:none}
+#modal[hidden],#settings[hidden]{display:none}
+#settings{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:5000;display:flex;align-items:center;justify-content:center}
+#side h1{display:flex;align-items:center;gap:8px}
+.hbtn{margin-left:auto;background:transparent;color:#fff;border-color:rgba(255,255,255,.6);font-size:12px}
+.hbtn:hover{background:rgba(255,255,255,.15)}
+.thg{font-weight:600;color:#345;margin:8px 0 3px}
+.thi{display:flex;align-items:center;gap:6px;padding:2px 0 2px 4px}
+.thi .sw{width:14px;height:12px;border:1.5px solid;flex:none}
+.thi small{color:#889}
+.thi.err label{color:#b33}
+.badge{font-size:10px;color:#fff;background:#3a7bd5;border-radius:3px;padding:0 4px;flex:none}
 .mbox{background:#fff;border-radius:6px;padding:16px 18px;min-width:340px;max-width:520px;max-height:85vh;overflow:auto}
 .mbox h3{margin:0 0 10px;font-size:15px}
 .mlist{max-height:300px;overflow:auto;border:1px solid #ccd;padding:6px;margin:8px 0}
@@ -142,11 +152,11 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v0.3</small></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v0.4</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
 
   <div class="sec">
     <h2>1. 배경지도 · 행정구역</h2>
-    <div class="row"><label>브이월드 키</label><input type="password" id="vkey" style="flex:1" placeholder="인증키 붙여넣기"><button id="vkeySave">저장</button></div>
+    <p class="hint" id="keyState"></p>
     <div class="row"><label>지도 종류</label>
       <select id="baseSel">
         <option value="vBase">브이월드 일반지도</option>
@@ -161,6 +171,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
         <option value="none">배경 없음</option>
       </select></div>
     <div class="row"><label>배경 진하기</label><input type="range" id="baseOp" min="10" max="100" value="70" style="flex:1"><span id="baseOpV" class="pv">70%</span></div>
+    <div class="row"><label><input type="checkbox" id="attrOn" checked> 지도 오른쪽 아래 출처 글씨(© 브이월드 등) 보이기</label></div>
     <table class="adm-t">
       <tr><th>행정구역</th><th>경계선</th><th>이름</th></tr>
       <tr><td>시도</td><td><input type="checkbox" class="admB" value="lt_c_adsido"></td><td><input type="checkbox" class="admN" value="lt_c_adsido"></td></tr>
@@ -177,7 +188,22 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>2. 레이어 올리기</h2>
+    <h2>2. 주제도 (브이월드 실시간)</h2>
+    <div id="themeList"></div>
+    <details><summary>목록에 없는 브이월드 자료 직접 추가</summary>
+      <div class="grid">
+        <label>자료 코드</label><input type="text" id="thCode" placeholder="예: LT_C_UQ114">
+        <label>이름</label><input type="text" id="thName" placeholder="범례에 들어갈 이름">
+        <label>종류</label><select id="thType"><option value="polygon">면</option><option value="line">선</option><option value="point">점</option></select>
+      </div>
+      <div class="row"><button id="thAdd">추가</button></div>
+      <p class="hint">코드는 브이월드 개발자센터의 2D 데이터 API · WMS/WFS 레퍼런스 표에 있습니다.</p>
+    </details>
+    <p class="hint">체크하면 지금 보이는 범위의 자료를 받아와 아래 레이어 목록에 들어갑니다. 지도를 옮기면 그 범위도 이어서 받아옵니다. 스타일·범례는 다른 레이어처럼 바꿀 수 있습니다.</p>
+  </div>
+
+  <div class="sec">
+    <h2>3. 레이어 올리기</h2>
     <div id="drop">SHP(zip), DXF, GeoJSON 파일을<br>여기에 끌어놓거나 클릭해서 선택
       <input type="file" id="fileIn" multiple accept=".zip,.shp,.dbf,.prj,.cpg,.shx,.dxf,.geojson,.json" hidden></div>
     <div class="row"><label>SHP 글자 인코딩</label>
@@ -187,7 +213,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>3. 글자 넣기</h2>
+    <h2>4. 글자 넣기</h2>
     <div class="row"><button id="annPlace" class="pri">＋ 지도 클릭해서 넣기</button><button id="annDeselect">선택 해제</button></div>
     <div id="annFormTitle">새 글자 기본 설정</div>
     <div id="annForm"></div>
@@ -197,7 +223,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>4. 범례</h2>
+    <h2>5. 범례</h2>
     <div id="legItems"></div>
     <div class="row"><button id="legAdd">＋ 직접 항목 추가</button></div>
     <details><summary>범례 스타일</summary>
@@ -215,7 +241,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>5. 도면 꾸미기</h2>
+    <h2>6. 도면 꾸미기</h2>
     <div class="row"><label>용지</label>
       <select id="paper">
         <option value="a3l">A3 가로</option><option value="a4l">A4 가로</option>
@@ -276,7 +302,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>6. 저장</h2>
+    <h2>7. 저장</h2>
     <div class="row"><label>해상도</label>
       <select id="dpi"><option value="2">보통 (2배)</option><option value="3" selected>높음 (3배)</option><option value="4">매우 높음 (4배)</option></select></div>
     <div class="row"><button class="pri" id="btnJpg">JPEG 저장</button><button class="pri" id="btnPdf">PDF 저장</button></div>
@@ -299,6 +325,12 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </div>
 
 <div id="modal" hidden><div class="mbox"><div id="mbody"></div><div class="mbtn"><button id="mok" class="pri">확인</button> <button id="mcancel">취소</button></div></div></div>
+<div id="settings" hidden><div class="mbox">
+  <h3>⚙ 설정</h3>
+  <div class="grid"><label>브이월드 인증키</label><span><input type="password" id="vkey" style="flex:1;min-width:230px" placeholder="인증키 붙여넣기"><button id="vkeyShow">보기</button></span></div>
+  <p class="hint" id="keyHint"></p>
+  <div class="mbtn"><button id="vkeyDel">키 지우기</button> <button id="vkeySave" class="pri">저장</button> <button id="settingsClose">닫기</button></div>
+</div></div>
 <div id="busy" hidden>처리 중…</div>
 <div id="msg" hidden onclick="this.hidden=true" title="클릭하면 닫힙니다"></div>
 
@@ -670,9 +702,25 @@ const renderer = L.canvas({ padding: 0.5 });
 const admRenderer = L.canvas({ padding: 0.5, pane: 'admPane' });
 map.addLayer(renderer); map.addLayer(admRenderer);
 
-const getKey = () => $('#vkey').value.trim();
-$('#vkey').value = store.get('vworldKey', '');
-$('#vkeySave').onclick = () => { store.set('vworldKey', getKey()); setBase(); updateAdmin(); updateInset(true); alert('저장했습니다.'); };
+let vwKey = store.get('vworldKey', '');
+const getKey = () => vwKey;
+function updateKeyState(){
+  $('#keyState').innerHTML = vwKey ? '브이월드 키: 등록됨 ✓ <small>(바꾸려면 오른쪽 위 ⚙ 설정)</small>'
+    : '브이월드 키가 없습니다. 오른쪽 위 <b>⚙ 설정</b>에서 넣으면 브이월드 지도·행정구역·주제도를 쓸 수 있습니다.';
+}
+$('#openSettings').onclick = () => {
+  $('#vkey').value = vwKey; $('#vkey').type = 'password'; $('#vkeyShow').textContent = '보기';
+  $('#keyHint').innerHTML = `키는 이 PC의 브라우저에만 저장되고, GitHub나 작업 파일(.json)에는 들어가지 않습니다.<br>키를 발급받을 때 서비스 URL을 <b>${esc(location.origin)}</b> 로 등록해야 작동합니다.`;
+  $('#settings').hidden = false;
+};
+$('#settingsClose').onclick = () => { $('#settings').hidden = true; };
+$('#vkeyShow').onclick = () => { const i = $('#vkey'); i.type = i.type === 'password' ? 'text' : 'password'; $('#vkeyShow').textContent = i.type === 'password' ? '보기' : '숨기기'; };
+function applyKeyChange(){ store.set('vworldKey', vwKey); updateKeyState(); setBase(); updateAdmin(); updateThemes(); updateInset(true); }
+$('#vkeySave').onclick = () => { vwKey = $('#vkey').value.trim(); applyKeyChange(); $('#settings').hidden = true; };
+$('#vkeyDel').onclick = () => { if (!confirm('저장된 브이월드 키를 지울까요?')) return; vwKey = ''; $('#vkey').value = ''; applyKeyChange(); };
+function applyAttr(){ const c = map.attributionControl.getContainer(); if (c) c.style.display = $('#attrOn').checked ? '' : 'none'; store.set('attrOn', $('#attrOn').checked ? '1' : '0'); }
+$('#attrOn').checked = store.get('attrOn', '1') === '1';
+$('#attrOn').onchange = applyAttr;
 
 let baseLayers = [], tileErr = 0;
 function setBase(){
@@ -770,23 +818,33 @@ function labelPoint(g){
   for (let k = 0; k + 1 < xs.length; k += 2){ const w = xs[k + 1] - xs[k]; if (w > bw){ bw = w; bx = (xs[k] + xs[k + 1]) / 2; } }
   return [bx, c[1]];
 }
+/* 브이월드 2D 데이터 API: 범위 안 자료를 쪽(page)마다 받아 onFeature로 넘김 */
+async function vwData(code, b, onFeature, maxPage = 5){
+  const box = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map(v => v.toFixed(5)).join(',');
+  let page = 1, total = 1;
+  do {
+    const url = 'https://api.vworld.kr/req/data?service=data&version=2.0&request=GetFeature&format=json&errorformat=json'
+      + `&size=1000&page=${page}&geometry=true&attribute=true&crs=EPSG:4326&geomFilter=BOX(${box})`
+      + `&data=${code}&key=${encodeURIComponent(getKey())}&domain=${encodeURIComponent(location.origin)}`;
+    const d = await jsonp(url), r = d && d.response;
+    if (!r) throw new Error('응답 없음');
+    if (r.status === 'NOT_FOUND') return;
+    if (r.status !== 'OK'){
+      const err = new Error((r.error && (r.error.text || r.error.code)) || r.status);
+      err.code = (r.error && r.error.code) || ''; throw err;
+    }
+    total = +((r.page && r.page.total) || 1);
+    ((r.result && r.result.featureCollection && r.result.featureCollection.features) || []).forEach(onFeature);
+    page++;
+  } while (page <= total && page <= maxPage);
+}
 async function fetchAdm(level){
   const A = ADM[level], b = map.getBounds().pad(0.15);
   admFetched[level] = admFetched[level] || [];
   if (admFetched[level].some(fb => fb.contains(b))) return false;
-  const box = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map(v => v.toFixed(4)).join(',');
   const cache = admCache[level] = admCache[level] || new Map();
-  let page = 1, total = 1, added = false;
-  do {
-    const url = 'https://api.vworld.kr/req/data?service=data&version=2.0&request=GetFeature&format=json&errorformat=json'
-      + `&size=1000&page=${page}&geometry=true&attribute=true&crs=EPSG:4326&geomFilter=BOX(${box})`
-      + `&data=${A.data}&key=${encodeURIComponent(getKey())}&domain=${encodeURIComponent(location.origin)}`;
-    const d = await jsonp(url), r = d && d.response;
-    if (!r) throw new Error('응답 없음');
-    if (r.status === 'NOT_FOUND') break;
-    if (r.status !== 'OK') throw new Error((r.error && (r.error.text || r.error.code)) || r.status);
-    total = +((r.page && r.page.total) || 1);
-    ((r.result && r.result.featureCollection && r.result.featureCollection.features) || []).forEach(f => {
+  let added = false;
+  await vwData(A.data, b, f => {
       const p = f.properties || {};
       const name = p[A.nm] || p[A.nm.toUpperCase()];
       if (!name) return;
@@ -795,9 +853,7 @@ async function fetchAdm(level){
       const pt = labelPoint(f.geometry);
       cache.set(id, { id, name, lat: pt ? pt[1] : null, lng: pt ? pt[0] : null, geom: f.geometry });
       added = true;
-    });
-    page++;
-  } while (page <= total && page <= 5);
+  });
   admFetched[level].push(b);
   return added;
 }
@@ -815,15 +871,43 @@ function renderAdmLines(level, force){
       style: { stroke: true, color: s.color, weight: s.w, opacity: s.op / 100, dashArray: da ? da.join(' ') : null, fill: false, lineJoin: 'round' } }));
   });
 }
+/* 다각형을 화면 범위로 잘라 남은 부분 중 가장 큰 곳에 이름 자리 잡기 */
+function clipRing(ring, b){
+  const inter = (a, c, ax, v) => { const t = (v - a[ax]) / (c[ax] - a[ax]); return [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t]; };
+  const edges = [[p => p[0] >= b[0], (a, c) => inter(a, c, 0, b[0])], [p => p[0] <= b[2], (a, c) => inter(a, c, 0, b[2])],
+                 [p => p[1] >= b[1], (a, c) => inter(a, c, 1, b[1])], [p => p[1] <= b[3], (a, c) => inter(a, c, 1, b[3])]];
+  let out = ring;
+  for (const [ins, ix] of edges){
+    const inp = out; out = [];
+    if (!inp.length) break;
+    for (let i = 0; i < inp.length; i++){
+      const cur = inp[i], prev = inp[(i + inp.length - 1) % inp.length], ci = ins(cur), pi = ins(prev);
+      if (ci){ if (!pi) out.push(ix(prev, cur)); out.push(cur); }
+      else if (pi) out.push(ix(prev, cur));
+    }
+  }
+  return out;
+}
+function viewLabelPoint(geom, vb){
+  const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+  const box = [vb.getWest(), vb.getSouth(), vb.getEast(), vb.getNorth()];
+  let best = null, ba = 0;
+  polys.forEach(p => { const c = clipRing(p[0], box); if (c.length < 3) return; const ar = Math.abs(ringArea(c)); if (ar > ba){ ba = ar; best = c; } });
+  return best ? labelPoint({ type: 'Polygon', coordinates: [best] }) : null;
+}
 function renderAdmNames(level){
   if (!admNameGroups[level]) admNameGroups[level] = L.layerGroup().addTo(map);
   const g = admNameGroups[level]; g.clearLayers();
   if (!admNameOn(level) || map.getZoom() < ADM[level].minZ || !admCache[level]) return;
-  const vb = map.getBounds().pad(0.2);
+  const vb = map.getBounds(), inner = vb.pad(-0.06);
   admCache[level].forEach(e => {
-    if (e.lat == null || admHidden.has(e.id)) return;
-    const pos = admPos[e.id] || { lat: e.lat, lng: e.lng };
-    if (!vb.contains([pos.lat, pos.lng])) return;
+    if (admHidden.has(e.id)) return;
+    let pos = admPos[e.id];
+    if (!pos){
+      if (e.lat != null && inner.contains([e.lat, e.lng])) pos = { lat: e.lat, lng: e.lng };
+      else if (e.geom){ const pt = viewLabelPoint(e.geom, inner); if (pt) pos = { lat: pt[1], lng: pt[0] }; }
+    }
+    if (!pos || !vb.pad(0.1).contains([pos.lat, pos.lng])) return;
     const m = L.marker([pos.lat, pos.lng], { draggable: true, keyboard: false,
       icon: L.divIcon({ className: 'admn', html: annHtml(Object.assign({}, admTs, { text: e.name })), iconSize: null }) });
     m._adm = e;
@@ -879,6 +963,108 @@ $('#anToAnn').onclick = () => {
   alert(n ? `${n}개 이름을 글자 목록으로 옮겼습니다.` : '지금 화면에 표시된 행정구역 이름이 없습니다.');
 };
 
+/* ================= 주제도 (브이월드 2D 데이터) ================= */
+const THEMES = [
+  ['보호구역 · 별도관리지역', [
+    ['LT_C_WGISNPGUG', '국립공원', 'polygon', '#9b7fd1'], ['LT_C_WGISNPDO', '도립공원', 'polygon', '#7fbf6a'],
+    ['LT_C_WGISNPGUN', '군립공원', 'polygon', '#c9a227'], ['LT_C_UM901', '습지보호지역 (내륙)', 'polygon', '#e87fb0'],
+    ['LT_C_WGISARWET', '습지보호구역 (연안·해양)', 'polygon', '#2aa198'], ['LT_C_UM221', '야생생물보호구역', 'polygon', '#f29900'],
+    ['LT_C_UF901', '백두대간보호지역', 'polygon', '#d9a77a'], ['LT_C_UF151', '산림보호구역 (산림유전자원 등)', 'polygon', '#e04b4b'],
+    ['LT_C_UO301', '국가유산 보호구역 (천연기념물 등)', 'polygon', '#b03a2e'], ['LT_C_UM710', '상수원보호구역', 'polygon', '#2f4fd0']]],
+  ['용도지역 · 개발제한구역', [
+    ['LT_C_UQ111', '도시지역', 'polygon', '#f4a6a6'], ['LT_C_UQ112', '관리지역', 'polygon', '#f2cf7e'],
+    ['LT_C_UQ113', '농림지역', 'polygon', '#b8e08a'], ['LT_C_UQ114', '자연환경보전지역', 'polygon', '#5fae62'],
+    ['LT_C_UD801', '개발제한구역', 'polygon', '#8bc34a']]],
+  ['측정 · 조사 지점', [
+    ['LT_P_WEISSITETB', '수질자동측정망 지점', 'point', '#1f6feb'], ['LT_P_WEISTACCON', '수생태계 조사지점', 'point', '#00a6b4']]]
+];
+const themeInfo = code => { for (const [, list] of THEMES){ const t = list.find(x => x[0] === code); if (t) return t; } return null; };
+const themeLayer = code => layers.find(o => o.src && o.src.code === code);
+function themeStyle(type, color){
+  if (type === 'point') return { symbols: [S('marker', { shape: 'circle', size: 10, fill: color, stroke: '#ffffff', sw: 1.5 })], label: labelDefaults() };
+  if (type === 'line') return { symbols: [S('stroke', { color, w: 2, dash: 'solid' })], label: labelDefaults() };
+  return { symbols: [S('fill', { color, op: 40 }), S('stroke', { color, w: 1.2, dash: 'solid' })], label: labelDefaults() };
+}
+function buildThemeList(){
+  const box = $('#themeList'); box.innerHTML = '';
+  THEMES.forEach(([grp, list]) => {
+    const h = document.createElement('div'); h.className = 'thg'; h.textContent = grp; box.appendChild(h);
+    list.forEach(([code, name, type, color]) => {
+      const o = themeLayer(code), d = document.createElement('div');
+      d.className = 'thi' + (o && o.src.err ? ' err' : '');
+      d.innerHTML = `<input type="checkbox" id="th_${code}" ${o && o.visible ? 'checked' : ''}>
+        <span class="sw" style="background:${rgba(color, type === 'point' ? 100 : 40)};border-color:${color};${type === 'point' ? 'border-radius:50%;width:11px;height:11px' : ''}"></span>
+        <label for="th_${code}">${esc(name)}</label>${o && o.src.err ? `<small title="${esc(o.src.err)}">⚠ 받기 실패</small>` : (o && o.src.mode === 'wms' ? '<small>(그림)</small>' : '')}`;
+      d.querySelector('input').onchange = e => toggleTheme(code, name, type, color, e.target.checked);
+      box.appendChild(d);
+    });
+  });
+  const custom = layers.filter(o => o.src && !themeInfo(o.src.code));
+  if (custom.length){
+    const h = document.createElement('div'); h.className = 'thg'; h.textContent = '직접 추가한 자료'; box.appendChild(h);
+    custom.forEach(o => {
+      const d = document.createElement('div'); d.className = 'thi';
+      d.innerHTML = `<input type="checkbox" ${o.visible ? 'checked' : ''}><label>${esc(o.name)} <small>${esc(o.src.code)}</small></label>`;
+      d.querySelector('input').onchange = e => toggleTheme(o.src.code, o.name, o.type, null, e.target.checked);
+      box.appendChild(d);
+    });
+  }
+}
+function toggleTheme(code, name, type, color, on){
+  let o = themeLayer(code);
+  if (on && !getKey()){ alert('브이월드 키가 필요합니다. 오른쪽 위 ⚙ 설정에서 넣어주세요.'); buildThemeList(); return; }
+  if (!o){
+    if (!on) return;
+    o = addLayer(name, { type: 'FeatureCollection', features: [] }, { type, style: themeStyle(type, color || '#e60012'), src: { kind: 'vworld', code } });
+  } else { o.visible = on; refreshOrder(); buildPanel(); renderLegendAll(); }
+  buildThemeList();
+  if (on) updateThemes();
+}
+$('#thAdd').onclick = () => {
+  const code = $('#thCode').value.trim().toUpperCase(), name = $('#thName').value.trim() || code, type = $('#thType').value;
+  if (!/^[A-Z0-9_]+$/.test(code)){ alert('자료 코드를 확인해 주세요. (영문·숫자·_ 만, 예: LT_C_UQ114)'); return; }
+  if (themeLayer(code)){ alert('이미 추가된 자료입니다.'); return; }
+  $('#thCode').value = ''; $('#thName').value = '';
+  toggleTheme(code, name, type, PALETTE[layers.length % PALETTE.length], true);
+};
+const themeMinZ = type => type === 'point' ? 9 : 8;
+let themeBusy = false;
+async function updateThemes(){
+  if (themeBusy || !getKey()) return;
+  themeBusy = true;
+  try {
+    for (const o of layers.filter(x => x.src && x.src.kind === 'vworld' && x.visible && x.src.mode !== 'wms')){
+      if (map.getZoom() < themeMinZ(o.type)) continue;
+      const b = map.getBounds().pad(0.1);
+      o._fetched = o._fetched || [];
+      if (o._fetched.some(fb => fb.contains(b))) continue;
+      o._keys = o._keys || new Set(o.gj.features.map(f => JSON.stringify(f.properties)));
+      let added = 0;
+      try {
+        await vwData(o.src.code, b, f => {
+          const k = JSON.stringify(f.properties || {}) + (f.properties && Object.keys(f.properties).length ? '' : JSON.stringify(f.geometry).slice(0, 80));
+          if (o._keys.has(k)) return;
+          o._keys.add(k); o.gj.features.push({ type: 'Feature', geometry: f.geometry, properties: f.properties || {} }); added++;
+        });
+        o._fetched.push(b); o.src.err = '';
+      } catch(e){
+        const msg = e.message || '';
+        if (/key|domain|인증|도메인/i.test(msg + e.code)){
+          showMsg(`'${o.name}' 자료를 받지 못했습니다: ${msg} (브이월드 키에 2D 데이터 API가 허용되어 있는지, 등록 주소가 지금 사이트 주소와 같은지 확인해 주세요)`);
+          o.src.err = msg;
+        } else {
+          o.src.mode = 'wms'; o.src.err = '';
+          showMsg(`'${o.name}'은(는) 데이터로 받을 수 없어 브이월드 그림(WMS)으로 표시합니다. 이 경우 색·선 스타일은 바꿀 수 없습니다. (${msg})`);
+          renderLayer(o); refreshOrder();
+        }
+        buildThemeList(); continue;
+      }
+      if (added){ renderLayer(o); refreshOrder(); }
+      const sum = $(`#layerList [data-lid="${o.id}"] .fcount`); if (sum) sum.textContent = o.gj.features.length + '개';
+    }
+  } finally { themeBusy = false; }
+}
+
 /* ================= 레이어 ================= */
 const PALETTE = ['#e60012', '#1f6feb', '#2e9d3a', '#f29900', '#8e44ad', '#00a6b4', '#d63384', '#795548'];
 const layerById = id => layers.find(o => o.id === id);
@@ -921,7 +1107,7 @@ function addLayer(name, gj, extra = {}){
   const type = extra.type || detectType(gj);
   const pal = PALETTE[layers.length % PALETTE.length];
   const style = extra.style ? migrateStyle(type, extra.style) : { symbols: defaultSymbols(type, pal), label: labelDefaults() };
-  const o = { id: ++lid, name, gj, type, visible: extra.visible !== false, style };
+  const o = { id: ++lid, name, gj, type, visible: extra.visible !== false, style, src: extra.src || null };
   layers.unshift(o);
   if (!extra.noLegend) legendItems.unshift({ key: 'L' + o.id, lid: o.id, label: name, show: extra.legend !== false });
   renderLayer(o); refreshOrder(); buildPanel(); renderLegendAll();
@@ -929,6 +1115,12 @@ function addLayer(name, gj, extra = {}){
 }
 function renderLayer(o){
   if (o.group) map.removeLayer(o.group);
+  if (o.src && o.src.mode === 'wms'){
+    const c = o.src.code.toLowerCase();
+    o.group = L.layerGroup([L.tileLayer.wms('https://api.vworld.kr/req/wms', { layers: c, styles: c, format: 'image/png', transparent: true,
+      version: '1.3.0', key: getKey(), domain: location.origin, tileSize: 512, maxZoom: 20, zIndex: 6, opacity: 0.8 })]);
+    return;
+  }
   const g = L.layerGroup(), feats = o.gj.features || [];
   const pick = re => ({ type: 'FeatureCollection', features: feats.filter(f => f.geometry && re.test(f.geometry.type)) });
   const polys = pick(/Polygon/), lines = pick(/LineString/), pts = pick(/Point/);
@@ -970,17 +1162,19 @@ const layerSymObj = o => ({ id: o.id, type: o.type, symbols: o.style.symbols });
 function buildPanel(){
   const box = $('#layerList'); box.innerHTML = '';
   layers.forEach((o, i) => {
-    const d = document.createElement('div'); d.className = 'lyr';
+    const d = document.createElement('div'); d.className = 'lyr'; d.dataset.lid = o.id;
     const keys = propKeys(o.gj);
     d.innerHTML = `
       <div class="lh">
         <input type="checkbox" data-k="visible" ${o.visible ? 'checked' : ''} title="보이기">
         <span class="sym">${legendSym(layerSymObj(o), 'P')}</span>
+        ${o.src ? `<span class="badge" title="브이월드 ${esc(o.src.code)}">브이월드</span>` : ''}
         <input class="nm" data-k="name" value="${esc(o.name)}" title="레이어 이름">
         <button data-a="up" title="위로">▲</button><button data-a="down" title="아래로">▼</button>
         <button data-a="zoom" title="이 레이어로 이동">◎</button><button data-a="del" title="삭제">✕</button>
       </div>
-      <details class="dsym" ${o._openSym ? 'open' : ''}><summary>기호 (색·선·패턴) · ${({ point: '점', line: '선', polygon: '면' })[o.type]} ${o.gj.features.length}개</summary>
+      ${o.src && o.src.mode === 'wms' ? '<div class="hint">브이월드 그림(WMS)으로 표시 중이라 스타일을 바꿀 수 없습니다.</div>' : ''}
+      <details class="dsym" ${o._openSym ? 'open' : ''}><summary>기호 (색·선·패턴) · ${({ point: '점', line: '선', polygon: '면' })[o.type]} <span class="fcount">${o.gj.features.length}개</span></summary>
         <div class="row"><label>종류</label><select data-type>${opts([['polygon', '면'], ['line', '선'], ['point', '점']], o.type)}</select></div>
         ${symEditorHtml(o.type, o.style.symbols)}</details>
       <details class="dlbl" ${o._openLbl ? 'open' : ''}><summary>이름 표시${o.style.label.field ? ' · ' + esc(o.style.label.field) : ''}</summary>
@@ -994,7 +1188,7 @@ function buildPanel(){
     d.querySelector('[data-lf]').onchange = e => { o.style.label.field = e.target.value; renderLayer(o); refreshOrder(); };
     const lts = d.querySelector('.lts'); fillTsForm(lts, o.style.label);
     bindTsForm(lts, () => o.style.label, () => { clearTimeout(o._lt); o._lt = setTimeout(() => { renderLayer(o); refreshOrder(); }, 150); });
-    d.querySelector('[data-k="visible"]').onchange = e => { o.visible = e.target.checked; refreshOrder(); renderLegendAll(); };
+    d.querySelector('[data-k="visible"]').onchange = e => { o.visible = e.target.checked; refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); if (o.visible) updateThemes(); } };
     d.querySelector('[data-k="name"]').onchange = e => {
       const it = legendItems.find(x => x.lid === o.id);
       if (it && it.label === o.name) it.label = e.target.value;
@@ -1009,6 +1203,7 @@ function buildPanel(){
         if (!confirm(`'${o.name}' 레이어를 지울까요?`)) return;
         map.removeLayer(o.group); layers.splice(i, 1);
         legendItems = legendItems.filter(x => x.lid !== o.id);
+        if (o.src) buildThemeList();
       } else return;
       refreshOrder(); buildPanel(); renderLegendAll();
     });
@@ -1237,7 +1432,9 @@ function updateInset(rebuildBase){
   if (insetRect) insetRect.setBounds(b);
   else insetRect = L.rectangle(b, { color: '#e60012', weight: 2, fill: true, fillOpacity: 0.25 }).addTo(insetMap);
 }
-map.on('moveend zoomend resize', () => { renderScale(); renderNorth(); updateInset(false); admSchedule(); placeDefaults(); });
+let themeTimer = null;
+map.on('moveend zoomend resize', () => { renderScale(); renderNorth(); updateInset(false); admSchedule(); placeDefaults();
+  clearTimeout(themeTimer); themeTimer = setTimeout(updateThemes, 450); });
 
 /* ================= 요소 위치 ================= */
 const OVL = ['legend', 'scale', 'north', 'title', 'inset'];
@@ -1649,7 +1846,7 @@ $('#btnPdf').onclick = async () => {
 };
 $('#btnSaveProj').onclick = () => {
   const data = {
-    app: 'eia-map', v: 3,
+    app: 'eia-map', v: 4,
     view: { c: map.getCenter(), z: map.getZoom() },
     base: $('#baseSel').value, baseOp: $('#baseOp').value,
     adminLines: $$('.admB').filter(c => c.checked).map(c => c.value),
@@ -1658,7 +1855,7 @@ $('#btnSaveProj').onclick = () => {
     paper: $('#paper').value, title: $('#titleIn').value, cfg,
     toggles: Object.fromEntries($$('.tg').map(c => [c.dataset.t, c.checked])),
     pos: Object.fromEntries(OVL.map(id => { const el = $('#' + id), s = el.style; return [id, { left: s.left, top: s.top, right: s.right, bottom: s.bottom, transform: s.transform, moved: !!el.dataset.moved }]; })),
-    layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, style: o.style, gj: o.gj })),
+    layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, style: o.style, gj: o.gj, src: o.src })),
     legendItems: legendItems.map(({ _open, ...it }) => it),
     anns: anns.map(({ marker, id, ...a }) => a)
   };
@@ -1703,7 +1900,7 @@ async function loadProject(d){
   });
   const idMap = {};
   (d.layers || []).slice().reverse().forEach(l => {
-    const o = addLayer(l.name, l.gj, { type: l.type, visible: l.visible, legend: l.legend, style: l.style, noLegend: !!d.legendItems });
+    const o = addLayer(l.name, l.gj, { type: l.type, visible: l.visible, legend: l.legend, style: l.style, noLegend: !!d.legendItems, src: l.src || null });
     idMap[l.id] = o.id;
   });
   if (d.legendItems){
@@ -1723,10 +1920,13 @@ async function loadProject(d){
   if (d.view) map.setView(d.view.c, d.view.z);
   setRotation(cfg.map.bearing || 0);
   Object.keys(ADM).forEach(lv => { admDrawn[lv] = -1; });
-  updateAdmin();
+  updateAdmin(); buildThemeList(); updateThemes();
 }
 
 /* ================= 시작 ================= */
+updateKeyState();
+applyAttr();
+buildThemeList();
 syncCfgUI();
 buildAdmLineEd();
 setBase();
