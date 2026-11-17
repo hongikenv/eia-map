@@ -170,6 +170,13 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .bi input[type=range]{width:80px}
 .bi button{padding:0 5px;font-size:10px}
 .bi .gr{font-size:11px;color:#567;display:flex;align-items:center;gap:1px}
+.seltools{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 6px}
+.seltools button{font-size:11px;padding:2px 6px}
+.seltools button:disabled{opacity:.45;cursor:default}
+.seltools .danger:not(:disabled){border-color:#c33;color:#c33}
+.lh .eye{padding:0 3px;font-size:12px;width:24px;border-color:#ccd}
+.lh .eye:not(.on){color:#aab}
+.lh .selcb{accent-color:#0a64d0}
 .psize{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin:6px 0}
 .psize .fld{display:flex;align-items:center;gap:4px;border:1px solid #ccd;border-radius:6px;padding:4px 8px;background:#fff}
 .psize .fld span{color:#789;font-size:12px}
@@ -204,7 +211,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.2</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.3</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -304,19 +311,18 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
     </details>
     </div>
     <div class="src" id="ecoBox">
-      <div class="srch"><b>에코뱅크 (국립생태원)</b><span class="badge">실시간</span><div class="hint">공공데이터포털 국립생태원_생태자연도 서비스 (WMS)</div></div>
-      <div class="thi"><input type="checkbox" id="eco_on"><span class="sw" style="background:#9bd17f;border-color:#3a8f3a"></span><label for="eco_on">생태자연도 (등급)</label></div>
-      <div class="row" style="padding-left:28px"><label>진하기</label><input type="range" id="eco_op" min="10" max="100" value="70" style="width:110px"><span class="pv" id="eco_opv">70%</span></div>
-      <div class="row" style="padding-left:28px"><button id="eco_leg">범례에 등급 항목 넣기</button></div>
+      <div class="srch"><b>에코뱅크 (국립생태원)</b><span class="badge">실시간</span><div class="hint">공공데이터포털 국립생태원_생태자연도 서비스 (WFS)</div></div>
+      <details class="thgrp" open><summary><input type="checkbox" id="eco_all" title="전체 켜기/끄기"> 생태자연도 <small class="hint" id="eco_cnt"></small></summary>
+        <div id="ecoList"></div>
+      </details>
       <p class="hint" id="eco_msg"></p>
       <details><summary>문제가 있을 때</summary>
-        <label><input type="checkbox" id="eco_swap"> 그림이 엉뚱한 곳에 나오면 체크 (좌표 순서 바꾸기)</label>
         <div class="row"><button id="eco_test">지금 화면 요청을 새 창에서 열어보기</button></div>
-        <p class="hint">새 창에 그림 대신 글자(오류 메시지)가 나오면 그 내용을 알려주세요.</p>
+        <p class="hint">새 창에 글자(오류 메시지)가 나오면 그 내용을 알려주세요. 주소창에 인증키가 보이니 캡처할 때는 가려주세요.</p>
       </details>
     </div>
     <div class="src soon"><div class="srch"><b>산림청 · 산줄기</b><span class="badge gray">연결 예정</span><div class="hint">백두대간·정맥 등</div></div></div>
-    <p class="hint">지도를 옮기면 그 범위도 이어서 받아옵니다. 자료가 많아서 시군구가 보일 정도(1:10만 안팎)로 확대해야 받아옵니다.</p>
+    <p class="hint">지도를 옮기면 그 범위도 이어서 받아옵니다. 브이월드 주제도는 시군구가 보일 정도(1:10만 안팎), 생태자연도는 읍면동이 보일 정도로 확대해야 받아옵니다.</p>
   </div>
   <div class="sec">
     <h2>2. 주제도 레이어 · 스타일</h2>
@@ -820,7 +826,7 @@ $('#settingsClose').onclick = () => { $('#settings').hidden = true; };
 $('#vkeyShow').onclick = () => { const i = $('#vkey'); i.type = i.type === 'password' ? 'text' : 'password'; $('#vkeyShow').textContent = i.type === 'password' ? '보기' : '숨기기'; };
 function applyKeyChange(){ store.set('vworldKey', vwKey); updateKeyState(); setBase(); buildBaseList(); updateAdmin(); updateThemes(); updateInset(true); }
 $('#dkeyShow').onclick = () => { const i = $('#dkey'); i.type = i.type === 'password' ? 'text' : 'password'; $('#dkeyShow').textContent = i.type === 'password' ? '보기' : '숨기기'; };
-function applyDataKey(){ store.set('dataGoKey', dataKey); layers.filter(o => o.src && o.src.kind === 'ecobank').forEach(o => { renderLayer(o); }); refreshOrder(); updateEcoBox(); }
+function applyDataKey(){ store.set('dataGoKey', dataKey); ecoFetched = []; updateEcoBox(); updateEco(); }
 $('#vkeySave').onclick = () => { vwKey = $('#vkey').value.trim(); dataKey = $('#dkey').value.trim(); applyKeyChange(); applyDataKey(); $('#settings').hidden = true; };
 $('#vkeyDel').onclick = () => { if (!confirm('저장된 키(브이월드·공공데이터포털)를 모두 지울까요?')) return; vwKey = ''; dataKey = ''; $('#vkey').value = ''; $('#dkey').value = ''; applyKeyChange(); applyDataKey(); };
 function applyAttr(){ const c = map.attributionControl.getContainer(); if (c) c.style.display = $('#attrOn').checked ? '' : 'none'; store.set('attrOn', $('#attrOn').checked ? '1' : '0'); }
@@ -1382,108 +1388,125 @@ async function updateThemes(){
   } finally { themeBusy = false; }
 }
 
-/* ================= 에코뱅크 생태자연도 (공공데이터포털 WMS, EPSG:5186) ================= */
-const ECO_CODE = 'tbl_opn_eczm';
-let ecoSwap = store.get('ecoSwap', '0') === '1', ecoErr = 0;
-function ecoUrl(minX, minY, maxX, maxY, W, H){
-  const k = getDataKey(), key = /%/.test(k) ? k : encodeURIComponent(k);
-  const bbox = ecoSwap ? [minX, minY, maxX, maxY] : [minY, minX, maxY, maxX];
-  return 'https://apis.data.go.kr/B553084/ecoapi/EcologyzmpService/wms/getEcologyzmpWMS'
-    + `?ServiceKey=${key}&layers=${ECO_CODE}&srs=EPSG:5186&bbox=${bbox.map(v => v.toFixed(2)).join(',')}`
-    + `&width=${W}&height=${H}&format=png&transparent=true`;
+/* ================= 에코뱅크 생태자연도 (공공데이터포털 WFS, EPSG:5186) ================= */
+const ECO_EP = 'https://apis.data.go.kr/B553084/ecoapi/EcologyzmpService';
+const ECO_GRADES = [['1', '생태자연도 1등급', '#1AA800'], ['2', '생태자연도 2등급', '#92D050'], ['3', '생태자연도 3등급', '#FFFFFF'], ['9', '별도관리지역', '#FF8000']];
+const ECO_MINZ = 11;
+const ecoKey = () => { const k = getDataKey(); return /%/.test(k) ? k : encodeURIComponent(k); };
+const ecoWfsUrl = (b, max) => `${ECO_EP}/wfs/getEcologyzmpWFS?ServiceKey=${ecoKey()}&typename=tbl_opn_eczm&srs=EPSG:5186`
+  + `&bbox=${b.map(v => v.toFixed(1)).join(',')}&outputFormat=application/json` + (max ? `&maxFeatures=${max}` : '');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+/* 공공데이터포털은 초당 요청 수 제한이 있어 동시에 2개, 0.4초 간격으로만 보냄 */
+const ecoSem = { n: 0, q: [], last: 0 };
+async function ecoSlot(fn){
+  if (ecoSem.n >= 2) await new Promise(r => ecoSem.q.push(r)); else ecoSem.n++;
+  try {
+    const wait = ecoSem.last + 400 - Date.now(); ecoSem.last = Math.max(Date.now(), ecoSem.last + 400);
+    if (wait > 0) await sleep(wait);
+    return await fn();
+  } finally { const r = ecoSem.q.shift(); if (r) r(); else ecoSem.n--; }
 }
-/* 공공데이터포털은 초당 요청 수가 제한되어 있어, 요청을 줄 세워 1초에 몇 개씩만 보냄 */
-const ECO_RPS = 3;                       // 1초에 보낼 최대 요청 수
-let ecoCors = null;                      // 다른 사이트 그림 사용 허용 여부 (처음 한 번 확인)
-const ecoQueue = []; let ecoSent = [];
-function ecoPump(){
-  const now = Date.now();
-  ecoSent = ecoSent.filter(t => now - t < 1000);
-  while (ecoQueue.length && ecoSent.length < ECO_RPS){
-    const job = ecoQueue.shift();
-    if (job.tile._cancel) continue;      // 이미 화면에서 사라진 조각은 요청하지 않음
-    ecoSent.push(Date.now()); job.run();
+async function ecoFetchJson(url){
+  let last = null;
+  for (let t = 0; t < 4; t++){
+    try {
+      const txt = await ecoSlot(async () => { const r = await fetch(url); if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); });
+      if (/^\s*</.test(txt)){
+        const msg = (txt.match(/<returnAuthMsg>([^<]*)/) || txt.match(/<errMsg>([^<]*)/) || [])[1] || txt.slice(0, 100);
+        if (/PER_SECOND|초당/.test(txt)){ last = new Error(msg); await sleep(1500 * (t + 1)); continue; }
+        const e = new Error(msg); e.fatal = true; throw e;
+      }
+      return JSON.parse(txt);
+    } catch(e){ if (e.fatal) throw e; last = e; await sleep(1500 * (t + 1)); }
   }
-  if (ecoQueue.length) setTimeout(ecoPump, 1000 / ECO_RPS);
+  throw last;
 }
-function ecoEnqueue(tile, run){ ecoQueue.push({ tile, run }); ecoPump(); }
-/* 타일마다 EPSG:5186 범위의 그림을 받아, 웹지도 타일에 맞게 비틀어(아핀 변환) 그림 */
-const EcoWms = L.GridLayer.extend({
-  options: { tileSize: 1024, minZoom: 7, maxZoom: 20, zIndex: 50, updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 0 },
-  onAdd(m){ L.GridLayer.prototype.onAdd.call(this, m); this.on('tileunload', e => { e.tile._cancel = true; }); },
-  createTile(coords, done){
-    const sz = this.getTileSize(), tile = document.createElement('canvas'); tile.width = sz.x; tile.height = sz.y;
-    const nw = coords.scaleBy(sz), mp = this._map;
-    const P = (px, py) => { const ll = mp.unproject(L.point(nw.x + px, nw.y + py), coords.z); return proj4('EPSG:4326', 'EPSG:5186', [ll.lng, ll.lat]); };
-    const c0 = P(0, 0), c1 = P(sz.x, 0), c2 = P(0, sz.y), c3 = P(sz.x, sz.y);
-    const xs = [c0[0], c1[0], c2[0], c3[0]], ys = [c0[1], c1[1], c2[1], c3[1]];
-    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-    const W = sz.x, H = sz.y, url = ecoUrl(minX, minY, maxX, maxY, W, H), layer = this;
-    const draw = img => {
-      const m00 = (c1[0] - c0[0]) / sz.x, m10 = (c1[1] - c0[1]) / sz.x, m01 = (c2[0] - c0[0]) / sz.y, m11 = (c2[1] - c0[1]) / sz.y;
-      const det = m00 * m11 - m01 * m10, a00 = m11 / det, a01 = -m01 / det, a10 = -m10 / det, a11 = m00 / det;
-      const sx = (maxX - minX) / W, sy = (maxY - minY) / H, ox = minX - c0[0], oy = maxY - c0[1];
-      const ctx = tile.getContext('2d');
-      ctx.setTransform(a00 * sx, a10 * sx, -a01 * sy, -a11 * sy, a00 * ox + a01 * oy, a10 * ox + a11 * oy);
-      ctx.drawImage(img, 0, 0);
-      ecoErr = 0; $('#eco_msg').textContent = ''; done(null, tile);
-    };
-    let tries = 0;
-    const load = () => {
-      const cors = ecoCors !== false, img = new Image();
-      if (cors) img.crossOrigin = 'anonymous';
-      img.onload = () => { if (cors) ecoCors = true; else layer._tainted = true; draw(img); };
-      img.onerror = e => {
-        if (cors && ecoCors === null){ ecoCors = false; return ecoEnqueue(tile, load); }   // 허용 안 됨 → 화면 표시용으로 한 번만 다시
-        if (++tries < 2) return setTimeout(() => ecoEnqueue(tile, load), 1500);            // 잠깐 쉬었다 한 번 더
-        if (++ecoErr === 3) $('#eco_msg').textContent = '생태자연도 일부를 받지 못했습니다. 잠시 뒤 지도를 조금 움직여 보세요. 계속 안 되면 "문제가 있을 때"에서 요청을 열어 오류 내용을 확인해 주세요.';
-        done(e, tile);
-      };
-      img.src = url;
-    };
-    ecoEnqueue(tile, load);
-    return tile;
+const ecoGrade = v => { if (v == null) return ''; const s = String(v).trim(), n = Number(s); return isFinite(n) && s !== '' ? String(Math.trunc(n)) : s; };
+const ecoSeen = new Set(); let ecoFetched = [], ecoBusy = false;
+const ecoLayerOf = g => layers.find(o => o.src && o.src.kind === 'ecowfs' && o.src.grade === g);
+function to4326(c){ return typeof c[0] === 'number' ? proj4('EPSG:5186', 'EPSG:4326', [c[0], c[1]]) : c.map(to4326); }
+async function ecoCollect(b, depth, stats){
+  const j = await ecoFetchJson(ecoWfsUrl(b));
+  stats.calls++;
+  const arr = j.features || [];
+  arr.forEach((f, i) => {
+    const id = f.id != null ? String(f.id) : JSON.stringify(f.properties || {}) + i;
+    if (ecoSeen.has(id) || !f.geometry) return;
+    ecoSeen.add(id);
+    const g = ecoGrade((f.properties || {}).eczm_grad);
+    const o = ecoLayerOf(g); if (!o) { ecoSeen.delete(id); return; }   // 꺼져 있는 등급은 나중에 켤 때 다시 받음
+    o.gj.features.push({ type: 'Feature', geometry: { type: f.geometry.type, coordinates: to4326(f.geometry.coordinates) }, properties: f.properties || {} });
+    stats.added++;
+  });
+  $('#eco_msg').textContent = `생태자연도 받는 중… (요청 ${stats.calls}번, ${stats.added}개)`;
+  const total = typeof j.totalFeatures === 'number' ? j.totalFeatures : (arr.length >= 500 ? Infinity : arr.length);
+  if (total > arr.length && depth < 8 && stats.calls < 150){
+    const mx = (b[0] + b[2]) / 2, my = (b[1] + b[3]) / 2;
+    await Promise.all([[b[0], b[1], mx, my], [mx, b[1], b[2], my], [b[0], my, mx, b[3]], [mx, my, b[2], b[3]]].map(q => ecoCollect(q, depth + 1, stats)));
   }
-});
-const ecoLayer = () => layers.find(o => o.src && o.src.kind === 'ecobank');
-function updateEcoBox(){
-  const o = ecoLayer();
-  $('#eco_on').checked = !!(o && o.visible);
-  const op = o ? (o.src.op || 70) : +$('#eco_op').value;
-  $('#eco_op').value = op; $('#eco_opv').textContent = op + '%';
-  $('#eco_swap').checked = ecoSwap;
-  if (!getDataKey()) $('#eco_msg').textContent = '⚙ 설정에 공공데이터포털 인증키를 넣어야 쓸 수 있습니다.';
-  else if (/설정에 공공데이터포털/.test($('#eco_msg').textContent)) $('#eco_msg').textContent = '';
 }
-$('#eco_on').onchange = e => {
-  if (e.target.checked && !getDataKey()){ e.target.checked = false; alert('⚙ 설정에 공공데이터포털 인증키를 먼저 넣어주세요.'); return; }
-  let o = ecoLayer();
+async function updateEco(){
+  const on = layers.filter(o => o.src && o.src.kind === 'ecowfs' && o.visible);
+  if (!on.length || ecoBusy) return;
+  if (!getDataKey()){ $('#eco_msg').textContent = '⚙ 설정에 공공데이터포털 인증키를 넣어야 쓸 수 있습니다.'; return; }
+  if (map.getZoom() < ECO_MINZ){ $('#eco_msg').textContent = '생태자연도는 읍면동이 보일 정도로 더 확대하면 받아옵니다.'; return; }
+  const vb = map.getBounds().pad(0.05);
+  if (ecoFetched.some(fb => fb.contains(vb))){ $('#eco_msg').textContent = ''; return; }
+  const a = proj4('EPSG:4326', 'EPSG:5186', [vb.getWest(), vb.getSouth()]), c = proj4('EPSG:4326', 'EPSG:5186', [vb.getEast(), vb.getNorth()]);
+  const b = [Math.min(a[0], c[0]), Math.min(a[1], c[1]), Math.max(a[0], c[0]), Math.max(a[1], c[1])];
+  ecoBusy = true; const stats = { calls: 0, added: 0 };
+  try {
+    await ecoCollect(b, 0, stats);
+    ecoFetched.push(vb);
+    $('#eco_msg').textContent = stats.added ? '' : '이 범위에는 켜진 등급의 생태자연도 자료가 없습니다.';
+  } catch(e){
+    $('#eco_msg').textContent = '생태자연도를 받지 못했습니다: ' + e.message + (/KEY|키|SERVICE/i.test(e.message) ? ' (⚙ 설정의 공공데이터포털 인증키를 확인해 주세요. 활용신청 직후에는 1~2시간 걸리기도 합니다)' : ' (잠시 뒤 지도를 조금 움직여 다시 시도해 보세요)');
+  } finally {
+    ecoBusy = false;
+    on.forEach(o => renderLayer(o)); refreshOrder();
+    buildEcoList(); $$('#themeLayerList .lyr').forEach(d => { const o = layerById(+d.dataset.lid); const fc = d.querySelector('.fcount'); if (o && fc) fc.textContent = o.gj.features.length + '개'; });
+  }
+}
+function ecoStyle(g, color){
+  return { symbols: [S('fill', { color, op: g === '3' ? 100 : 75 }), S('stroke', { color: g === '3' ? '#999999' : '#3c3c3c', w: 0.6, dash: 'solid', op: 70 })], label: labelDefaults() };
+}
+function toggleEco(g, on, batch){
+  if (on && !getDataKey()){ alert('⚙ 설정에 공공데이터포털 인증키를 먼저 넣어주세요.'); buildEcoList(); return false; }
+  let o = ecoLayerOf(g);
+  const [, name, color] = ECO_GRADES.find(x => x[0] === g);
   if (!o){
-    if (!e.target.checked) return;
-    o = addLayer('생태자연도', { type: 'FeatureCollection', features: [] }, { type: 'polygon', style: { symbols: [], label: labelDefaults() },
-      src: { kind: 'ecobank', code: ECO_CODE, op: +$('#eco_op').value }, noLegend: true });
-  } else { o.visible = e.target.checked; refreshOrder(); buildPanel(); renderLegendAll(); }
-  if (e.target.checked && map.getZoom() < 7) $('#eco_msg').textContent = '생태자연도는 조금 더 확대하면 나타납니다.';
+    if (!on) return true;
+    o = addLayer(name, { type: 'FeatureCollection', features: [] }, { type: 'polygon', style: ecoStyle(g, color), src: { kind: 'ecowfs', grade: g }, quiet: true });
+    ecoFetched = []; ecoSeen.clear(); layers.filter(x => x.src && x.src.kind === 'ecowfs').forEach(x => { x.gj.features = []; });   // 새 등급을 켜면 다시 받음
+  } else o.visible = on;
+  if (!batch){ refreshOrder(); buildPanel(); renderLegendAll(); buildEcoList(); if (on) updateEco(); }
+  return true;
+}
+function buildEcoList(){
+  const box = $('#ecoList'); box.innerHTML = '';
+  let onCnt = 0;
+  ECO_GRADES.forEach(([g, name, color]) => {
+    const o = ecoLayerOf(g), on = !!(o && o.visible); if (on) onCnt++;
+    const d = document.createElement('div'); d.className = 'thi';
+    d.innerHTML = `<input type="checkbox" id="eco_${g}" ${on ? 'checked' : ''}><span class="sw" style="background:${color};border-color:#666"></span><label for="eco_${g}">${esc(name)}</label>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
+    d.querySelector('input').onchange = e => toggleEco(g, e.target.checked);
+    box.appendChild(d);
+  });
+  $('#eco_cnt').textContent = `(${onCnt}/${ECO_GRADES.length})`;
+  $('#eco_all').checked = onCnt === ECO_GRADES.length; $('#eco_all').indeterminate = onCnt > 0 && onCnt < ECO_GRADES.length;
+}
+$('#eco_all').onclick = e => e.stopPropagation();
+$('#eco_all').onchange = e => {
+  const on = e.target.checked;
+  for (const [g] of ECO_GRADES) if (!toggleEco(g, on, true)) break;
+  refreshOrder(); buildPanel(); renderLegendAll(); buildEcoList(); if (on) updateEco();
 };
-$('#eco_op').oninput = () => {
-  const v = +$('#eco_op').value, o = ecoLayer(); $('#eco_opv').textContent = v + '%';
-  if (o){ o.src.op = v; o.group && o.group.eachLayer(l => l.setOpacity && l.setOpacity(v / 100)); }
-};
-$('#eco_swap').onchange = e => { ecoSwap = e.target.checked; store.set('ecoSwap', ecoSwap ? '1' : '0'); const o = ecoLayer(); if (o){ renderLayer(o); refreshOrder(); } };
 $('#eco_test').onclick = () => {
   if (!getDataKey()){ alert('⚙ 설정에 공공데이터포털 인증키를 먼저 넣어주세요.'); return; }
-  const b = map.getBounds(), a = proj4('EPSG:4326', 'EPSG:5186', [b.getWest(), b.getSouth()]), c = proj4('EPSG:4326', 'EPSG:5186', [b.getEast(), b.getNorth()]);
-  window.open(ecoUrl(a[0], a[1], c[0], c[1], 800, 600), '_blank');
+  const c = map.getCenter(), p = proj4('EPSG:4326', 'EPSG:5186', [c.lng, c.lat]);
+  window.open(ecoWfsUrl([p[0] - 500, p[1] - 500, p[0] + 500, p[1] + 500], 5), '_blank');
 };
-$('#eco_leg').onclick = () => {
-  const G = [['생태자연도 1등급', '#4caf50'], ['생태자연도 2등급', '#fff176'], ['생태자연도 3등급', '#f5f5f5'], ['별도관리지역', '#b39ddb']];
-  G.forEach(([label, color]) => {
-    if (legendItems.some(it => it.label === label)) return;
-    legendItems.push({ key: 'C' + (++legSeq), lid: null, label, show: true, type: 'polygon', symbols: [S('fill', { color, op: 70 }), S('stroke', { color: '#666666', w: 0.8, dash: 'solid' })] });
-  });
-  renderLegendAll();
-  alert('범례에 등급 항목 4개를 넣었습니다. 색은 실제 지도와 비교해서 ① 작업 → 5. 범례에서 맞춰주세요.');
-};
+function updateEcoBox(){ buildEcoList(); if (!getDataKey()) $('#eco_msg').textContent = '⚙ 설정에 공공데이터포털 인증키를 넣어야 쓸 수 있습니다.'; else if (/설정에 공공데이터포털/.test($('#eco_msg').textContent)) $('#eco_msg').textContent = ''; }
 
 /* ================= 레이어 ================= */
 const PALETTE = ['#e60012', '#1f6feb', '#2e9d3a', '#f29900', '#8e44ad', '#00a6b4', '#d63384', '#795548'];
@@ -1536,10 +1559,7 @@ function addLayer(name, gj, extra = {}){
 }
 function renderLayer(o){
   if (o.group) map.removeLayer(o.group);
-  if (o.src && o.src.kind === 'ecobank'){
-    o.group = L.layerGroup(getDataKey() ? [new EcoWms({ opacity: (o.src.op || 70) / 100 })] : []);
-    return;
-  }
+  if (o.src && o.src.kind === 'ecobank'){ o.group = L.layerGroup(); return; }   // 이전 버전(그림 방식) 자료는 표시하지 않음
   if (o.src && o.src.mode === 'wms'){
     const c = o.src.code.toLowerCase();
     o.group = L.layerGroup([L.tileLayer.wms('https://api.vworld.kr/req/wms', { layers: c, styles: c, format: 'image/png', transparent: true,
@@ -1590,31 +1610,50 @@ function buildPanelEmpty(){
   if (!$('#layerList').children.length) $('#layerList').innerHTML = '<p class="hint">아직 올린 레이어가 없습니다.</p>';
   if (!$('#themeLayerList').children.length) $('#themeLayerList').innerHTML = '<p class="hint">위 1번에서 주제도를 체크하면 여기에 나타나고, 색·선·패턴과 이름 표시를 바꿀 수 있습니다.</p>';
 }
+let lastSelId = null;
+function deleteLayers(list){
+  list.forEach(o => {
+    if (o.group) map.removeLayer(o.group);
+    const i = layers.indexOf(o); if (i >= 0) layers.splice(i, 1);
+    legendItems = legendItems.filter(x => x.lid !== o.id);
+  });
+  if (list.some(o => o.src && o.src.kind === 'ecowfs')){ ecoFetched = []; ecoSeen.clear(); }
+  refreshOrder(); buildPanel(); renderLegendAll(); buildThemeList(); buildEcoList();
+}
+function selToolbar(box, theme){
+  const grp = layers.filter(o => !!o.src === theme); if (!grp.length) return;
+  const n = grp.filter(o => o._sel).length, t = document.createElement('div'); t.className = 'seltools';
+  t.innerHTML = `<button data-s="all">전체 선택</button><button data-s="none" ${n ? '' : 'disabled'}>선택 해제</button>
+    <button data-s="hide" ${n ? '' : 'disabled'}>선택 숨기기</button><button data-s="del" class="danger" ${n ? '' : 'disabled'}>선택 삭제${n ? ` (${n})` : ''}</button>`;
+  t.querySelectorAll('[data-s]').forEach(b => b.onclick = () => {
+    const a = b.dataset.s, sel = grp.filter(o => o._sel);
+    if (a === 'all') grp.forEach(o => o._sel = true);
+    else if (a === 'none') grp.forEach(o => o._sel = false);
+    else if (a === 'hide'){ sel.forEach(o => { o.visible = false; o._sel = false; }); refreshOrder(); renderLegendAll(); buildThemeList(); buildEcoList(); }
+    else if (a === 'del'){ if (!confirm(`선택한 레이어 ${sel.length}개를 지울까요?`)) return; deleteLayers(sel); return; }
+    buildPanel();
+  });
+  box.appendChild(t);
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Delete' || /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+  const sel = layers.filter(o => o._sel); if (!sel.length) return;
+  if (confirm(`선택한 레이어 ${sel.length}개를 지울까요?`)) deleteLayers(sel);
+});
 function buildPanel(){
   const box1 = $('#layerList'), box2 = $('#themeLayerList');
   box1.innerHTML = ''; box2.innerHTML = '';
   const sameGroup = (a, b) => !!a.src === !!b.src;
+  selToolbar(box1, false); selToolbar(box2, true);
   layers.forEach((o, i) => {
     const box = o.src ? box2 : box1;
     const d = document.createElement('div'); d.className = 'lyr'; d.dataset.lid = o.id;
-    if (o.src && o.src.kind === 'ecobank'){
-      d.innerHTML = `<div class="lh"><input type="checkbox" ${o.visible ? 'checked' : ''} title="보이기"><span class="badge" style="background:#3a8f3a">에코뱅크</span>
-        <input class="nm" value="${esc(o.name)}"><button data-a="up">▲</button><button data-a="down">▼</button><button data-a="del">✕</button></div>
-        <div class="hint">그림(WMS)으로 받아오는 자료라 색·선은 바꿀 수 없습니다. 진하기는 위 에코뱅크 상자에서 조절합니다.</div>`;
-      d.querySelector('input[type=checkbox]').onchange = e => { o.visible = e.target.checked; refreshOrder(); updateEcoBox(); };
-      d.querySelector('.nm').onchange = e => { o.name = e.target.value; };
-      d.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
-        const a = b.dataset.a;
-        if (a === 'del'){ map.removeLayer(o.group); layers.splice(i, 1); updateEcoBox(); }
-        else { let j = i; do { j += a === 'up' ? -1 : 1; } while (j >= 0 && j < layers.length && !sameGroup(layers[j], o)); if (j < 0 || j >= layers.length) return; [layers[j], layers[i]] = [layers[i], layers[j]]; }
-        refreshOrder(); buildPanel();
-      });
-      box.appendChild(d); return;
-    }
+
     const keys = propKeys(o.gj);
     d.innerHTML = `
       <div class="lh">
-        <input type="checkbox" data-k="visible" ${o.visible ? 'checked' : ''} title="보이기">
+        <input type="checkbox" class="selcb" ${o._sel ? 'checked' : ''} title="선택 (Shift+클릭: 범위 선택, Delete 키: 삭제)">
+        <button class="eye ${o.visible ? 'on' : ''}" data-k="visible" title="보이기 / 숨기기">${o.visible ? '👁' : '—'}</button>
         <span class="sym">${legendSym(layerSymObj(o), 'P')}</span>
         ${o.src ? `<span class="badge" title="브이월드 2D데이터 API · ${esc(o.src.code)}">브이월드 2D데이터</span>` : ''}
         <input class="nm" data-k="name" value="${esc(o.name)}" title="레이어 이름">
@@ -1636,7 +1675,14 @@ function buildPanel(){
     d.querySelector('[data-lf]').onchange = e => { o.style.label.field = e.target.value; renderLayer(o); refreshOrder(); };
     const lts = d.querySelector('.lts'); fillTsForm(lts, o.style.label);
     bindTsForm(lts, () => o.style.label, () => { clearTimeout(o._lt); o._lt = setTimeout(() => { renderLayer(o); refreshOrder(); }, 150); });
-    d.querySelector('[data-k="visible"]').onchange = e => { o.visible = e.target.checked; refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); if (o.visible) updateThemes(); } };
+    d.querySelector('.selcb').onclick = e => {
+      const grp = layers.filter(x => sameGroup(x, o)), val = e.target.checked;
+      const ia = grp.findIndex(x => x.id === lastSelId), ib = grp.findIndex(x => x.id === o.id);
+      if (e.shiftKey && ia >= 0){ for (let k = Math.min(ia, ib); k <= Math.max(ia, ib); k++) grp[k]._sel = val; }
+      else o._sel = val;
+      lastSelId = o.id; buildPanel();
+    };
+    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); buildEcoList(); if (o.visible){ updateThemes(); updateEco(); } } };
     d.querySelector('[data-k="name"]').onchange = e => {
       const it = legendItems.find(x => x.lid === o.id);
       if (it && it.label === o.name) it.label = e.target.value;
@@ -1653,9 +1699,7 @@ function buildPanel(){
       else if (a === 'zoom'){ const bd = layerBounds(o); if (bd) map.fitBounds(bd, { padding: [30, 30] }); return; }
       else if (a === 'del'){
         if (!confirm(`'${o.name}' 레이어를 지울까요?`)) return;
-        map.removeLayer(o.group); layers.splice(i, 1);
-        legendItems = legendItems.filter(x => x.lid !== o.id);
-        if (o.src) buildThemeList();
+        deleteLayers([o]); return;
       } else return;
       refreshOrder(); buildPanel(); renderLegendAll();
     });
@@ -1912,7 +1956,7 @@ function updateInset(rebuildBase){
 }
 let themeTimer = null;
 map.on('moveend zoomend resize', () => { renderScale(); renderNorth(); updateInset(false); admSchedule(); placeDefaults();
-  clearTimeout(themeTimer); themeTimer = setTimeout(updateThemes, 450); });
+  clearTimeout(themeTimer); themeTimer = setTimeout(() => { updateThemes(); updateEco(); }, 450); });
 
 /* ================= 요소 위치 ================= */
 const OVL = ['legend', 'scale', 'north', 'title', 'inset'];
@@ -2308,14 +2352,7 @@ $('#fileIn').onchange = e => { handleFiles(e.target.files); e.target.value = '';
 /* ================= 저장 ================= */
 function download(name, url){ const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
 const fileBase = () => ($('#titleIn').value || '도면').replace(/[\\/:*?"<>|]/g, '_');
-async function capture(){
-  const blocked = layers.filter(o => o.visible && o.src && o.src.kind === 'ecobank' && o.group && o.group.getLayers().some(l => l._tainted));
-  blocked.forEach(o => map.removeLayer(o.group));
-  try { return await capture2(); }
-  finally {
-    if (blocked.length){ refreshOrder(); showMsg('생태자연도는 공공데이터포털 서버 설정 때문에 저장 그림에 넣을 수 없어 이번 저장에서 빠졌습니다. (화면에는 보입니다)'); }
-  }
-}
+async function capture(){ return capture2(); }
 async function capture2(){
   document.body.classList.add('exporting');
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
@@ -2408,7 +2445,7 @@ async function loadProject(d){
     if (p && (p.moved || (d.v || 1) < 3)){ el.dataset.moved = '1'; const { moved, ...st } = p; Object.assign(el.style, st); }
   });
   const idMap = {};
-  (d.layers || []).slice().reverse().forEach(l => {
+  (d.layers || []).filter(l => !(l.src && l.src.kind === 'ecobank')).slice().reverse().forEach(l => {
     const o = addLayer(l.name, l.gj, { type: l.type, visible: l.visible, legend: l.legend, style: l.style, noLegend: !!d.legendItems, src: l.src || null });
     idMap[l.id] = o.id;
   });
@@ -2429,6 +2466,8 @@ async function loadProject(d){
   if (d.view) map.setView(d.view.c, d.view.z);
   setRotation(cfg.map.bearing || 0);
   Object.keys(ADM).forEach(lv => { admDrawn[lv] = -1; });
+  ecoFetched = []; ecoSeen.clear();
+  layers.filter(o => o.src && o.src.kind === 'ecowfs').forEach(o => o.gj.features.forEach((f, i) => ecoSeen.add('saved' + o.id + '_' + i)));
   updateAdmin(); buildThemeList(); updateThemes(); updateEcoBox();
   if (mapLocked){ lockRatio = null; applyLockRatio(); }
 }
