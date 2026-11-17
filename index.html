@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>환경영향평가 도면 작성기</title>
+<script>window.L_DISABLE_3D = true;</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/proj4@2.9.2/dist/proj4.js"></script>
+<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
+<script src="https://unpkg.com/dxf-parser@1.1.2/dist/dxf-parser.js"></script>
+<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Malgun Gothic","맑은 고딕","Noto Sans KR",sans-serif;font-size:13px;color:#222}
+body{display:flex}
+#side{width:360px;flex:none;height:100%;overflow-y:auto;background:#f6f7f9;border-right:1px solid #ccd}
+#side h1{font-size:16px;margin:0;padding:12px 14px;background:#1d3b2a;color:#fff}
+.sec{border-bottom:1px solid #dde;padding:10px 14px}
+.sec h2{font-size:13px;margin:0 0 8px;color:#1d3b2a}
+.row{display:flex;gap:6px;align-items:center;margin:5px 0;flex-wrap:wrap}
+.row label{white-space:nowrap}
+input[type=text],input[type=password],select,input[type=number]{border:1px solid #bbc;border-radius:3px;padding:3px 5px;font:inherit}
+input[type=number]{width:58px}
+button{font:inherit;border:1px solid #9aa;background:#fff;border-radius:3px;padding:3px 8px;cursor:pointer}
+button:hover{background:#eef3ee}
+button.on{background:#1d3b2a;color:#fff;border-color:#1d3b2a}
+button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
+.hint{color:#667;font-size:12px;line-height:1.5;margin:4px 0}
+#drop{border:2px dashed #9ab;border-radius:6px;padding:12px;text-align:center;color:#567;background:#fff;cursor:pointer}
+#drop.over{background:#e6f2ea;border-color:#1d6b3a}
+.lyr{background:#fff;border:1px solid #ccd;border-radius:4px;margin:6px 0;padding:4px 6px}
+.lh{display:flex;align-items:center;gap:3px}
+.lh .nm{flex:1;min-width:0;border:1px solid transparent;padding:2px 4px}
+.lh .nm:hover,.lh .nm:focus{border-color:#bbc}
+.lh button{padding:1px 5px;font-size:11px}
+.lyr summary{cursor:pointer;color:#456;font-size:12px;margin-top:3px}
+.grid{display:grid;grid-template-columns:82px 1fr;gap:5px 6px;align-items:center;margin-top:6px}
+.grid span{display:flex;gap:4px;align-items:center}
+.sym svg{display:block}
+#work{flex:1;height:100%;background:#8a9097;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+#frame{position:relative;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.4);overflow:hidden}
+#map{position:absolute;left:0;top:0;width:100%;height:100%;background:#fff}
+#map.annmode{cursor:crosshair}
+.ovl{position:absolute;z-index:1000;cursor:move;user-select:none;-webkit-user-select:none}
+.ovl:hover{outline:1px dashed #0a84ff}
+.exporting .ovl:hover{outline:none}
+.exporting .leaflet-control-container{display:none}
+#legend{right:12px;bottom:12px;background:#fff;font-size:13px}
+#legend table{border-collapse:collapse;border:2px solid #222}
+#legend th{border-bottom:2px solid #222;padding:4px 10px;font-size:1.1em;letter-spacing:.6em;text-align:center}
+#legend td{border:1px solid #444;padding:2px 8px;text-align:center}
+#legend td.s{padding:2px 4px}
+#scale{left:12px;bottom:12px;background:#fff;border:1px solid #333;padding:4px 10px 2px}
+#north{right:16px;top:12px}
+#title{left:50%;top:12px;transform:translateX(-50%);background:#fff;border:2px solid #222;padding:4px 18px;font-size:20px;font-weight:700;white-space:nowrap}
+#inset{left:12px;top:12px;width:150px;height:190px;border:2px solid #222;background:#fff}
+#insetMap{width:100%;height:100%;pointer-events:none}
+#doguk{position:absolute;inset:0;border:5px double #111;pointer-events:none;z-index:1100}
+.ann{background:none!important;border:none!important}
+.ann>div{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;cursor:move;font-family:"Malgun Gothic","Noto Sans KR",sans-serif;line-height:1}
+.a-admin{display:flex;gap:3px}
+.a-admin b{display:flex;align-items:center;justify-content:center;width:1.45em;height:1.45em;background:#fff;border:1px solid #333;color:var(--c)}
+.a-ridge{display:flex;gap:4px}
+.a-ridge b{display:flex;align-items:center;justify-content:center;width:1.7em;height:1.7em;border-radius:50%;background:var(--c);color:#fff;border:2px solid #fff;box-shadow:0 0 0 1px var(--c)}
+.v{flex-direction:column}
+.a-box{background:var(--c);color:#fff;font-weight:700;padding:.2em .9em;border:2px solid #fff;outline:1px solid #333}
+.a-text{color:var(--c);font-weight:700;text-align:center;line-height:1.25;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff,0 0 3px #fff}
+.leaflet-tooltip.flabel{background:none;border:none;box-shadow:none;padding:0;font-weight:700;text-align:center;white-space:nowrap;line-height:1.2;text-shadow:-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff,1px 1px 0 #fff}
+.leaflet-tooltip.flabel:before{display:none}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:5000;display:flex;align-items:center;justify-content:center}
+#modal[hidden]{display:none}
+.mbox{background:#fff;border-radius:6px;padding:16px 18px;min-width:340px;max-width:520px;max-height:85vh;overflow:auto}
+.mbox h3{margin:0 0 10px;font-size:15px}
+.mlist{max-height:300px;overflow:auto;border:1px solid #ccd;padding:6px;margin:8px 0}
+.mlist label{display:block;padding:1px 0}
+.mbtn{text-align:right;margin-top:12px}
+#busy{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:#1d3b2a;color:#fff;padding:6px 14px;border-radius:4px;z-index:6000}
+#busy[hidden]{display:none}
+#msg{position:fixed;left:380px;right:20px;top:14px;background:#fff3cd;border:1px solid #e0b54a;color:#5a4300;padding:10px 14px;border-radius:4px;z-index:6000;line-height:1.5;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#msg[hidden]{display:none}
+</style>
+</head>
+<body>
+<div id="side">
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v0.1</small></h1>
+
+  <div class="sec">
+    <h2>1. 배경지도</h2>
+    <div class="row"><label>브이월드 키</label><input type="password" id="vkey" style="flex:1" placeholder="인증키 붙여넣기"><button id="vkeySave">저장</button></div>
+    <div class="row"><label>지도 종류</label>
+      <select id="baseSel">
+        <option value="vBase">브이월드 일반지도</option>
+        <option value="vWhite">브이월드 백지도</option>
+        <option value="vGray">브이월드 회색지도</option>
+        <option value="vSat">브이월드 영상지도</option>
+        <option value="vHyb">브이월드 영상+명칭</option>
+        <option value="cVoy">카토 일반지도 (키 불필요)</option>
+        <option value="cLight">카토 밝은지도 (키 불필요)</option>
+        <option value="esriSat">에스리 영상지도 (키 불필요)</option>
+        <option value="osm">오픈스트리트맵 (사이트에 올린 뒤 사용)</option>
+        <option value="none">배경 없음</option>
+      </select></div>
+    <div class="row"><label>배경 진하기</label><input type="range" id="baseOp" min="10" max="100" value="70" style="flex:1"><span id="baseOpV">70%</span></div>
+    <div class="row"><label>행정경계</label>
+      <label><input type="checkbox" class="adm" value="lt_c_adsido">시도</label>
+      <label><input type="checkbox" class="adm" value="lt_c_adsigg">시군구</label>
+      <label><input type="checkbox" class="adm" value="lt_c_ademd">읍면동</label></div>
+    <p class="hint">행정경계는 브이월드 키가 있어야 나옵니다.</p>
+  </div>
+
+  <div class="sec">
+    <h2>2. 레이어 올리기</h2>
+    <div id="drop">SHP(zip), DXF, GeoJSON 파일을<br>여기에 끌어놓거나 클릭해서 선택
+      <input type="file" id="fileIn" multiple accept=".zip,.shp,.dbf,.prj,.cpg,.shx,.dxf,.geojson,.json" hidden></div>
+    <div class="row"><label>SHP 글자 인코딩</label>
+      <select id="encSel"><option value="auto">자동 판별</option><option value="euc-kr">EUC-KR (CP949)</option><option value="utf-8">UTF-8</option></select></div>
+    <p class="hint">· SHP는 zip으로 묶거나 shp/dbf/prj를 함께 선택하세요.<br>· DWG는 CAD에서 DXF로 저장한 뒤 올려주세요.<br>· 목록 위쪽 레이어가 지도에서 위에 그려집니다.</p>
+    <div id="layerList"></div>
+  </div>
+
+  <div class="sec">
+    <h2>3. 글자 넣기</h2>
+    <div class="row">
+      <button class="annBtn" data-m="admin">행정구역 (□□□)</button>
+      <button class="annBtn" data-m="ridge">산줄기 (○○○)</button>
+      <button class="annBtn" data-m="box">박스 라벨</button>
+      <button class="annBtn" data-m="text">일반 글자</button>
+    </div>
+    <div class="row"><label>크기</label><input type="number" id="annSize" value="16" min="6" max="80">
+      <label>색</label><input type="color" id="annColor" value="#222222">
+      <label><input type="checkbox" id="annVert">세로</label></div>
+    <p class="hint">버튼을 누르고 지도를 클릭하면 글자가 들어갑니다. (Esc: 그만 넣기)<br>· 끌어서 이동 · 더블클릭: 수정 · 우클릭: 삭제<br>· 일반 글자에서 <b>|</b> 를 넣으면 줄이 바뀝니다. 예) 충주첨단|일반산업단지</p>
+  </div>
+
+  <div class="sec">
+    <h2>4. 도면 꾸미기</h2>
+    <div class="row"><label>용지</label>
+      <select id="paper">
+        <option value="a3l">A3 가로</option><option value="a4l">A4 가로</option>
+        <option value="a3p">A3 세로</option><option value="a4p">A4 세로</option>
+        <option value="free">화면 크기</option>
+      </select></div>
+    <div class="row">
+      <label><input type="checkbox" class="tg" data-t="legend" checked>범례</label>
+      <label><input type="checkbox" class="tg" data-t="scale" checked>축척</label>
+      <label><input type="checkbox" class="tg" data-t="north" checked>방위표</label>
+      <label><input type="checkbox" class="tg" data-t="inset">위치도</label>
+      <label><input type="checkbox" class="tg" data-t="title">제목</label>
+      <label><input type="checkbox" class="tg" data-t="doguk">도곽</label>
+    </div>
+    <div class="row"><label>제목</label><input type="text" id="titleIn" value="지역개황도" style="flex:1"></div>
+    <div class="row"><label>범례 크기</label><input type="range" id="legSize" min="9" max="22" value="13" style="flex:1"></div>
+    <p class="hint">범례·축척·방위표·위치도·제목은 지도 위에서 끌어서 옮길 수 있습니다.</p>
+  </div>
+
+  <div class="sec">
+    <h2>5. 저장</h2>
+    <div class="row"><label>해상도</label>
+      <select id="dpi"><option value="2">보통 (2배)</option><option value="3" selected>높음 (3배)</option><option value="4">매우 높음 (4배)</option></select></div>
+    <div class="row"><button class="pri" id="btnJpg">JPEG 저장</button><button class="pri" id="btnPdf">PDF 저장</button></div>
+    <div class="row"><button id="btnSaveProj">작업 저장(.json)</button><button id="btnLoadProj">작업 열기</button>
+      <input type="file" id="projIn" accept=".json" hidden></div>
+    <p class="hint">작업 파일을 공유폴더에 두면 다른 사람도 열어서 이어 작업할 수 있습니다.</p>
+  </div>
+</div>
+
+<div id="work">
+  <div id="frame">
+    <div id="map"></div>
+    <div id="title" class="ovl" style="display:none">지역개황도</div>
+    <div id="inset" class="ovl" style="display:none"><div id="insetMap"></div></div>
+    <div id="north" class="ovl"></div>
+    <div id="scale" class="ovl"></div>
+    <div id="legend" class="ovl"></div>
+    <div id="doguk" style="display:none"></div>
+  </div>
+</div>
+
+<div id="modal" hidden><div class="mbox"><div id="mbody"></div><div class="mbtn"><button id="mok" class="pri">확인</button> <button id="mcancel">취소</button></div></div></div>
+<div id="busy" hidden>처리 중…</div>
+<div id="msg" hidden onclick="this.hidden=true" title="클릭하면 닫힙니다"></div>
+
+<script>
+/* 필요한 프로그램(라이브러리)을 인터넷에서 받아오지 못한 경우 안내 */
+(function(){
+  const miss = [['L', '지도(Leaflet)'], ['proj4', '좌표변환(proj4)'], ['JSZip', 'zip 읽기'], ['shp', 'SHP 읽기'],
+                ['DxfParser', 'DXF 읽기'], ['html2canvas', '이미지 저장'], ['jspdf', 'PDF 저장']]
+    .filter(([k]) => !window[k]).map(([, n]) => n);
+  if (miss.length){
+    const m = document.getElementById('msg');
+    m.textContent = '다음 구성요소를 인터넷에서 받아오지 못했습니다: ' + miss.join(', ') +
+      '. 인터넷 연결이나 회사 방화벽(unpkg.com 차단 여부)을 확인해 주세요.';
+    m.hidden = false;
+  }
+})();
+</script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : v; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+};
+const busy = on => { $('#busy').hidden = !on; };
+
+/* ---------- 좌표계 ---------- */
+const TOWGS_BESSEL = '+towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43';
+const CRS = [
+  ['EPSG:5186', 'GRS80 중부원점 (EPSG:5186)', '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +units=m +no_defs'],
+  ['EPSG:5185', 'GRS80 서부원점 (EPSG:5185)', '+proj=tmerc +lat_0=38 +lon_0=125 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +units=m +no_defs'],
+  ['EPSG:5187', 'GRS80 동부원점 (EPSG:5187)', '+proj=tmerc +lat_0=38 +lon_0=129 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +units=m +no_defs'],
+  ['EPSG:5188', 'GRS80 동해원점 (EPSG:5188)', '+proj=tmerc +lat_0=38 +lon_0=131 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +units=m +no_defs'],
+  ['EPSG:5179', 'UTM-K (EPSG:5179)', '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +units=m +no_defs'],
+  ['EPSG:5181', 'GRS80 중부원점 50만 (EPSG:5181, 다음지도)', '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +units=m +no_defs'],
+  ['EPSG:5174', 'Bessel 중부원점 보정 (EPSG:5174)', '+proj=tmerc +lat_0=38 +lon_0=127.0028902777778 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel +units=m +no_defs ' + TOWGS_BESSEL],
+  ['EPSG:5173', 'Bessel 서부원점 보정 (EPSG:5173)', '+proj=tmerc +lat_0=38 +lon_0=125.0028902777778 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel +units=m +no_defs ' + TOWGS_BESSEL],
+  ['EPSG:5175', 'Bessel 동부원점 보정 (EPSG:5175)', '+proj=tmerc +lat_0=38 +lon_0=129.0028902777778 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel +units=m +no_defs ' + TOWGS_BESSEL],
+  ['EPSG:2097', 'Bessel 중부원점 (EPSG:2097)', '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel +units=m +no_defs ' + TOWGS_BESSEL],
+  ['EPSG:32652', 'WGS84 UTM 52N (EPSG:32652)', '+proj=utm +zone=52 +datum=WGS84 +units=m +no_defs'],
+  ['EPSG:4326', 'WGS84 경위도 (EPSG:4326)', '+proj=longlat +datum=WGS84 +no_defs']
+];
+CRS.forEach(c => proj4.defs(c[0], c[2]));
+const crsDef = code => (CRS.find(c => c[0] === code) || CRS[0])[2];
+const crsOptions = sel => CRS.map(c => `<option value="${c[0]}" ${c[0] === sel ? 'selected' : ''}>${c[1]}</option>`).join('');
+
+/* 옛 Bessel 계열 .prj는 TOWGS84가 빠져 300m 가량 어긋나므로 보정값을 붙인 정의로 바꿈 */
+function fixPrj(prj){
+  if (!prj) return prj;
+  if (!/bessel|tokyo|korean_1985|korean 1985/i.test(prj) || /towgs84/i.test(prj)) return prj;
+  const num = name => { const m = prj.match(new RegExp('PARAMETER\\["' + name + '"\\s*,\\s*([-\\d.eE]+)', 'i')); return m ? +m[1] : null; };
+  const cm = num('central_meridian'), lat0 = num('latitude_of_origin'), k = num('scale_factor'),
+        fe = num('false_easting'), fn = num('false_northing');
+  if (cm == null) return prj;
+  return `+proj=tmerc +lat_0=${lat0 ?? 38} +lon_0=${cm} +k=${k ?? 1} +x_0=${fe ?? 200000} +y_0=${fn ?? 500000} +ellps=bessel +units=m +no_defs ${TOWGS_BESSEL}`;
+}
+
+/* ---------- 지도 ---------- */
+const frame = $('#frame');
+const map = L.map('map', { zoomControl: true, zoomSnap: 0.25, zoomDelta: 0.5, attributionControl: true, doubleClickZoom: true })
+  .setView([36.6, 127.9], 8);
+map.attributionControl.setPrefix(false);
+const renderer = L.canvas({ padding: 0.5 });
+map.addLayer(renderer);
+
+const getKey = () => $('#vkey').value.trim();
+$('#vkey').value = store.get('vworldKey', '');
+$('#vkeySave').onclick = () => { store.set('vworldKey', getKey()); setBase(); refreshAdmin(); updateInset(true); alert('저장했습니다.'); };
+
+let baseLayers = [], tileErr = 0;
+function showMsg(m){ const b = $('#msg'); b.textContent = m; b.hidden = false; }
+function setBase(){
+  baseLayers.forEach(l => map.removeLayer(l)); baseLayers = [];
+  const t = $('#baseSel').value, key = getKey(), op = +$('#baseOp').value / 100;
+  if (t.startsWith('v') && !key){
+    $('#baseSel').value = 'cVoy'; return setBase();
+  }
+  const vw = (lyr, ext) => L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${key}/${lyr}/{z}/{y}/{x}.${ext}`,
+    { maxNativeZoom: 18, maxZoom: 20, opacity: op, attribution: '© 브이월드' });
+  switch (t){
+    case 'vBase': baseLayers = [vw('Base', 'png')]; break;
+    case 'vWhite': baseLayers = [vw('white', 'png')]; break;
+    case 'vGray': baseLayers = [vw('gray', 'png')]; break;
+    case 'vSat': baseLayers = [vw('Satellite', 'jpeg')]; break;
+    case 'vHyb': baseLayers = [vw('Satellite', 'jpeg'), vw('Hybrid', 'png')]; break;
+    case 'osm': baseLayers = [L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxNativeZoom: 19, maxZoom: 20, opacity: op, attribution: '© OpenStreetMap' })]; break;
+    case 'cVoy': case 'cLight': baseLayers = [L.tileLayer(`https://{s}.basemaps.cartocdn.com/${t === 'cVoy' ? 'rastertiles/voyager' : 'light_all'}/{z}/{x}/{y}.png`,
+      { subdomains: 'abcd', maxNativeZoom: 19, maxZoom: 20, opacity: op, attribution: '© OpenStreetMap © CARTO' })]; break;
+    case 'esriSat': baseLayers = [L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxNativeZoom: 18, maxZoom: 20, opacity: op, attribution: '© Esri' })]; break;
+  }
+  tileErr = 0;
+  baseLayers.forEach(l => {
+    l.on('tileerror', () => {
+      if (++tileErr === 6) showMsg(t.startsWith('v')
+        ? '브이월드 지도를 불러오지 못했습니다. 키가 맞는지, 키를 발급받을 때 등록한 주소에서 열었는지 확인해 주세요. 우선 "카토 일반지도"로 바꿔서 써보세요.'
+        : '배경지도를 불러오지 못했습니다. 회사 방화벽에서 막혔을 수 있습니다. 다른 배경지도로 바꿔보세요.');
+    });
+    l.on('tileload', () => { if (tileErr < 6) tileErr = 0; });
+    l.addTo(map); l.bringToBack();
+  });
+  store.set('baseSel', t);
+}
+$('#baseSel').value = (s => s === 'osm' ? 'cVoy' : s)(store.get('baseSel', getKey() ? 'vBase' : 'cVoy'));
+$('#baseSel').onchange = () => { $('#msg').hidden = true; setBase(); };
+$('#baseOp').oninput = () => { $('#baseOpV').textContent = $('#baseOp').value + '%'; baseLayers.forEach(l => l.setOpacity(+$('#baseOp').value / 100)); };
+
+const adminLayers = {};
+function vwWms(name){
+  return L.tileLayer.wms('https://api.vworld.kr/req/wms', {
+    layers: name, styles: name, format: 'image/png', transparent: true, version: '1.3.0',
+    key: getKey(), domain: location.origin, tileSize: 512, maxZoom: 20, zIndex: 5
+  });
+}
+function refreshAdmin(){
+  $$('.adm').forEach(cb => {
+    const n = cb.value;
+    if (adminLayers[n]){ map.removeLayer(adminLayers[n]); delete adminLayers[n]; }
+    if (cb.checked){
+      if (!getKey()){ cb.checked = false; alert('행정경계는 브이월드 키가 필요합니다.'); return; }
+      adminLayers[n] = vwWms(n).addTo(map);
+    }
+  });
+}
+$$('.adm').forEach(cb => cb.onchange = refreshAdmin);
+
+/* ---------- 레이어 ---------- */
+const PALETTE = ['#e60012', '#1f6feb', '#2e9d3a', '#f29900', '#8e44ad', '#00a6b4', '#d63384', '#795548'];
+const layers = []; let lid = 0;
+
+function detectType(gj){
+  const c = { point: 0, line: 0, polygon: 0 };
+  (gj.features || []).forEach(f => {
+    const t = f.geometry && f.geometry.type || '';
+    if (/Point/.test(t)) c.point++; else if (/LineString/.test(t)) c.line++; else if (/Polygon/.test(t)) c.polygon++;
+  });
+  return Object.entries(c).sort((a, b) => b[1] - a[1])[0][0];
+}
+function propKeys(gj){
+  const s = new Set();
+  (gj.features || []).slice(0, 200).forEach(f => Object.keys(f.properties || {}).forEach(k => s.add(k)));
+  return [...s];
+}
+function addLayer(name, gj, extra = {}){
+  const type = extra.type || detectType(gj);
+  const pal = PALETTE[layers.length % PALETTE.length];
+  const o = {
+    id: ++lid, name, gj, type,
+    visible: extra.visible !== false, legend: extra.legend !== false,
+    style: Object.assign({
+      color: pal, weight: type === 'point' ? 1 : 2, dash: 'solid',
+      fill: type !== 'line', fillColor: pal, fillOpacity: 0.35,
+      hatch: false, hatchColor: '#444444', radius: 6,
+      labelField: '', labelSize: 12, labelColor: '#222222'
+    }, extra.style || {})
+  };
+  layers.unshift(o);
+  renderLayer(o); refreshOrder(); buildPanel(); updateLegend();
+  return o;
+}
+function dashOf(s){
+  if (s.dash === 'dash') return `${s.weight * 4 + 2} ${s.weight * 3 + 2}`;
+  if (s.dash === 'dot') return `1 ${s.weight * 2.5 + 2}`;
+  return null;
+}
+function makeHatch(s){
+  const n = 12, c = document.createElement('canvas'); c.width = c.height = n;
+  const x = c.getContext('2d');
+  if (s.fill){ x.globalAlpha = s.fillOpacity; x.fillStyle = s.fillColor; x.fillRect(0, 0, n, n); x.globalAlpha = 1; }
+  x.strokeStyle = s.hatchColor; x.lineWidth = 1.3; x.beginPath();
+  x.moveTo(0, n); x.lineTo(n, 0); x.moveTo(-n / 2, n / 2); x.lineTo(n / 2, -n / 2); x.moveTo(n / 2, n * 1.5); x.lineTo(n * 1.5, n / 2);
+  x.stroke();
+  return renderer._ctx.createPattern(c, 'repeat');
+}
+function renderLayer(o){
+  if (o.group) map.removeLayer(o.group);
+  const s = o.style, rail = s.dash === 'rail', w = Math.max(s.weight, 2);
+  const fillColor = s.hatch ? makeHatch(s) : s.fillColor;
+  const g = L.layerGroup();
+  const main = L.geoJSON(o.gj, {
+    renderer, interactive: false,
+    style: f => {
+      const t = f.geometry ? f.geometry.type : '';
+      if (/Point/.test(t)) return s.radius > 0
+        ? { color: s.color, weight: s.weight, stroke: s.weight > 0, fill: true, fillColor: s.fillColor, fillOpacity: s.fill ? s.fillOpacity : 0, radius: s.radius }
+        : { stroke: false, fill: false, radius: 0 };
+      return {
+        color: s.color, weight: rail ? w + 2 : s.weight, stroke: s.weight > 0, opacity: 1,
+        dashArray: rail ? null : dashOf(s), lineCap: s.dash === 'dot' ? 'round' : 'butt',
+        fill: /Polygon/.test(t) && (s.fill || s.hatch), fillColor, fillOpacity: s.hatch ? 1 : s.fillOpacity
+      };
+    },
+    pointToLayer: (f, ll) => L.circleMarker(ll, { renderer, interactive: false, radius: Math.max(0, s.radius) }),
+    onEachFeature: (f, l) => {
+      if (!s.labelField) return;
+      const v = f.properties ? f.properties[s.labelField] : null;
+      if (v == null || String(v).trim() === '') return;
+      l.bindTooltip(`<span style="font-size:${s.labelSize}px;color:${s.labelColor}">${esc(String(v).trim()).replace(/\n|\|/g, '<br>')}</span>`,
+        { permanent: true, direction: 'center', className: 'flabel', interactive: false });
+    }
+  });
+  g.addLayer(main);
+  if (rail){
+    g.addLayer(L.geoJSON(o.gj, {
+      renderer, interactive: false,
+      filter: f => f.geometry && !/Point/.test(f.geometry.type),
+      style: () => ({ color: '#ffffff', weight: w, dashArray: `${w * 2.5} ${w * 2.5}`, fill: false })
+    }));
+  }
+  o.group = g;
+}
+function refreshOrder(){
+  layers.forEach(o => o.group && map.removeLayer(o.group));
+  for (let i = layers.length - 1; i >= 0; i--) if (layers[i].visible) map.addLayer(layers[i].group);
+}
+function layerBounds(o){ try { const b = L.geoJSON(o.gj).getBounds(); return b.isValid() ? b : null; } catch(e){ return null; } }
+
+/* 범례 기호 (패널과 범례 공용) */
+function legendSym(o, pfx){
+  const s = o.style, id = `${pfx}h${o.id}`;
+  const lw = Math.min(Math.max(s.weight, 0.5), 6);
+  const dash = s.dash === 'dash' ? `stroke-dasharray="${lw * 3 + 2} ${lw * 2 + 2}"` : s.dash === 'dot' ? `stroke-dasharray="1 ${lw * 2 + 2}" stroke-linecap="round"` : '';
+  let defs = '', body = '';
+  if (o.type === 'point'){
+    body = s.radius > 0
+      ? `<circle cx="23" cy="9" r="${Math.min(7, Math.max(2, s.radius))}" fill="${s.fillColor}" fill-opacity="${s.fill ? s.fillOpacity : 0}" stroke="${s.color}" stroke-width="${Math.min(s.weight, 3)}"/>`
+      : `<text x="23" y="13" font-size="11" font-weight="700" text-anchor="middle" fill="${s.labelColor}">가</text>`;
+  } else if (o.type === 'line'){
+    if (s.dash === 'rail'){
+      const w = Math.min(Math.max(s.weight, 2), 5);
+      body = `<line x1="3" y1="9" x2="43" y2="9" stroke="${s.color}" stroke-width="${w + 2}"/><line x1="3" y1="9" x2="43" y2="9" stroke="#fff" stroke-width="${w}" stroke-dasharray="${w * 2} ${w * 2}"/>`;
+    } else body = `<line x1="3" y1="9" x2="43" y2="9" stroke="${s.color}" stroke-width="${lw}" ${dash}/>`;
+  } else {
+    if (s.hatch) defs = `<defs><pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="${s.hatchColor}" stroke-width="1.4"/></pattern></defs>`;
+    body = `<rect x="3" y="2" width="40" height="14" fill="${s.fill ? s.fillColor : 'none'}" fill-opacity="${s.fill ? s.fillOpacity : 0}" stroke="${s.weight > 0 ? s.color : 'none'}" stroke-width="${Math.min(lw, 3)}" ${dash}/>`
+      + (s.hatch ? `<rect x="3" y="2" width="40" height="14" fill="url(#${id})"/>` : '');
+  }
+  return `<svg width="46" height="18" viewBox="0 0 46 18" xmlns="http://www.w3.org/2000/svg">${defs}${body}</svg>`;
+}
+
+function buildPanel(){
+  const box = $('#layerList'); box.innerHTML = '';
+  layers.forEach((o, i) => {
+    const s = o.style, keys = propKeys(o.gj);
+    const d = document.createElement('div'); d.className = 'lyr';
+    const sel = (k, opts) => `<select data-s="${k}">${opts.map(([v, t]) => `<option value="${esc(v)}" ${s[k] === v ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
+    d.innerHTML = `
+      <div class="lh">
+        <input type="checkbox" data-k="visible" ${o.visible ? 'checked' : ''} title="보이기">
+        <span class="sym">${legendSym(o, 'P')}</span>
+        <input class="nm" data-k="name" value="${esc(o.name)}" title="범례에 들어갈 이름">
+        <button data-a="up" title="위로">▲</button><button data-a="down" title="아래로">▼</button>
+        <button data-a="zoom" title="이 레이어로 이동">◎</button><button data-a="del" title="삭제">✕</button>
+      </div>
+      <details><summary>스타일 · ${({ point: '점', line: '선', polygon: '면' })[o.type]} ${o.gj.features.length}개</summary><div class="grid">
+        <label>종류</label>${sel('_type', [])}
+        <label>선 색</label><input type="color" data-s="color" value="${s.color}">
+        <label>선 굵기</label><input type="number" data-s="weight" value="${s.weight}" min="0" max="20" step="0.5">
+        <label>선 모양</label>${sel('dash', [['solid', '실선'], ['dash', '파선'], ['dot', '점선'], ['rail', '철도']])}
+        ${o.type !== 'line' ? `
+        <label>채움</label><span><input type="checkbox" data-s="fill" ${s.fill ? 'checked' : ''}><input type="color" data-s="fillColor" value="${s.fillColor}">
+          <input type="range" data-s="fillOpacity" min="0" max="1" step="0.05" value="${s.fillOpacity}" style="width:80px" title="투명도"></span>` : ''}
+        ${o.type === 'polygon' ? `<label>빗금</label><span><input type="checkbox" data-s="hatch" ${s.hatch ? 'checked' : ''}><input type="color" data-s="hatchColor" value="${s.hatchColor}"></span>` : ''}
+        ${o.type === 'point' ? `<label>점 크기</label><input type="number" data-s="radius" value="${s.radius}" min="0" max="30">` : ''}
+        <label>이름 표시</label>${sel('labelField', [['', '(표시 안 함)'], ...keys.map(k => [k, k])])}
+        <label>글자 크기·색</label><span><input type="number" data-s="labelSize" value="${s.labelSize}" min="6" max="60"><input type="color" data-s="labelColor" value="${s.labelColor}"></span>
+        <label>범례</label><label><input type="checkbox" data-k="legend" ${o.legend ? 'checked' : ''}> 범례에 넣기</label>
+      </div></details>`;
+    // 종류(점/선/면) 변경
+    const ts = d.querySelector('[data-s="_type"]');
+    ts.innerHTML = [['polygon', '면'], ['line', '선'], ['point', '점']].map(([v, t]) => `<option value="${v}" ${o.type === v ? 'selected' : ''}>${t}</option>`).join('');
+    ts.onchange = () => { o.type = ts.value; renderLayer(o); refreshOrder(); buildPanel(); updateLegend(); };
+
+    d.querySelectorAll('[data-s]:not([data-s="_type"])').forEach(inp => inp.addEventListener('change', () => {
+      const k = inp.dataset.s;
+      s[k] = inp.type === 'checkbox' ? inp.checked : (inp.type === 'number' || inp.type === 'range') ? +inp.value : inp.value;
+      renderLayer(o); refreshOrder(); updateLegend();
+      d.querySelector('.sym').innerHTML = legendSym(o, 'P');
+    }));
+    d.querySelector('[data-k="visible"]').onchange = e => { o.visible = e.target.checked; refreshOrder(); updateLegend(); };
+    d.querySelector('[data-k="name"]').onchange = e => { o.name = e.target.value; updateLegend(); };
+    d.querySelector('[data-k="legend"]').onchange = e => { o.legend = e.target.checked; updateLegend(); };
+    d.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+      const a = b.dataset.a;
+      if (a === 'up' && i > 0){ [layers[i - 1], layers[i]] = [layers[i], layers[i - 1]]; }
+      else if (a === 'down' && i < layers.length - 1){ [layers[i + 1], layers[i]] = [layers[i], layers[i + 1]]; }
+      else if (a === 'zoom'){ const bd = layerBounds(o); if (bd) map.fitBounds(bd, { padding: [30, 30] }); return; }
+      else if (a === 'del'){ if (!confirm(`'${o.name}' 레이어를 지울까요?`)) return; map.removeLayer(o.group); layers.splice(i, 1); }
+      else return;
+      refreshOrder(); buildPanel(); updateLegend();
+    });
+    box.appendChild(d);
+  });
+}
+
+/* ---------- 범례 · 축척 · 방위표 · 위치도 ---------- */
+function updateLegend(){
+  const rows = layers.filter(o => o.visible && o.legend)
+    .map(o => `<tr><td class="s">${legendSym(o, 'G')}</td><td>${esc(o.name)}</td></tr>`).join('');
+  $('#legend').innerHTML = rows ? `<table><tr><th colspan="2">범 례</th></tr>${rows}</table>` : '';
+  $('#legend').style.display = (rows && $('.tg[data-t="legend"]').checked) ? '' : 'none';
+}
+$('#legSize').oninput = () => { $('#legend').style.fontSize = $('#legSize').value + 'px'; };
+
+function updateScale(){
+  const sz = map.getSize(); if (!sz.x) return;
+  const y = sz.y / 2;
+  const mpp = map.containerPointToLatLng([0, y]).distanceTo(map.containerPointToLatLng([100, y])) / 100;
+  const maxM = mpp * 230, p = Math.pow(10, Math.floor(Math.log10(maxM)));
+  const T = [5, 2, 1].map(d => d * p).find(v => v <= maxM) || p;
+  const px = T / mpp, km = T >= 1000, fmt = v => { const n = km ? v / 1000 : v; return +n.toFixed(2) + ''; };
+  const q = px / 4, h = px / 2, X = 8;
+  const lab = (x, v, last) => `<text x="${X + x}" y="34" font-size="12" text-anchor="${last ? 'start' : 'middle'}" ${last ? `dx="-${(fmt(v).length) * 3.4}"` : ''}>${fmt(v)}${last ? (km ? 'km' : 'm') : ''}</text>`;
+  $('#scale').innerHTML = `<svg width="${px + 40}" height="40" xmlns="http://www.w3.org/2000/svg" font-family="Malgun Gothic, sans-serif">
+    <rect x="${X}" y="8" width="${q}" height="8" fill="#000"/><rect x="${X + q}" y="8" width="${q}" height="8" fill="#fff"/>
+    <rect x="${X + h}" y="8" width="${h}" height="8" fill="#000"/>
+    <rect x="${X}" y="8" width="${px}" height="8" fill="none" stroke="#000" stroke-width="1.5"/>
+    ${[0, q, h, px].map(x => `<line x1="${X + x}" y1="4" x2="${X + x}" y2="20" stroke="#000" stroke-width="1.2"/>`).join('')}
+    ${lab(0, 0)}${lab(q, T / 4)}${lab(h, T / 2)}${lab(px, T, true)}</svg>`;
+}
+$('#north').innerHTML = `<svg width="64" height="78" viewBox="-40 -54 80 98" xmlns="http://www.w3.org/2000/svg">
+  <text x="0" y="-41" font-size="15" font-weight="700" text-anchor="middle" font-family="Arial">N</text>
+  <circle r="17" fill="none" stroke="#000" stroke-width="1.2"/>
+  <g stroke="#000" stroke-width="0.8" stroke-linejoin="round">
+    <polygon points="0,-36 6,-6 0,0" fill="#000"/><polygon points="0,-36 -6,-6 0,0" fill="#fff"/>
+    <polygon points="0,36 -6,6 0,0" fill="#000"/><polygon points="0,36 6,6 0,0" fill="#fff"/>
+    <polygon points="36,0 6,6 0,0" fill="#000"/><polygon points="36,0 6,-6 0,0" fill="#fff"/>
+    <polygon points="-36,0 -6,-6 0,0" fill="#000"/><polygon points="-36,0 -6,6 0,0" fill="#fff"/>
+    <polygon points="16,-16 3,-6 0,0" fill="#000"/><polygon points="16,-16 6,-3 0,0" fill="#fff"/>
+    <polygon points="-16,16 -3,6 0,0" fill="#000"/><polygon points="-16,16 -6,3 0,0" fill="#fff"/>
+    <polygon points="16,16 6,3 0,0" fill="#000"/><polygon points="16,16 3,6 0,0" fill="#fff"/>
+    <polygon points="-16,-16 -6,-3 0,0" fill="#000"/><polygon points="-16,-16 -3,-6 0,0" fill="#fff"/>
+  </g></svg>`;
+
+let insetMap = null, insetRect = null, insetBase = null;
+function updateInset(rebuildBase){
+  if ($('#inset').style.display === 'none') return;
+  if (!insetMap){
+    insetMap = L.map('insetMap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false,
+      doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false });
+    rebuildBase = true;
+  }
+  if (rebuildBase){
+    if (insetBase) insetMap.removeLayer(insetBase);
+    const key = getKey();
+    insetBase = key ? L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${key}/white/{z}/{y}/{x}.png`, { maxNativeZoom: 18 })
+                    : L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', { subdomains: 'abcd' });
+    insetBase.addTo(insetMap);
+  }
+  insetMap.invalidateSize();
+  insetMap.fitBounds([[33.1, 125.0], [38.6, 130.0]]);
+  const b = map.getBounds();
+  if (insetRect) insetRect.setBounds(b);
+  else insetRect = L.rectangle(b, { color: '#e60012', weight: 2, fill: true, fillOpacity: 0.25 }).addTo(insetMap);
+}
+map.on('moveend zoomend resize', () => { updateScale(); updateInset(false); });
+
+/* 끌어서 옮기기 */
+function makeDrag(el){
+  el.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation();
+    const fr = frame.getBoundingClientRect(), r = el.getBoundingClientRect();
+    const ox = e.clientX - r.left, oy = e.clientY - r.top;
+    el.style.transform = 'none';
+    const mv = ev => {
+      let x = ev.clientX - fr.left - ox, y = ev.clientY - fr.top - oy;
+      x = Math.max(0, Math.min(fr.width - r.width, x)); y = Math.max(0, Math.min(fr.height - r.height, y));
+      Object.assign(el.style, { left: x / fr.width * 100 + '%', top: y / fr.height * 100 + '%', right: 'auto', bottom: 'auto' });
+    };
+    const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+  });
+  L.DomEvent.disableScrollPropagation(el);
+}
+['#legend', '#scale', '#north', '#title', '#inset'].forEach(s => makeDrag($(s)));
+
+$$('.tg').forEach(cb => cb.onchange = () => {
+  const t = cb.dataset.t;
+  if (t === 'legend') return updateLegend();
+  $('#' + t).style.display = cb.checked ? '' : 'none';
+  if (t === 'inset' && cb.checked) setTimeout(() => updateInset(false), 50);
+});
+$('#titleIn').oninput = () => { $('#title').textContent = $('#titleIn').value; };
+
+/* 용지 비율 */
+const RATIOS = { a3l: 420 / 297, a4l: 297 / 210, a3p: 297 / 420, a4p: 210 / 297, free: 0 };
+function layoutFrame(){
+  const ws = $('#work'), W = ws.clientWidth - 40, H = ws.clientHeight - 40, r = RATIOS[$('#paper').value];
+  let w = W, h = H;
+  if (r){ h = w / r; if (h > H){ h = H; w = h * r; } }
+  frame.style.width = Math.floor(w) + 'px'; frame.style.height = Math.floor(h) + 'px';
+  map.invalidateSize(); updateScale(); updateInset(false);
+}
+$('#paper').onchange = layoutFrame;
+window.addEventListener('resize', layoutFrame);
+
+/* ---------- 글자 넣기 ---------- */
+const anns = []; let annMode = null;
+function setAnnMode(m){
+  annMode = annMode === m ? null : m;
+  $$('.annBtn').forEach(b => b.classList.toggle('on', b.dataset.m === annMode));
+  $('#map').classList.toggle('annmode', !!annMode);
+}
+$$('.annBtn').forEach(b => b.onclick = () => setAnnMode(b.dataset.m));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && annMode) setAnnMode(annMode); });
+
+function annHtml(a){
+  const chars = [...a.text.replace(/[\s|]/g, '')].map(c => `<b>${esc(c)}</b>`).join('');
+  const st = `font-size:${a.size}px;--c:${a.color}`;
+  switch (a.type){
+    case 'admin': return `<div class="a-admin ${a.vertical ? 'v' : ''}" style="${st}">${chars}</div>`;
+    case 'ridge': return `<div class="a-ridge ${a.vertical ? 'v' : ''}" style="${st}">${chars}</div>`;
+    case 'box': return `<div class="a-box" style="${st}">${esc(a.text)}</div>`;
+    default: return `<div class="a-text" style="${st}">${a.vertical ? [...a.text.replace(/\|/g, '')].map(esc).join('<br>') : esc(a.text).replace(/\|/g, '<br>')}</div>`;
+  }
+}
+function addAnn(a){
+  a.marker = L.marker([a.lat, a.lng], { draggable: true, keyboard: false,
+    icon: L.divIcon({ className: 'ann', html: annHtml(a), iconSize: null }) }).addTo(map);
+  a.marker.on('dragend', () => { const p = a.marker.getLatLng(); a.lat = p.lat; a.lng = p.lng; });
+  a.marker.on('contextmenu', e => {
+    L.DomEvent.preventDefault(e.originalEvent);
+    if (confirm(`'${a.text}' 글자를 지울까요?`)){ map.removeLayer(a.marker); anns.splice(anns.indexOf(a), 1); }
+  });
+  a.marker.on('dblclick', e => {
+    L.DomEvent.stop(e);
+    const t = prompt('글자 수정 (| 는 줄바꿈)', a.text);
+    if (t){ a.text = t; a.marker.setIcon(L.divIcon({ className: 'ann', html: annHtml(a), iconSize: null })); }
+  });
+  anns.push(a);
+}
+map.on('click', e => {
+  if (!annMode) return;
+  const t = prompt('넣을 글자를 입력하세요');
+  if (!t || !t.trim()) return;
+  addAnn({ type: annMode, text: t.trim(), lat: e.latlng.lat, lng: e.latlng.lng,
+    size: +$('#annSize').value, color: $('#annColor').value, vertical: $('#annVert').checked });
+});
+$('#annColor').value = '#222222';
+$$('.annBtn').forEach(b => b.addEventListener('click', () => {
+  // 종류별 기본 색
+  const def = { admin: '#222222', ridge: '#2e8b3a', box: '#d7001a', text: '#222222' }[b.dataset.m];
+  if (def) $('#annColor').value = def;
+}));
+
+/* ---------- 파일 불러오기 ---------- */
+const modal = html => new Promise(res => {
+  $('#mbody').innerHTML = html; $('#modal').hidden = false;
+  const done = v => { $('#modal').hidden = true; $('#mok').onclick = $('#mcancel').onclick = null; res(v); };
+  $('#mok').onclick = () => done(true); $('#mcancel').onclick = () => done(false);
+});
+async function askCrs(title, msg){
+  const ok = await modal(`<h3>${esc(title)}</h3><p>${msg}</p><select id="mcrs" style="width:100%">${crsOptions(store.get('lastCrs', 'EPSG:5186'))}</select>`);
+  if (!ok) return null;
+  const v = $('#mcrs').value; store.set('lastCrs', v); return v;
+}
+function checkKorea(gj, name){
+  const b = layerBounds({ gj });
+  if (!b){ alert(`'${name}'에서 그릴 수 있는 도형을 찾지 못했습니다.`); return false; }
+  const c = b.getCenter();
+  if (c.lat < 32 || c.lat > 39.5 || c.lng < 123 || c.lng > 132.5)
+    alert(`'${name}' 위치가 우리나라 밖으로 나옵니다. 좌표계가 맞는지 확인해 주세요.\n(레이어를 지우고 다른 좌표계로 다시 올려보세요)`);
+  return true;
+}
+function decideEnc(dbf, cpg){
+  if (cpg && cpg.trim()){
+    const c = cpg.trim();
+    if (/949|euc|ks_c|ksc/i.test(c)) return 'euc-kr';
+    if (/utf/i.test(c)) return 'utf-8';
+  }
+  const sel = $('#encSel').value; if (sel !== 'auto') return sel;
+  try {
+    const hl = new DataView(dbf).getUint16(8, true);
+    new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(dbf, hl));
+    return 'utf-8';
+  } catch(e){ return 'euc-kr'; }
+}
+async function loadShpParts(name, p){
+  let prj = p.prj;
+  if (!prj){
+    const code = await askCrs(name, '.prj 파일이 없어 좌표계를 알 수 없습니다. 좌표계를 골라주세요.');
+    if (!code) return null;
+    prj = crsDef(code);
+  }
+  prj = fixPrj(prj);
+  const geoms = shp.parseShp(p.shp, prj);
+  const props = p.dbf ? shp.parseDbf(p.dbf, decideEnc(p.dbf, p.cpg)) : geoms.map(() => ({}));
+  const gj = shp.combine([geoms, props]);
+  if (!checkKorea(gj, name)) return null;
+  return addLayer(name, gj);
+}
+async function loadZip(file){
+  const z = await JSZip.loadAsync(await file.arrayBuffer());
+  const groups = {};
+  z.forEach((path, entry) => {
+    if (entry.dir || /__MACOSX|\/\._/.test(path)) return;
+    const m = path.match(/^(.*)\.(shp|dbf|prj|cpg)$/i); if (!m) return;
+    (groups[m[1]] = groups[m[1]] || { name: m[1].split('/').pop() })[m[2].toLowerCase()] = entry;
+  });
+  const out = [];
+  for (const g of Object.values(groups)){
+    if (!g.shp) continue;
+    out.push(await loadShpParts(g.name, {
+      shp: await g.shp.async('arraybuffer'),
+      dbf: g.dbf ? await g.dbf.async('arraybuffer') : null,
+      prj: g.prj ? await g.prj.async('string') : null,
+      cpg: g.cpg ? await g.cpg.async('string') : null
+    }));
+  }
+  if (!out.length) alert(`'${file.name}' 안에서 shp 파일을 찾지 못했습니다.`);
+  return out;
+}
+
+/* DXF */
+function bulgeSeg(p1, p2, b, out){
+  const th = 4 * Math.atan(b), dx = p2.x - p1.x, dy = p2.y - p1.y, c = Math.hypot(dx, dy);
+  if (!c) return;
+  const r = c / (2 * Math.sin(th / 2)), hgt = r * Math.cos(th / 2);
+  const cx = (p1.x + p2.x) / 2 - dy / c * hgt, cy = (p1.y + p2.y) / 2 + dx / c * hgt;
+  const a1 = Math.atan2(p1.y - cy, p1.x - cx), R = Math.abs(r);
+  const n = Math.max(4, Math.ceil(Math.abs(th) / (Math.PI / 36)));
+  for (let k = 1; k < n; k++){ const a = a1 + th * k / n; out.push({ x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) }); }
+}
+function polyPts(vs, closed){
+  const out = [];
+  const n = vs.length;
+  for (let i = 0; i < n; i++){
+    out.push(vs[i]);
+    const nx = i + 1 < n ? vs[i + 1] : (closed ? vs[0] : null);
+    if (nx && vs[i].bulge) bulgeSeg(vs[i], nx, vs[i].bulge, out);
+  }
+  return out;
+}
+const cleanMtext = t => String(t || '').replace(/\\P/g, '\n').replace(/\\[A-Za-z][^;\\]*;/g, '').replace(/\\[A-Za-z]/g, '').replace(/[{}]/g, '').trim();
+function ent2feat(e, T){
+  const ok = c => c.every(Number.isFinite);
+  const pt = v => T([v.x, v.y]);
+  const line = cs => { cs = cs.map(pt).filter(ok); return cs.length > 1 ? { type: 'LineString', coordinates: cs } : null; };
+  let g = null, props = { layer: e.layer };
+  switch (e.type){
+    case 'LINE': g = line(e.vertices || []); break;
+    case 'LWPOLYLINE': case 'POLYLINE': {
+      const vs = (e.vertices || []).filter(v => v && Number.isFinite(v.x));
+      if (vs.length < 2) break;
+      const first = vs[0], last = vs[vs.length - 1];
+      const closed = !!e.shape || (vs.length > 2 && Math.hypot(first.x - last.x, first.y - last.y) < 1e-6);
+      let cs = polyPts(vs, !!e.shape).map(pt).filter(ok);
+      if (closed && cs.length >= 3){
+        const a = cs[0], z = cs[cs.length - 1];
+        if (a[0] !== z[0] || a[1] !== z[1]) cs.push(a);
+        g = { type: 'Polygon', coordinates: [cs] };
+      } else if (cs.length > 1) g = { type: 'LineString', coordinates: cs };
+      break;
+    }
+    case 'CIRCLE': {
+      const cs = []; for (let k = 0; k <= 72; k++){ const a = k / 72 * 2 * Math.PI; cs.push(pt({ x: e.center.x + e.radius * Math.cos(a), y: e.center.y + e.radius * Math.sin(a) })); }
+      g = { type: 'Polygon', coordinates: [cs] }; break;
+    }
+    case 'ARC': {
+      let a0 = e.startAngle, a1 = e.endAngle; if (a1 < a0) a1 += 2 * Math.PI;
+      const n = Math.max(6, Math.ceil((a1 - a0) / (Math.PI / 36))), cs = [];
+      for (let k = 0; k <= n; k++){ const a = a0 + (a1 - a0) * k / n; cs.push({ x: e.center.x + e.radius * Math.cos(a), y: e.center.y + e.radius * Math.sin(a) }); }
+      g = line(cs); break;
+    }
+    case 'SPLINE': g = line(e.fitPoints && e.fitPoints.length > 1 ? e.fitPoints : (e.controlPoints || [])); break;
+    case 'POINT': if (e.position){ const c = pt(e.position); if (ok(c)) g = { type: 'Point', coordinates: c }; } break;
+    case 'TEXT': case 'MTEXT': {
+      const p0 = e.startPoint || e.position; if (!p0) break;
+      const c = pt(p0); if (!ok(c)) break;
+      g = { type: 'Point', coordinates: c }; props.text = e.type === 'MTEXT' ? cleanMtext(e.text) : String(e.text || '').trim(); props._isText = true;
+      break;
+    }
+  }
+  return g ? { type: 'Feature', geometry: g, properties: props } : null;
+}
+async function loadDxf(file){
+  const buf = await file.arrayBuffer();
+  const head = new TextDecoder('latin1').decode(buf.slice(0, Math.min(buf.byteLength, 300000)));
+  const ver = (head.match(/\$ACADVER\s*\r?\n\s*1\s*\r?\n\s*AC(\d+)/) || [])[1];
+  const enc = (ver && +ver >= 1021) ? 'utf-8' : (/ANSI_949/i.test(head) ? 'euc-kr' : 'utf-8');
+  const text = new TextDecoder(enc).decode(buf);
+  const Parser = window.DxfParser && (window.DxfParser.default || window.DxfParser);
+  let dxf;
+  try { dxf = new Parser().parseSync(text); } catch(e){ alert('DXF를 읽지 못했습니다. ASCII 형식 DXF로 저장했는지 확인해 주세요.\n' + e.message); return; }
+  const ents = (dxf && dxf.entities) || [];
+  const cnt = {};
+  ents.forEach(e => {
+    const c = cnt[e.layer] = cnt[e.layer] || { geo: 0, txt: 0 };
+    if (e.type === 'TEXT' || e.type === 'MTEXT') c.txt++; else c.geo++;
+  });
+  const names = Object.keys(cnt).sort();
+  if (!names.length){ alert('DXF에 도형이 없습니다. (블록 안에만 있는 도형은 아직 지원하지 않습니다. CAD에서 분해(EXPLODE) 후 저장해 주세요.)'); return; }
+  const p = modal(`<h3>${esc(file.name)}</h3>
+    <div class="row"><label>좌표계</label><select id="mcrs" style="flex:1">${crsOptions(store.get('lastCrs', 'EPSG:5186'))}</select></div>
+    <div class="mlist"><label><input type="checkbox" id="mall" checked> <b>전체 선택</b></label>
+      ${names.map(n => `<label><input type="checkbox" class="mly" value="${esc(n)}" checked> ${esc(n)} <small style="color:#889">(도형 ${cnt[n].geo} · 문자 ${cnt[n].txt})</small></label>`).join('')}</div>
+    <label><input type="checkbox" id="msplit"> CAD 레이어별로 나눠서 불러오기</label><br>
+    <label><input type="checkbox" id="mtext"> 문자(TEXT)도 불러오기</label>`);
+  $('#mall').onchange = e => $$('.mly').forEach(c => c.checked = e.target.checked);
+  if (!await p) return;
+  const code = $('#mcrs').value; store.set('lastCrs', code);
+  const pick = new Set($$('.mly').filter(c => c.checked).map(c => c.value));
+  const split = $('#msplit').checked, withText = $('#mtext').checked;
+  const T = c => proj4(code, 'EPSG:4326', c);
+  const base = file.name.replace(/\.dxf$/i, '');
+  const buckets = {};
+  ents.forEach(e => {
+    if (!pick.has(e.layer)) return;
+    const isText = e.type === 'TEXT' || e.type === 'MTEXT';
+    if (isText && !withText) return;
+    const f = ent2feat(e, T); if (!f) return;
+    const k = (split ? e.layer : '') + (isText ? '\u0001txt' : '');
+    (buckets[k] = buckets[k] || []).push(f);
+  });
+  const added = [];
+  Object.entries(buckets).forEach(([k, feats]) => {
+    const isText = k.endsWith('\u0001txt'), lname = k.replace('\u0001txt', '');
+    const name = (split ? `${base}_${lname}` : base) + (isText ? '_문자' : '');
+    const gj = { type: 'FeatureCollection', features: feats };
+    if (!checkKorea(gj, name)) return;
+    added.push(addLayer(name, gj, isText ? { type: 'point', legend: false, style: { radius: 0, labelField: 'text', labelSize: 11 } } : {}));
+  });
+  return added;
+}
+
+async function handleFiles(fileList){
+  const files = [...fileList], groups = {}, added = [];
+  busy(true);
+  try {
+    for (const f of files){
+      const ext = f.name.split('.').pop().toLowerCase(), base = f.name.replace(/\.[^.]+$/, '');
+      if (ext === 'zip') added.push(...(await loadZip(f) || []));
+      else if (ext === 'dxf') added.push(...(await loadDxf(f) || []));
+      else if (ext === 'geojson' || ext === 'json'){
+        const gj = JSON.parse(await f.text());
+        if (gj.layers && gj.app === 'eia-map') { await loadProject(gj); continue; }
+        const fc = gj.type === 'FeatureCollection' ? gj : { type: 'FeatureCollection', features: [gj.type === 'Feature' ? gj : { type: 'Feature', geometry: gj, properties: {} }] };
+        if (checkKorea(fc, base)) added.push(addLayer(base, fc));
+      } else if (['shp', 'dbf', 'prj', 'cpg', 'shx'].includes(ext)){
+        (groups[base.toLowerCase()] = groups[base.toLowerCase()] || { name: base })[ext] = f;
+      }
+    }
+    for (const g of Object.values(groups)){
+      if (!g.shp){ alert(`'${g.name}'의 .shp 파일이 없습니다.`); continue; }
+      added.push(await loadShpParts(g.name, {
+        shp: await g.shp.arrayBuffer(), dbf: g.dbf ? await g.dbf.arrayBuffer() : null,
+        prj: g.prj ? await g.prj.text() : null, cpg: g.cpg ? await g.cpg.text() : null
+      }));
+    }
+  } catch(e){ console.error(e); alert('파일을 읽는 중 문제가 생겼습니다.\n' + e.message); }
+  finally { busy(false); }
+  const ok = added.filter(Boolean);
+  if (ok.length){
+    let b = null; ok.forEach(o => { const lb = layerBounds(o); if (lb) b = b ? b.extend(lb) : L.latLngBounds(lb.getSouthWest(), lb.getNorthEast()); });
+    if (b) map.fitBounds(b, { padding: [30, 30] });
+  }
+}
+const drop = $('#drop');
+drop.onclick = () => $('#fileIn').click();
+$('#fileIn').onchange = e => { handleFiles(e.target.files); e.target.value = ''; };
+[drop, $('#work')].forEach(el => {
+  el.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  el.addEventListener('dragleave', () => drop.classList.remove('over'));
+  el.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); handleFiles(e.dataTransfer.files); });
+});
+
+/* ---------- 저장 ---------- */
+function download(name, url){ const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+const fileBase = () => ($('#titleIn').value || '도면').replace(/[\\/:*?"<>|]/g, '_');
+async function capture(){
+  document.body.classList.add('exporting');
+  await new Promise(r => setTimeout(r, 150));
+  try {
+    return await html2canvas(frame, { useCORS: true, allowTaint: false, scale: +$('#dpi').value, backgroundColor: '#ffffff', logging: false });
+  } finally { document.body.classList.remove('exporting'); }
+}
+$('#btnJpg').onclick = async () => {
+  busy(true);
+  try { const cv = await capture(); download(fileBase() + '.jpg', cv.toDataURL('image/jpeg', 0.95)); }
+  catch(e){ alert('저장 실패: ' + e.message); } finally { busy(false); }
+};
+$('#btnPdf').onclick = async () => {
+  busy(true);
+  try {
+    const cv = await capture(), { jsPDF } = window.jspdf, pv = $('#paper').value, land = cv.width >= cv.height;
+    let fmt = pv.startsWith('a3') ? 'a3' : 'a4';
+    if (pv === 'free') fmt = land ? [420, 420 * cv.height / cv.width] : [297 * cv.width / cv.height, 297];
+    const pdf = new jsPDF({ orientation: land ? 'l' : 'p', unit: 'mm', format: fmt });
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+    pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pw, ph);
+    pdf.save(fileBase() + '.pdf');
+  } catch(e){ alert('저장 실패: ' + e.message); } finally { busy(false); }
+};
+
+const OVL = ['legend', 'scale', 'north', 'title', 'inset'];
+$('#btnSaveProj').onclick = () => {
+  const data = {
+    app: 'eia-map', v: 1,
+    view: { c: map.getCenter(), z: map.getZoom() },
+    base: $('#baseSel').value, baseOp: $('#baseOp').value,
+    admin: $$('.adm').filter(c => c.checked).map(c => c.value),
+    paper: $('#paper').value, title: $('#titleIn').value, legSize: $('#legSize').value,
+    toggles: Object.fromEntries($$('.tg').map(c => [c.dataset.t, c.checked])),
+    pos: Object.fromEntries(OVL.map(id => { const s = $('#' + id).style; return [id, { left: s.left, top: s.top, right: s.right, bottom: s.bottom, transform: s.transform }]; })),
+    layers: layers.map(o => ({ name: o.name, type: o.type, visible: o.visible, legend: o.legend, style: o.style, gj: o.gj })),
+    anns: anns.map(a => ({ type: a.type, text: a.text, lat: a.lat, lng: a.lng, size: a.size, color: a.color, vertical: a.vertical }))
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+  download(fileBase() + '_작업.json', url); setTimeout(() => URL.revokeObjectURL(url), 5000);
+};
+$('#btnLoadProj').onclick = () => $('#projIn').click();
+$('#projIn').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try { await loadProject(JSON.parse(await f.text())); } catch(err){ alert('작업 파일을 열지 못했습니다.\n' + err.message); }
+};
+async function loadProject(d){
+  if (d.app !== 'eia-map') throw new Error('이 도구의 작업 파일이 아닙니다.');
+  layers.forEach(o => map.removeLayer(o.group)); layers.length = 0;
+  anns.forEach(a => map.removeLayer(a.marker)); anns.length = 0;
+  $('#baseSel').value = d.base || 'osm'; $('#baseOp').value = d.baseOp || 70; $('#baseOpV').textContent = $('#baseOp').value + '%';
+  setBase();
+  $$('.adm').forEach(c => c.checked = (d.admin || []).includes(c.value)); refreshAdmin();
+  $('#paper').value = d.paper || 'a3l'; $('#titleIn').value = d.title || ''; $('#title').textContent = $('#titleIn').value;
+  $('#legSize').value = d.legSize || 13; $('#legend').style.fontSize = $('#legSize').value + 'px';
+  $$('.tg').forEach(c => { if (d.toggles && c.dataset.t in d.toggles) c.checked = d.toggles[c.dataset.t]; if (c.dataset.t !== 'legend') $('#' + c.dataset.t).style.display = c.checked ? '' : 'none'; });
+  OVL.forEach(id => { if (d.pos && d.pos[id]) Object.assign($('#' + id).style, d.pos[id]); });
+  (d.layers || []).slice().reverse().forEach(l => addLayer(l.name, l.gj, { type: l.type, visible: l.visible, legend: l.legend, style: l.style }));
+  (d.anns || []).forEach(addAnn);
+  layoutFrame();
+  if (d.view) map.setView(d.view.c, d.view.z);
+}
+
+/* ---------- 시작 ---------- */
+setBase();
+layoutFrame();
+updateLegend();
+</script>
+</body>
+</html>
