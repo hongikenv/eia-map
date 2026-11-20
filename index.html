@@ -177,6 +177,11 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .lh .eye{padding:0 3px;font-size:12px;width:24px;border-color:#ccd}
 .lh .eye:not(.on){color:#aab}
 .lh .selcb{accent-color:#0a64d0}
+#drawFormTitle{font-weight:600;color:#1d3b2a;margin-top:4px}
+#drawFormTitle.editing{color:#0a64d0}
+.dpre{font-size:11px;padding:2px 6px}
+#map.drawmode,#map.drawmode .leaflet-interactive{cursor:crosshair}
+.vtx{background:#fff!important;border:2px solid #0a84ff!important;box-sizing:border-box}
 .psize{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin:6px 0}
 .psize .fld{display:flex;align-items:center;gap:4px;border:1px solid #ccd;border-radius:6px;padding:4px 8px;background:#fff}
 .psize .fld span{color:#789;font-size:12px}
@@ -204,6 +209,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #busy[hidden]{display:none}
 #msg{position:fixed;left:420px;right:20px;top:14px;background:#fff3cd;border:1px solid #e0b54a;color:#5a4300;padding:10px 14px;border-radius:4px;z-index:6000;line-height:1.5;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 #msg[hidden]{display:none}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d3b2a;color:#fff;padding:8px 16px;border-radius:5px;z-index:7000;opacity:0;transition:opacity .3s;pointer-events:none;font-size:13px}
 #msg{display:flex;gap:12px;align-items:flex-start;cursor:default}
 #msg #msgText{flex:1}
 #msg #msgClose{flex:none;background:#fff;border-color:#e0b54a;color:#5a4300}
@@ -211,7 +217,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.4</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.5</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -261,7 +267,28 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>5. 범례</h2>
+    <h2>5. 선 · 화살표 그리기</h2>
+    <div class="row"><button id="drawStart" class="pri">＋ 선 그리기</button><button id="drawDeselect">선택 해제</button></div>
+    <div class="row"><span class="hint">빠른 설정</span>
+      <button class="dpre" data-pre="dim" title="양쪽 화살표">⟷ 구간선</button><button class="dpre" data-pre="dimbar" title="양 끝 화살표+막대">|⟷| 구간선</button>
+      <button class="dpre" data-pre="leader" title="한쪽 끝에 점">●─ 지시선</button><button class="dpre" data-pre="arrow">→ 화살표</button><button class="dpre" data-pre="line">─ 선</button></div>
+    <div id="drawFormTitle">새 선 기본 설정</div>
+    <div class="grid">
+      <label>선</label><span><input type="color" id="dColor" value="#e60012"><input type="number" id="dW" value="2.5" step="0.5" min="0.5" max="20" title="굵기"><select id="dDash"></select></span>
+      <label>시작점 끝</label><select id="dStart"></select>
+      <label>끝점 끝</label><select id="dEnd"></select>
+      <label>끝 모양 크기</label><span><input type="number" id="dCap" value="12" min="4" max="60">px</span>
+      <label>흰 테두리</label><label><input type="checkbox" id="dHalo"> 선 둘레에 흰 테두리</label>
+    </div>
+    <div class="row" style="margin-top:6px"><label><input type="checkbox" id="drawShowAll" checked> 선 모두 보이기</label><span class="hint" id="drawCount"></span></div>
+    <div id="drawList"></div>
+    <p class="hint">지도를 클릭해 점을 찍고 <b>더블클릭(또는 Enter)</b>으로 끝냅니다. <b>Shift</b>를 누른 채 찍으면 수평·수직·45°로 곧게 그어집니다. Backspace: 마지막 점 취소 · Esc: 그리기 취소<br>
+      선을 누르면 위 설정으로 고칠 수 있고, 꼭짓점(■)을 끌어 모양을 바꿉니다. 꼭짓점 우클릭: 점 삭제 · Delete 키: 선 삭제<br>
+      글자는 4. 글자 넣기의 '채운 박스' 등으로 선 끝에 붙이면 위치도 설명 상자가 됩니다.</p>
+  </div>
+
+  <div class="sec">
+    <h2>6. 범례</h2>
     <div id="legItems"></div>
     <div class="row"><button id="legAdd">＋ 직접 항목 추가</button></div>
     <details><summary>범례 스타일</summary>
@@ -279,13 +306,13 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>6. 지도 회전</h2>
+    <h2>7. 지도 회전</h2>
     <div class="row"><input type="range" id="rotR" min="-180" max="180" step="1" value="0" style="flex:1"><input type="number" id="rotN" min="-180" max="180" value="0">° <button id="rotZero">0°</button></div>
     <p class="hint" id="rotHint">사업지구 모양에 맞춰 지도를 돌릴 수 있습니다. 방위표는 자동으로 북쪽을 가리킵니다.</p>
   </div>
 
   <div class="sec">
-    <h2>7. 작업 파일</h2>
+    <h2>8. 작업 파일</h2>
     <div class="row"><button id="btnSaveProj">작업 저장(.json)</button><button id="btnLoadProj">작업 열기</button>
       <input type="file" id="projIn" accept=".json" hidden></div>
     <p class="hint">새 버전으로 바꾸기 전에는 꼭 작업 저장을 해두세요. 공유폴더에 두면 다른 사람도 열어서 이어 작업할 수 있습니다.</p>
@@ -813,9 +840,11 @@ const map = L.map('map', { zoomControl: true, zoomSnap: 0.25, zoomDelta: 0.5, at
 map.attributionControl.setPrefix(false);
 const canRotate = typeof map.setBearing === 'function';
 map.createPane('admPane', map._rotatePane || undefined).style.zIndex = 350;
+map.createPane('drawPane', map._rotatePane || undefined).style.zIndex = 450;
 const renderer = L.canvas({ padding: 0.5 });
 const admRenderer = L.canvas({ padding: 0.5, pane: 'admPane' });
-map.addLayer(renderer); map.addLayer(admRenderer);
+const drawRenderer = L.canvas({ padding: 0.5, pane: 'drawPane' });
+map.addLayer(renderer); map.addLayer(admRenderer); map.addLayer(drawRenderer);
 
 let vwKey = store.get('vworldKey', '');
 const getKey = () => vwKey;
@@ -1734,6 +1763,30 @@ function buildPanelEmpty(){
   if (!$('#themeLayerList').children.length) $('#themeLayerList').innerHTML = '<p class="hint">위 1번에서 주제도를 체크하면 여기에 나타나고, 색·선·패턴과 이름 표시를 바꿀 수 있습니다.</p>';
 }
 let lastSelId = null;
+/* 스타일 복사·붙여넣기 (이 PC 브라우저에 기억 → 다른 작업 파일에서도 붙여넣기 가능) */
+let styleClip = null;
+try { styleClip = JSON.parse(store.get('styleClip', 'null')); } catch(e){ styleClip = null; }
+function copyStyle(o){
+  const lb = Object.assign({}, o.style.label); delete lb.field; delete lb._t;
+  styleClip = { from: o.name, type: o.type, symbols: JSON.parse(JSON.stringify(o.style.symbols || [])), label: lb };
+  store.set('styleClip', JSON.stringify(styleClip));
+  buildPanel(); showToast(`'${o.name}' 스타일을 복사했습니다. 다른 레이어에서 [붙여넣기]를 누르세요.`);
+}
+function pasteStyle(list){
+  if (!styleClip || !list.length) return;
+  list.forEach(o => {
+    o.style.symbols = JSON.parse(JSON.stringify(styleClip.symbols));
+    o.style.label = Object.assign({}, o.style.label, JSON.parse(JSON.stringify(styleClip.label || {})), { field: o.style.label.field });
+    renderLayer(o);
+  });
+  refreshOrder(); buildPanel(); renderLegendAll();
+  showToast(`'${styleClip.from}' 스타일을 ${list.length}개 레이어에 붙여넣었습니다.`);
+}
+let toastT = null;
+function showToast(m){
+  let t = $('#toast'); if (!t){ t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+  t.textContent = m; t.style.opacity = '1'; clearTimeout(toastT); toastT = setTimeout(() => { t.style.opacity = '0'; }, 2600);
+}
 function deleteLayers(list){
   list.forEach(o => {
     if (o.group) map.removeLayer(o.group);
@@ -1747,13 +1800,15 @@ function selToolbar(box, theme){
   const grp = layers.filter(o => !!o.src === theme); if (!grp.length) return;
   const n = grp.filter(o => o._sel).length, t = document.createElement('div'); t.className = 'seltools';
   t.innerHTML = `<button data-s="all">전체 선택</button><button data-s="none" ${n ? '' : 'disabled'}>선택 해제</button>
-    <button data-s="hide" ${n ? '' : 'disabled'}>선택 숨기기</button><button data-s="del" class="danger" ${n ? '' : 'disabled'}>선택 삭제${n ? ` (${n})` : ''}</button>`;
+    <button data-s="hide" ${n ? '' : 'disabled'}>선택 숨기기</button><button data-s="paste" ${n && styleClip ? '' : 'disabled'} title="${styleClip ? esc(`'${styleClip.from}' 스타일`) : '먼저 스타일 복사'}">선택에 스타일 붙여넣기</button>
+    <button data-s="del" class="danger" ${n ? '' : 'disabled'}>선택 삭제${n ? ` (${n})` : ''}</button>`;
   t.querySelectorAll('[data-s]').forEach(b => b.onclick = () => {
     const a = b.dataset.s, sel = grp.filter(o => o._sel);
     if (a === 'all') grp.forEach(o => o._sel = true);
     else if (a === 'none') grp.forEach(o => o._sel = false);
     else if (a === 'hide'){ sel.forEach(o => { o.visible = false; o._sel = false; }); refreshOrder(); renderLegendAll(); buildThemeList(); buildEcoList(); }
     else if (a === 'del'){ if (!confirm(`선택한 레이어 ${sel.length}개를 지울까요?`)) return; deleteLayers(sel); return; }
+    else if (a === 'paste'){ pasteStyle(sel); return; }
     buildPanel();
   });
   box.appendChild(t);
@@ -1785,7 +1840,8 @@ function buildPanel(){
       </div>
       ${o.src && o.src.mode === 'wms' ? '<div class="hint">브이월드 그림(WMS)으로 표시 중이라 스타일을 바꿀 수 없습니다.</div>' : ''}
       <details class="dsym" ${o._openSym ? 'open' : ''}><summary>기호 (색·선·패턴) · ${({ point: '점', line: '선', polygon: '면' })[o.type]} <span class="fcount">${o.gj.features.length}개</span></summary>
-        <div class="row"><label>종류</label><select data-type>${opts([['polygon', '면'], ['line', '선'], ['point', '점']], o.type)}</select></div>
+        <div class="row"><label>종류</label><select data-type>${opts([['polygon', '면'], ['line', '선'], ['point', '점']], o.type)}</select>
+          <button data-cp="copy" title="이 레이어의 기호·이름 스타일 복사">스타일 복사</button><button data-cp="paste" ${styleClip ? '' : 'disabled'} title="복사한 스타일을 이 레이어에 붙여넣기">붙여넣기</button></div>
         ${symEditorHtml(o.type, o.style.symbols)}</details>
       <details class="dlbl" ${o._openLbl ? 'open' : ''}><summary>이름 표시${o.style.label.field ? ' · ' + esc(o.style.label.field) : ''}</summary>
         <div class="row"><label>표시할 속성</label><select data-lf>${opts([['', '(표시 안 함)'], ...keys.map(k => [k, k])], o.style.label.field)}</select></div>
@@ -1794,6 +1850,8 @@ function buildPanel(){
     d.querySelector('.dlbl').addEventListener('toggle', e => { o._openLbl = e.target.open; });
     const redraw = () => { renderLayer(o); refreshOrder(); renderLegendAll(); d.querySelector('.sym').innerHTML = legendSym(layerSymObj(o), 'P'); };
     bindSymEditor(d.querySelector('.dsym'), o.type, () => o.style.symbols, v => { o.style.symbols = v; }, redraw, () => { redraw(); buildPanel(); });
+    d.querySelector('[data-cp="copy"]').onclick = () => copyStyle(o);
+    d.querySelector('[data-cp="paste"]').onclick = () => pasteStyle([o]);
     d.querySelector('[data-type]').onchange = e => { o.type = e.target.value; renderLegendAll(); buildPanel(); };
     d.querySelector('[data-lf]').onchange = e => { o.style.label.field = e.target.value; renderLayer(o); refreshOrder(); };
     const lts = d.querySelector('.lts'); fillTsForm(lts, o.style.label);
@@ -1988,6 +2046,8 @@ function setMapLock(on){
   anns.forEach(a => setMarkerDrag(a.marker, !on));
   Object.values(admNameGroups).forEach(g => g.eachLayer(m => setMarkerDrag(m, !on)));
   $('#map').classList.toggle('locked', on);
+  if (on && drawing) setDrawing(false);
+  renderVertices();
   if (on){ if (typeof placing !== 'undefined' && placing) setPlacing(false); lockRatio = null; applyLockRatio(); }
   else lockRatio = null;
 }
@@ -2186,6 +2246,7 @@ function addAnn(a, skipList){
 function markSel(){ anns.forEach(x => { const el = x.marker.getElement(); if (el) el.classList.toggle('ann-sel', x === selAnn); }); }
 function refreshAnn(a){ a.marker.setIcon(annIcon(a)); markSel(); }
 function selectAnn(a){
+  if (selDraw) deselectDraw();
   selAnn = a; fillTsForm($('#annForm'), a);
   $('#annFormTitle').textContent = `선택한 글자 수정 중: ${a.text}`; $('#annFormTitle').classList.add('editing');
   markSel(); buildAnnList();
@@ -2239,20 +2300,191 @@ function setPlacing(on){
   $('#annPlace').textContent = on ? '■ 그만 넣기 (Esc)' : '＋ 지도 클릭해서 넣기';
   $('#map').classList.toggle('annmode', on);
 }
-$('#annPlace').onclick = () => setPlacing(!placing);
+$('#annPlace').onclick = () => { if (drawing) setDrawing(false); setPlacing(!placing); };
 $('#annDeselect').onclick = deselectAnn;
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (placing) setPlacing(false); else if (selAnn) deselectAnn();
 });
 map.on('click', e => {
-  if (!placing || mapLocked) return;
+  if (!placing || mapLocked || drawing) return;
   let t = String(annDraft.text || '').trim();
   if (!t) t = (prompt('넣을 글자를 입력하세요 (| 는 줄바꿈)') || '').trim();
   if (!t) return;
   addAnn(Object.assign({}, annDraft, { text: t, lat: e.latlng.lat, lng: e.latlng.lng }));
   annDraft.text = ''; const ti = $('#annForm [data-ts="text"]'); if (ti) ti.value = '';
 });
+
+/* ================= 선 · 화살표 그리기 ================= */
+const CAPS = [['none', '없음'], ['arrow', '화살표 ▶'], ['open', '열린 화살표 >'], ['arrowbar', '화살표 + 막대 ▶|'], ['bar', '막대 |'], ['dot', '점 ●']];
+$('#dDash').innerHTML = opts(DASHES.filter(d => d[0] !== 'even'), 'solid');
+$('#dStart').innerHTML = opts(CAPS, 'none'); $('#dEnd').innerHTML = opts(CAPS, 'arrow');
+const DRAW_PRE = {
+  dim:    { color: '#e60012', w: 2.5, dash: 'solid', start: 'arrow', end: 'arrow', cap: 12, halo: false },
+  dimbar: { color: '#e60012', w: 2.5, dash: 'solid', start: 'arrowbar', end: 'arrowbar', cap: 12, halo: false },
+  leader: { color: '#222222', w: 1.5, dash: 'solid', start: 'dot', end: 'none', cap: 8, halo: true },
+  arrow:  { color: '#e60012', w: 3, dash: 'solid', start: 'none', end: 'arrow', cap: 14, halo: true },
+  line:   { color: '#e60012', w: 2.5, dash: 'solid', start: 'none', end: 'none', cap: 12, halo: false }
+};
+const draws = []; let drawSeq = 0, selDraw = null, drawing = null;
+let drawDraft = Object.assign({}, DRAW_PRE.dim);
+const drawGroup = L.layerGroup().addTo(map), vtxGroup = L.layerGroup().addTo(map);
+function drawFromForm(){ return { color: $('#dColor').value, w: +$('#dW').value || 2, dash: $('#dDash').value, start: $('#dStart').value, end: $('#dEnd').value, cap: +$('#dCap').value || 12, halo: $('#dHalo').checked }; }
+function formFromDraw(d){ $('#dColor').value = d.color; $('#dW').value = d.w; $('#dDash').value = d.dash; $('#dStart').value = d.start; $('#dEnd').value = d.end; $('#dCap').value = d.cap; $('#dHalo').checked = !!d.halo; }
+/* 화면 픽셀 기준으로 끝 모양을 만들고 경위도로 되돌림 (확대·축소해도 크기 일정) */
+function capShapes(d, pts){
+  const P = pts.map(ll => map.latLngToContainerPoint(ll)), out = { trimS: 0, trimE: 0, shapes: [] };
+  const mk = (tip, from, kind) => {
+    const dx = tip.x - from.x, dy = tip.y - from.y, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len, px = -uy, py = ux;
+    const L0 = d.cap, hw = d.cap * 0.42, C = (x, y) => map.containerPointToLatLng([x, y]);
+    let trim = 0;
+    if (kind === 'arrow' || kind === 'arrowbar'){
+      out.shapes.push({ t: 'poly', ll: [C(tip.x, tip.y), C(tip.x - ux * L0 + px * hw, tip.y - uy * L0 + py * hw), C(tip.x - ux * L0 - px * hw, tip.y - uy * L0 - py * hw)] });
+      trim = L0 * 0.8;
+    }
+    if (kind === 'open') out.shapes.push({ t: 'line', ll: [C(tip.x - ux * L0 + px * hw, tip.y - uy * L0 + py * hw), C(tip.x, tip.y), C(tip.x - ux * L0 - px * hw, tip.y - uy * L0 - py * hw)] });
+    if (kind === 'bar' || kind === 'arrowbar') out.shapes.push({ t: 'line', ll: [C(tip.x + px * L0 * 0.8, tip.y + py * L0 * 0.8), C(tip.x - px * L0 * 0.8, tip.y - py * L0 * 0.8)] });
+    if (kind === 'dot') out.shapes.push({ t: 'dot', ll: C(tip.x, tip.y), r: L0 / 2 });
+    return trim;
+  };
+  if (P.length >= 2){
+    out.trimS = mk(P[0], P[1], d.start);
+    out.trimE = mk(P[P.length - 1], P[P.length - 2], d.end);
+  }
+  /* 화살표 끝이 뾰족하게 보이도록 선 끝을 조금 줄임 */
+  const trimmed = P.slice();
+  const cut = (i, j, t) => { if (!t) return; const a = P[i], b = P[j], len = Math.hypot(a.x - b.x, a.y - b.y); if (len <= t) return; trimmed[i] = L.point(a.x + (b.x - a.x) * t / len, a.y + (b.y - a.y) * t / len); };
+  if (P.length >= 2){ cut(0, 1, out.trimS); cut(P.length - 1, P.length - 2, out.trimE); }
+  out.line = trimmed.map(p => map.containerPointToLatLng(p));
+  return out;
+}
+function renderDraw(d){
+  if (d.group) drawGroup.removeLayer(d.group);
+  const g = L.layerGroup(); d.group = g;
+  if (!d.visible || !$('#drawShowAll').checked || d.pts.length < 2) return;
+  const c = capShapes(d, d.pts), da = dashArr(d.dash, d.w), dash = da ? da.join(' ') : null;
+  const base = { renderer: drawRenderer, interactive: false, lineCap: 'butt', lineJoin: 'round' };
+  if (d.halo){
+    g.addLayer(L.polyline(c.line, Object.assign({}, base, { color: '#ffffff', weight: d.w + 4, opacity: 0.95 })));
+    c.shapes.forEach(sh => {
+      if (sh.t === 'poly') g.addLayer(L.polygon(sh.ll, Object.assign({}, base, { color: '#ffffff', weight: 4, fill: true, fillColor: '#ffffff', fillOpacity: 1 })));
+      if (sh.t === 'line') g.addLayer(L.polyline(sh.ll, Object.assign({}, base, { color: '#ffffff', weight: d.w + 4 })));
+      if (sh.t === 'dot') g.addLayer(L.circleMarker(sh.ll, Object.assign({}, base, { radius: sh.r + 2, color: '#ffffff', weight: 0, fill: true, fillColor: '#ffffff', fillOpacity: 1 })));
+    });
+  }
+  g.addLayer(L.polyline(c.line, Object.assign({}, base, { color: d.color, weight: d.w, dashArray: dash })));
+  c.shapes.forEach(sh => {
+    if (sh.t === 'poly') g.addLayer(L.polygon(sh.ll, Object.assign({}, base, { stroke: false, fill: true, fillColor: d.color, fillOpacity: 1 })));
+    if (sh.t === 'line') g.addLayer(L.polyline(sh.ll, Object.assign({}, base, { color: d.color, weight: d.w })));
+    if (sh.t === 'dot') g.addLayer(L.circleMarker(sh.ll, Object.assign({}, base, { radius: sh.r, stroke: false, fill: true, fillColor: d.color, fillOpacity: 1 })));
+  });
+  /* 클릭하기 쉽게 투명한 굵은 선을 위에 깔아 둠 */
+  const hit = L.polyline(d.pts, { renderer: drawRenderer, interactive: true, color: '#000', opacity: 0, weight: Math.max(12, d.w + 8), bubblingMouseEvents: false });
+  hit.on('click', e => { if (drawing){ addDrawPoint(e); return; } L.DomEvent.stop(e); selectDraw(d); });
+  g.addLayer(hit);
+  drawGroup.addLayer(g);
+}
+const renderAllDraws = () => draws.forEach(renderDraw);
+function renderVertices(){
+  vtxGroup.clearLayers();
+  if (!selDraw || mapLocked || drawing) return;
+  selDraw.pts.forEach((ll, i) => {
+    const m = L.marker(ll, { draggable: true, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: 'vtx', iconSize: [10, 10], iconAnchor: [5, 5] }) });
+    m.on('drag', () => { selDraw.pts[i] = m.getLatLng(); renderDraw(selDraw); });
+    m.on('dragend', () => { const p = m.getLatLng(); selDraw.pts[i] = [p.lat, p.lng]; renderDraw(selDraw); renderVertices(); });
+    m.on('contextmenu', ev => { L.DomEvent.preventDefault(ev.originalEvent); if (selDraw.pts.length > 2){ selDraw.pts.splice(i, 1); renderDraw(selDraw); renderVertices(); } });
+    vtxGroup.addLayer(m);
+  });
+}
+function selectDraw(d){
+  if (selAnn) deselectAnn();
+  selDraw = d; formFromDraw(d);
+  $('#drawFormTitle').textContent = '선택한 선 수정 중'; $('#drawFormTitle').classList.add('editing');
+  renderVertices(); buildDrawList();
+}
+function deselectDraw(){
+  selDraw = null; formFromDraw(drawDraft);
+  $('#drawFormTitle').textContent = '새 선 기본 설정'; $('#drawFormTitle').classList.remove('editing');
+  renderVertices(); buildDrawList();
+}
+function delDraw(d){ if (d.group) drawGroup.removeLayer(d.group); draws.splice(draws.indexOf(d), 1); if (selDraw === d) deselectDraw(); else buildDrawList(); }
+function addDraw(d, skip){
+  d = Object.assign({}, DRAW_PRE.line, { visible: true }, d); d.id = ++drawSeq; d.pts = d.pts.map(p => Array.isArray(p) ? p : [p.lat, p.lng]);
+  draws.push(d); renderDraw(d); if (!skip) buildDrawList(); return d;
+}
+const CAP_ICON = { none: '', arrow: '▶', open: '>', arrowbar: '▶|', bar: '|', dot: '●' };
+function buildDrawList(){
+  const box = $('#drawList'); box.innerHTML = '';
+  $('#drawCount').textContent = draws.length ? `(${draws.length}개)` : '';
+  draws.slice().reverse().forEach((d, k) => {
+    const el = document.createElement('div'); el.className = 'ai' + (d === selDraw ? ' sel' : '');
+    const sym = (CAP_ICON[d.start] || '').split('').reverse().join('').replace('▶', '◀') + '──' + (CAP_ICON[d.end] || '');
+    el.innerHTML = `<input type="checkbox" ${d.visible ? 'checked' : ''} title="보이기"><span class="tp" style="color:${d.color}">${esc(sym)}</span>
+      <span class="at">선 ${draws.length - k} · 점 ${d.pts.length}개</span><button data-a="zoom" title="이 선으로 이동">◎</button><button data-a="del" title="삭제">✕</button>`;
+    el.querySelector('input').onclick = e => { e.stopPropagation(); d.visible = e.target.checked; renderDraw(d); };
+    el.querySelector('[data-a="zoom"]').onclick = e => { e.stopPropagation(); map.fitBounds(L.latLngBounds(d.pts), { padding: [60, 60], maxZoom: map.getZoom() }); selectDraw(d); };
+    el.querySelector('[data-a="del"]').onclick = e => { e.stopPropagation(); if (confirm('이 선을 지울까요?')) delDraw(d); };
+    el.onclick = () => selectDraw(d);
+    box.appendChild(el);
+  });
+}
+['#dColor', '#dDash', '#dStart', '#dEnd', '#dHalo'].forEach(s => $(s).addEventListener('change', onDrawForm));
+['#dW', '#dCap'].forEach(s => $(s).addEventListener('input', onDrawForm));
+function onDrawForm(){ const f = drawFromForm(); if (selDraw){ Object.assign(selDraw, f); renderDraw(selDraw); buildDrawList(); } else drawDraft = f; }
+$$('.dpre').forEach(b => b.onclick = () => { formFromDraw(DRAW_PRE[b.dataset.pre]); onDrawForm(); });
+$('#drawShowAll').onchange = renderAllDraws;
+$('#drawDeselect').onclick = deselectDraw;
+/* 그리기 */
+let drawTemp = null;
+function constrain(e){
+  if (!drawing || !drawing.pts.length || !(e.originalEvent && e.originalEvent.shiftKey)) return e.latlng;
+  const a = map.latLngToContainerPoint(drawing.pts[drawing.pts.length - 1]), b = e.containerPoint || map.latLngToContainerPoint(e.latlng);
+  const dx = b.x - a.x, dy = b.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), len = Math.hypot(dx, dy);
+  return map.containerPointToLatLng([a.x + Math.cos(ang) * len, a.y + Math.sin(ang) * len]);
+}
+function setDrawing(on){
+  if (on){
+    if (mapLocked) return;
+    if (placing) setPlacing(false);
+    if (selDraw) deselectDraw();
+    drawing = { pts: [] }; map.doubleClickZoom.disable();
+  } else {
+    drawing = null; if (drawTemp){ map.removeLayer(drawTemp); drawTemp = null; }
+    if (!mapLocked) map.doubleClickZoom.enable();
+  }
+  $('#drawStart').classList.toggle('on', on);
+  $('#drawStart').textContent = on ? '■ 그리기 끝내기 (더블클릭/Enter)' : '＋ 선 그리기';
+  $('#map').classList.toggle('drawmode', on);
+}
+function addDrawPoint(e){ const ll = constrain(e); drawing.pts.push([ll.lat, ll.lng]); updateTemp(ll); }
+function updateTemp(cur){
+  if (!drawing) return;
+  const pts = drawing.pts.concat(cur ? [[cur.lat, cur.lng]] : []);
+  if (!drawTemp) drawTemp = L.polyline(pts, { renderer: drawRenderer, interactive: false, color: drawDraft.color, weight: drawDraft.w, dashArray: '6 4', opacity: 0.8 }).addTo(map);
+  else drawTemp.setLatLngs(pts);
+}
+function finishDrawing(){
+  if (!drawing) return;
+  const pts = drawing.pts.filter((p, i, a) => i === 0 || map.latLngToContainerPoint(p).distanceTo(map.latLngToContainerPoint(a[i - 1])) > 2);
+  setDrawing(false);
+  if (pts.length >= 2){ const d = addDraw(Object.assign({}, drawDraft, { pts })); selectDraw(d); }
+}
+$('#drawStart').onclick = () => drawing ? finishDrawing() : setDrawing(true);
+map.on('click', e => { if (drawing) addDrawPoint(e); });
+map.on('dblclick', e => { if (drawing){ L.DomEvent.stop(e); finishDrawing(); } });
+map.on('mousemove', e => { if (drawing && drawing.pts.length) updateTemp(constrain(e)); });
+map.on('zoomend rotate', () => { renderAllDraws(); renderVertices(); });
+document.addEventListener('keydown', e => {
+  if (/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
+  if (drawing){
+    if (e.key === 'Enter'){ e.preventDefault(); finishDrawing(); }
+    else if (e.key === 'Escape') setDrawing(false);
+    else if (e.key === 'Backspace'){ e.preventDefault(); drawing.pts.pop(); updateTemp(null); }
+    return;
+  }
+  if (selDraw && e.key === 'Delete'){ e.stopImmediatePropagation(); if (confirm('선택한 선을 지울까요?')) delDraw(selDraw); }
+  else if (selDraw && e.key === 'Escape') deselectDraw();
+}, true);
 
 /* ================= 파일 불러오기 ================= */
 const modal = html => new Promise(res => {
@@ -2477,12 +2709,13 @@ function download(name, url){ const a = document.createElement('a'); a.href = ur
 const fileBase = () => ($('#titleIn').value || '도면').replace(/[\\/:*?"<>|]/g, '_');
 async function capture(){ return capture2(); }
 async function capture2(){
+  vtxGroup.clearLayers();
   document.body.classList.add('exporting');
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
   await new Promise(r => setTimeout(r, 200));
   try {
     return await html2canvas(frame, { useCORS: true, allowTaint: false, scale: outScale(), backgroundColor: '#ffffff', logging: false });
-  } finally { document.body.classList.remove('exporting'); }
+  } finally { document.body.classList.remove('exporting'); renderVertices(); }
 }
 $('#btnJpg').onclick = async () => {
   busy(true);
@@ -2511,7 +2744,8 @@ $('#btnSaveProj').onclick = () => {
     pos: Object.fromEntries(OVL.map(id => { const el = $('#' + id), s = el.style; return [id, { left: s.left, top: s.top, right: s.right, bottom: s.bottom, transform: s.transform, moved: !!el.dataset.moved }]; })),
     layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, style: o.style, gj: o.gj, src: o.src })),
     legendItems: legendItems.map(({ _open, ...it }) => it),
-    anns: anns.map(({ marker, id, ...a }) => a)
+    anns: anns.map(({ marker, id, ...a }) => a),
+    draws: draws.map(({ group, id, ...d }) => d)
   };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
   download(fileBase() + '_작업.json', url); setTimeout(() => URL.revokeObjectURL(url), 5000);
@@ -2585,6 +2819,8 @@ async function loadProject(d){
     legSeq = legendItems.length + 1;
   }
   (d.anns || []).forEach(a => addAnn(a, true));
+  draws.slice().forEach(x => { if (x.group) drawGroup.removeLayer(x.group); }); draws.length = 0; selDraw = null;
+  (d.draws || []).forEach(x => addDraw(x, true)); buildDrawList(); renderVertices();
   buildAnnList(); syncCfgUI(); layoutFrame(); applyCfg();
   if (d.view) map.setView(d.view.c, d.view.z);
   setRotation(cfg.map.bearing || 0);
@@ -2610,6 +2846,7 @@ $('#goSheet3').onclick = () => showSheet(3);
 showSheet(store.get('sheet', '1'));
 buildPanel();
 updateKeyState();
+buildDrawList();
 updateEcoBox();
 buildEgisList();
 buildBaseList();
