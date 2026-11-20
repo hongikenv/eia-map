@@ -13,6 +13,7 @@
 <script src="https://unpkg.com/dxf-parser@1.1.2/dist/dxf-parser.js"></script>
 <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
 <!-- 웹 글꼴: 한 글꼴이 막혀도 나머지는 쓸 수 있도록 따로 불러옴 -->
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -180,6 +181,16 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #drawFormTitle{font-weight:600;color:#1d3b2a;margin-top:4px}
 #drawFormTitle.editing{color:#0a64d0}
 .dpre{font-size:11px;padding:2px 6px}
+.idp{font-size:12px;max-height:320px;overflow:auto;min-width:220px}
+.idp .it{border-bottom:1px solid #e3e6ea;padding:5px 0}
+.idp .it:last-child{border-bottom:none}
+.idp .ly{font-size:11px;color:#678}
+.idp .nm{font-size:14px;font-weight:700;margin:1px 0 3px}
+.idp table{border-collapse:collapse;font-size:11px;margin-top:3px}
+.idp td{border-top:1px solid #eef;padding:1px 6px 1px 0;vertical-align:top}
+.idp td:first-child{color:#678;white-space:nowrap}
+.idp button{font-size:11px;padding:1px 6px;margin-top:3px}
+.exporting .leaflet-popup-pane{display:none}
 #map.drawmode,#map.drawmode .leaflet-interactive{cursor:crosshair}
 .vtx{background:#fff!important;border:2px solid #0a84ff!important;box-sizing:border-box}
 .psize{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin:6px 0}
@@ -217,7 +228,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.6</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.8</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -257,7 +268,19 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>4. 글자 넣기</h2>
+    <h2>4. 버퍼 · 대상지역 설정</h2>
+    <div class="grid">
+      <label>기준</label><select id="bufSrc"></select>
+      <label>거리</label><span><input type="text" id="bufDist" value="500, 1000" style="width:120px">m <small class="hint">쉼표로 여러 개</small></span>
+      <label>합치기</label><label><input type="checkbox" id="bufDissolve" checked> 겹치는 범위를 하나로 합치기</label>
+      <label>모양</label><select id="bufStyle"><option value="eia">대상지역 설정도 (바깥 실선 · 안쪽 파선)</option><option value="fill">반투명 채움 + 실선</option><option value="line">테두리만 (실선)</option></select>
+    </div>
+    <div class="row"><button id="bufMake" class="pri">버퍼 만들기</button><span class="hint" id="bufMsg"></span></div>
+    <p class="hint">만든 버퍼는 3번 레이어 목록에 '○○ 반경 1km'처럼 들어갑니다. 색·선·채움은 다른 레이어처럼 바꿀 수 있고, 범례에도 들어갑니다.</p>
+  </div>
+
+  <div class="sec">
+    <h2>5. 글자 넣기</h2>
     <div class="row"><button id="annPlace" class="pri">＋ 지도 클릭해서 넣기</button><button id="annDeselect">선택 해제</button></div>
     <div id="annFormTitle">새 글자 기본 설정</div>
     <div id="annForm"></div>
@@ -267,7 +290,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>5. 선 · 화살표 그리기</h2>
+    <h2>6. 선 · 화살표 그리기</h2>
     <div class="row"><button id="drawStart" class="pri">＋ 선 그리기</button><button id="drawDeselect">선택 해제</button></div>
     <div class="row"><span class="hint">빠른 설정</span>
       <button class="dpre" data-pre="dim" title="양쪽 화살표">⟷ 구간선</button><button class="dpre" data-pre="dimbar" title="양 끝 화살표+막대">|⟷| 구간선</button>
@@ -289,11 +312,11 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
     <div id="drawList"></div>
     <p class="hint">지도를 클릭해 점을 찍고 <b>더블클릭(또는 Enter)</b>으로 끝냅니다. <b>Shift</b>를 누른 채 찍으면 수평·수직·45°로 곧게 그어집니다. Backspace: 마지막 점 취소 · Esc: 그리기 취소<br>
       선을 누르면 위 설정으로 고칠 수 있고, 꼭짓점(■)을 끌어 모양을 바꿉니다. 꼭짓점 우클릭: 점 삭제 · Delete 키: 선 삭제<br>
-      글자는 4. 글자 넣기의 '채운 박스' 등으로 선 끝에 붙이면 위치도 설명 상자가 됩니다.</p>
+      글자는 5. 글자 넣기의 '채운 박스' 등으로 선 끝에 붙이면 위치도 설명 상자가 됩니다.</p>
   </div>
 
   <div class="sec">
-    <h2>6. 범례</h2>
+    <h2>7. 범례</h2>
     <div id="legItems"></div>
     <div class="row"><button id="legAdd">＋ 직접 항목 추가</button></div>
     <details><summary>범례 스타일</summary>
@@ -311,13 +334,13 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>7. 지도 회전</h2>
+    <h2>8. 지도 회전</h2>
     <div class="row"><input type="range" id="rotR" min="-180" max="180" step="1" value="0" style="flex:1"><input type="number" id="rotN" min="-180" max="180" value="0">° <button id="rotZero">0°</button></div>
     <p class="hint" id="rotHint">사업지구 모양에 맞춰 지도를 돌릴 수 있습니다. 방위표는 자동으로 북쪽을 가리킵니다.</p>
   </div>
 
   <div class="sec">
-    <h2>8. 작업 파일</h2>
+    <h2>9. 작업 파일</h2>
     <div class="row"><button id="btnSaveProj">작업 저장(.json)</button><button id="btnLoadProj">작업 열기</button>
       <input type="file" id="projIn" accept=".json" hidden></div>
     <p class="hint">새 버전으로 바꾸기 전에는 꼭 작업 저장을 해두세요. 공유폴더에 두면 다른 사람도 열어서 이어 작업할 수 있습니다.</p>
@@ -328,6 +351,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   <div class="sec">
     <h2>1. 주제도 고르기</h2>
     <div class="row"><button id="thAllOff">전체 해제</button><span class="hint">체크하면 지금 보이는 범위의 자료를 받아와 아래 2번 목록에 들어갑니다.</span></div>
+    <div class="row"><label><input type="checkbox" id="identOn" checked> 지도를 클릭하면 그 자리 자료의 이름·속성 보기</label></div>
     <div class="src">
       <div class="srch"><b>브이월드 (국토교통부)</b><span class="badge">실시간</span><div class="hint">브이월드 2D데이터 API</div></div>
       <div id="themeList"></div>
@@ -359,6 +383,13 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
         <div id="egisList"></div>
       </details>
       <p class="hint" id="egis_msg"></p>
+    </div>
+    <div class="src" id="rivBox">
+      <div class="srch"><b>하천 (국가 · 지방 · 소하천)</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="hint">국가·지방하천: 하천정보관리시스템(RIMGIS) · 소하천: 환경공간정보서비스</div></div>
+      <details class="thgrp" open><summary><input type="checkbox" id="riv_all" title="전체 켜기/끄기"> 하천 <small class="hint" id="riv_cnt"></small></summary>
+        <div id="rivList"></div>
+      </details>
+      <p class="hint" id="riv_msg">국가하천은 처음 받을 때 하천 하나씩 통째로 받아 시간이 걸리고, 그 뒤로는 이 PC에 보관해 두어 빠릅니다.</p>
     </div>
     <div class="src" id="keiBox">
       <div class="srch"><b>KEI 지역환경정보시스템 · 산줄기</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="hint">신산경표 산줄기 (박성태, 2010) · 한국환경연구원 GeoServer WFS</div></div>
@@ -487,7 +518,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 <script>
 (function(){
   const miss = [['L', '지도(Leaflet)'], ['proj4', '좌표변환(proj4)'], ['JSZip', 'zip 읽기'], ['shp', 'SHP 읽기'],
-                ['DxfParser', 'DXF 읽기'], ['html2canvas', '이미지 저장'], ['jspdf', 'PDF 저장']]
+                ['DxfParser', 'DXF 읽기'], ['html2canvas', '이미지 저장'], ['jspdf', 'PDF 저장'], ['turf', '버퍼 계산']]
     .filter(([k]) => !window[k]).map(([, n]) => n);
   if (miss.length){
     const m = document.getElementById('msg');
@@ -879,8 +910,8 @@ $('#dkeyShow').onclick = () => { const i = $('#dkey'); i.type = i.type === 'pass
 function applyDataKey(){ store.set('dataGoKey', dataKey); ecoFetched = []; updateEcoBox(); updateEco(); }
 $('#vkeySave').onclick = () => {
   vwKey = $('#vkey').value.trim(); dataKey = $('#dkey').value.trim();
-  const nr = $('#relayIn').value.trim(); if (nr !== relayUrl){ relayUrl = nr; store.set('relayUrl', relayUrl); layers.forEach(o => { if (o.src && (o.src.kind === 'egis' || o.src.kind === 'kei')){ o._fetched = []; o.src.err = ''; } }); }
-  applyKeyChange(); applyDataKey(); updateEgis(); buildEgisList(); buildKeiList(); $('#settings').hidden = true;
+  const nr = $('#relayIn').value.trim(); if (nr !== relayUrl){ relayUrl = nr; store.set('relayUrl', relayUrl); layers.forEach(o => { if (o.src && /^(egis|kei|rim)$/.test(o.src.kind)){ o._fetched = []; o.src.err = ''; } }); }
+  applyKeyChange(); applyDataKey(); updateEgis(); buildEgisList(); buildKeiList(); buildRiverList(); $('#settings').hidden = true;
 };
 $('#vkeyDel').onclick = () => { if (!confirm('저장된 키(브이월드·공공데이터포털)를 모두 지울까요?')) return; vwKey = ''; dataKey = ''; $('#vkey').value = ''; $('#dkey').value = ''; applyKeyChange(); applyDataKey(); };
 function applyAttr(){ const c = map.attributionControl.getContainer(); if (c) c.style.display = $('#attrOn').checked ? '' : 'none'; store.set('attrOn', $('#attrOn').checked ? '1' : '0'); }
@@ -1572,8 +1603,12 @@ const EGIS = [
   ['eg_water', '상수원보호구역 (환경부)', 'polygon', '#1565C0', { tn: 'me:wa_plg_quality_restrict', cql: "district='상수원보호구역'" }],
   ['eg_special', '상수원 수질보전 특별대책지역', 'polygon', '#00897B', { tn: 'me:wa_plg_quality_restrict', cql: "district='수질보전특별대책지역'" }],
   ['eg_discharge', '폐수배출시설 설치제한지역', 'polygon', '#F4511E', { tn: 'me:wa_plg_quality_restrict', cql: "district='배출시설설치제한지역'" }],
-  ['eg_air', '대기환경규제지역', 'polygon', '#FFB300', { tn: 'me:ca_plg_air_restrict' }],
-  ['eg_smallriver', '소하천구역', 'polygon', '#7986CB', { tn: 'EGIS:K33UJC100', ows: true, minZ: 11 }]
+  ['eg_air', '대기환경규제지역', 'polygon', '#FFB300', { tn: 'me:ca_plg_air_restrict' }]
+];
+const RIVER = [
+  ['riv_nat', '국가하천', 'line', '#1A237E', { rim: true, tn: 'rimgis:tb_riverlist_1', byList: true, minZ: 8, w: 3 }],
+  ['riv_loc', '지방하천', 'line', '#3F51B5', { rim: true, tn: 'rimgis:tb_riverlist_2', minZ: 9, w: 2 }],
+  ['eg_smallriver', '소하천', 'polygon', '#7986CB', { tn: 'EGIS:K33UJC100', ows: true, minZ: 11, w: 1 }]
 ];
 const KEI = [
   ['kei_l1', '백두대간', 'line', '#4E342E', { tn: 'keilocal:mtridge_l1_pl', nm: 'mbsnnm', w: 3.5, minZ: 6 }],
@@ -1583,7 +1618,32 @@ const KEI = [
 ];
 const keiUrl = (q, b) => 'https://eiaresearch.kei.re.kr/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application/json&srsName=EPSG:4326'
   + `&typename=${q.tn}&bbox=${b.join(',')},EPSG:4326`;
-const egisDef = id => EGIS.find(x => x[0] === id) || KEI.find(x => x[0] === id);
+const egisDef = id => EGIS.find(x => x[0] === id) || KEI.find(x => x[0] === id) || RIVER.find(x => x[0] === id);
+const rimUrl = (q, b) => `https://www.river.go.kr/geoserver/rimgis/wfs?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application/json&srsName=EPSG:4326&typeName=${q.tn}&bbox=${b.join(',')},EPSG:4326`;
+/* 국가하천은 하천 하나가 통째로(예: 낙동강 전체) 내려와 느림 → 범위 안 하천 목록만 먼저 받고, 하천 도형은 하천마다 한 번만 받아 이 PC에 60일 보관 */
+const rdb = () => new Promise((ok, no) => { const q = indexedDB.open('eiaMapCache', 1); q.onupgradeneeded = () => q.result.createObjectStore('river'); q.onsuccess = () => ok(q.result); q.onerror = () => no(q.error); });
+async function rget(k){ try { const db = await rdb(); return await new Promise(ok => { const r = db.transaction('river').objectStore('river').get(k); r.onsuccess = () => ok(r.result); r.onerror = () => ok(null); }); } catch(e){ return null; } }
+async function rput(k, v){ try { const db = await rdb(); db.transaction('river', 'readwrite').objectStore('river').put(v, k); } catch(e){} }
+async function fetchRiverByList(o, q, b){
+  const base = `https://www.river.go.kr/geoserver/rimgis/wfs?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application/json&typeName=${q.tn}`;
+  const list = await egisFetch(`${base}&propertyName=id,rivcd,rivnm&bbox=${b.join(',')},EPSG:4326`, 60000);
+  const ids = [...new Map((list.features || []).map(f => [(f.properties || {}).id, f.properties || {}])).values()].filter(p => p.id != null);
+  const feats = [];
+  for (const pr of ids){
+    const fid = 'nat_' + pr.id; if (o._keys && o._keys.has(fid)) continue;
+    const key = q.tn + '|' + pr.id; let c = await rget(key);
+    if (!c || Date.now() - c.t > 60 * 864e5){
+      $('#riv_msg').textContent = `국가하천 '${pr.rivnm || pr.id}' 도형 받는 중… (처음 한 번만 오래 걸립니다)`;
+      const j = await egisFetch(`${base}&srsName=EPSG:4326&CQL_FILTER=${encodeURIComponent('id=' + pr.id)}`, 150000);
+      const f = (j.features || [])[0]; if (!f || !f.geometry) continue;
+      let geom = f.geometry;
+      try { if (window.turf) geom = turf.simplify({ type: 'Feature', geometry: geom, properties: {} }, { tolerance: 0.00002, highQuality: false }).geometry; } catch(e){}
+      c = { t: Date.now(), geom, props: f.properties || pr }; rput(key, c);
+    }
+    feats.push({ type: 'Feature', id: fid, geometry: c.geom, properties: c.props || pr });
+  }
+  return { features: feats };
+}
 const egisLayerOf = id => layers.find(o => o.src && o.src.kind === 'egis' && o.src.id === id);
 const snap02 = b => { const s = 0.02; return [Math.floor(b[0] / s) * s, Math.floor(b[1] / s) * s, Math.ceil(b[2] / s) * s, Math.ceil(b[3] / s) * s].map(v => +v.toFixed(4)); };
 function egisUrl(q, b){
@@ -1594,8 +1654,8 @@ function egisUrl(q, b){
   return 'https://api.mcee.go.kr/geoserver/me/wfs?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application/json&srsName=EPSG:4326'
     + `&typeName=${q.tn}&CQL_FILTER=${encodeURIComponent(cql)}`;
 }
-async function egisFetch(url){
-  const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 60000);
+async function egisFetch(url, ms){
+  const ac = new AbortController(), tm = setTimeout(() => ac.abort(), ms || 60000);
   try {
     let r;
     try { r = await fetch(relayWrap(url), { signal: ac.signal }); }
@@ -1611,12 +1671,12 @@ async function egisFetch(url){
 let egisBusy = false;
 async function updateEgis(){
   if (egisBusy) return;
-  const on = layers.filter(o => o.src && (o.src.kind === 'egis' || o.src.kind === 'kei') && o.visible); if (!on.length) return;
+  const on = layers.filter(o => o.src && (o.src.kind === 'egis' || o.src.kind === 'kei' || o.src.kind === 'rim') && o.visible); if (!on.length) return;
   egisBusy = true;
   try {
     for (const o of on){
       const q = egisDef(o.src.id)[4];
-      const msgEl = o.src.kind === 'kei' ? $('#kei_msg') : $('#egis_msg');
+      const msgEl = o.src.kind === 'kei' ? $('#kei_msg') : (o.src.kind === 'rim' || o.src.id === 'eg_smallriver') ? $('#riv_msg') : $('#egis_msg');
       if (map.getZoom() < (q.minZ || 8)){ msgEl.textContent = '조금 더 확대하면 받아옵니다.'; continue; }
       const v = map.getBounds().pad(0.05), b = snap02([v.getWest(), v.getSouth(), v.getEast(), v.getNorth()]);
       const lb = L.latLngBounds([b[1], b[0]], [b[3], b[2]]);
@@ -1625,7 +1685,8 @@ async function updateEgis(){
       o._keys = o._keys || new Set(o.gj.features.map(f => f._k).filter(Boolean));
       msgEl.textContent = `'${o.name}' 받는 중…`;
       try {
-        const j = await egisFetch(o.src.kind === 'kei' ? keiUrl(q, b) : egisUrl(q, b));
+        const j = q.byList ? await fetchRiverByList(o, q, b)
+          : await egisFetch(o.src.kind === 'kei' ? keiUrl(q, b) : o.src.kind === 'rim' ? rimUrl(q, b) : egisUrl(q, b), q.rim ? 90000 : 60000);
         let added = 0;
         (j.features || []).forEach((f, i) => {
           if (!f.geometry) return;
@@ -1634,7 +1695,7 @@ async function updateEgis(){
           o.gj.features.push({ type: 'Feature', geometry: f.geometry, properties: f.properties || {}, _k: k }); added++;
         });
         o._fetched.push(lb); o.src.err = '';
-        if (added){ renderLayer(o); refreshOrder(); }
+        if (added){ if (o.gj.features.length === added){ const t = detectType(o.gj); if (t !== o.type){ o.type = t; renderLegendAll(); } } renderLayer(o); refreshOrder(); }
         msgEl.textContent = '';
       } catch(e){
         o.src.err = e.message;
@@ -1645,7 +1706,7 @@ async function updateEgis(){
       }
     }
   } finally {
-    egisBusy = false; buildEgisList(); buildKeiList();
+    egisBusy = false; buildEgisList(); buildKeiList(); buildRiverList(); buildRiverList();
     $$('#themeLayerList .lyr').forEach(d => { const o = layerById(+d.dataset.lid); const fc = d.querySelector('.fcount'); if (o && fc) fc.textContent = o.gj.features.length + '개'; });
   }
 }
@@ -1676,6 +1737,31 @@ function toggleKei(id, on, batch){
   } else o.visible = on;
   if (!batch){ refreshOrder(); buildPanel(); renderLegendAll(); buildKeiList(); if (on) updateEgis(); }
 }
+function toggleRiver(id, on, batch){
+  const [, name, type, color, q] = egisDef(id), kind = q.rim ? 'rim' : 'egis';
+  let o = layers.find(x => x.src && x.src.kind === kind && x.src.id === id);
+  if (!o){
+    if (!on) return;
+    const sym = type === 'polygon' ? [S('fill', { color, op: 45 }), S('stroke', { color, w: q.w, dash: 'solid' })] : [S('fill', { color, op: 45 }), S('stroke', { color, w: q.w, dash: 'solid' })];
+    o = addLayer(name, { type: 'FeatureCollection', features: [] }, { type, style: { symbols: sym, label: Object.assign(labelDefaults(), { textColor: color }) }, src: { kind, id }, quiet: true });
+  } else o.visible = on;
+  if (!batch){ refreshOrder(); buildPanel(); renderLegendAll(); buildRiverList(); if (on) updateEgis(); }
+}
+function buildRiverList(){
+  const box = $('#rivList'); if (!box) return; box.innerHTML = ''; let onCnt = 0;
+  RIVER.forEach(([id, name, type, color, q]) => {
+    const kind = q.rim ? 'rim' : 'egis', o = layers.find(x => x.src && x.src.kind === kind && x.src.id === id), on = !!(o && o.visible); if (on) onCnt++;
+    const d = document.createElement('div'); d.className = 'thi' + (o && o.src.err ? ' err' : '');
+    d.innerHTML = `<input type="checkbox" id="riv_${id}" ${on ? 'checked' : ''}><span class="sw" style="background:${type === 'polygon' ? rgba(color, 45) : 'none'};${type === 'line' ? `height:0;border-width:${q.w}px 0 0;width:16px;` : ''}border-color:${color}"></span><label for="riv_${id}">${esc(name)}</label>
+      <small class="hint">${q.rim ? '하천정보관리시스템' : '환경공간정보서비스'}</small>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
+    d.querySelector('input').onchange = e => toggleRiver(id, e.target.checked);
+    box.appendChild(d);
+  });
+  $('#riv_cnt').textContent = `(${onCnt}/${RIVER.length})`;
+  $('#riv_all').checked = onCnt === RIVER.length; $('#riv_all').indeterminate = onCnt > 0 && onCnt < RIVER.length;
+}
+$('#riv_all').onclick = e => e.stopPropagation();
+$('#riv_all').onchange = e => { RIVER.forEach(([id]) => toggleRiver(id, e.target.checked, true)); refreshOrder(); buildPanel(); renderLegendAll(); buildRiverList(); if (e.target.checked) updateEgis(); };
 function buildKeiList(){
   const box = $('#keiList'); box.innerHTML = ''; let onCnt = 0;
   KEI.forEach(([id, name, type, color, q]) => {
@@ -1837,7 +1923,7 @@ function deleteLayers(list){
     legendItems = legendItems.filter(x => x.lid !== o.id);
   });
   if (list.some(o => o.src && o.src.kind === 'ecowfs')){ ecoFetched = []; ecoSeen.clear(); }
-  refreshOrder(); buildPanel(); renderLegendAll(); buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList();
+  refreshOrder(); buildPanel(); renderLegendAll(); buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList();
 }
 function selToolbar(box, theme){
   const grp = layers.filter(o => !!o.src === theme); if (!grp.length) return;
@@ -1862,6 +1948,7 @@ document.addEventListener('keydown', e => {
   if (confirm(`선택한 레이어 ${sel.length}개를 지울까요?`)) deleteLayers(sel);
 });
 function buildPanel(){
+  buildBufSrc();
   const box1 = $('#layerList'), box2 = $('#themeLayerList');
   box1.innerHTML = ''; box2.innerHTML = '';
   const sameGroup = (a, b) => !!a.src === !!b.src;
@@ -1906,7 +1993,7 @@ function buildPanel(){
       else o._sel = val;
       lastSelId = o.id; buildPanel();
     };
-    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); if (o.visible){ updateThemes(); updateEco(); updateEgis(); } } };
+    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (o.visible){ updateThemes(); updateEco(); updateEgis(); } } };
     d.querySelector('[data-k="name"]').onchange = e => {
       const it = legendItems.find(x => x.lid === o.id);
       if (it && it.label === o.name) it.label = e.target.value;
@@ -2486,6 +2573,7 @@ function addDraw(d, skip){
 }
 const CAP_ICON = { none: '', arrow: '▶', open: '>', arrowbar: '▶|', bar: '|', dot: '●' };
 function buildDrawList(){
+  buildBufSrc();
   const box = $('#drawList'); box.innerHTML = '';
   $('#drawCount').textContent = draws.length ? `(${draws.length}개)` : '';
   draws.slice().reverse().forEach((d, k) => {
@@ -2564,6 +2652,143 @@ document.addEventListener('keydown', e => {
   if (selDraw && e.key === 'Delete'){ e.stopImmediatePropagation(); if (confirm('선택한 선을 지울까요?')) delDraw(selDraw); }
   else if (selDraw && e.key === 'Escape') deselectDraw();
 }, true);
+
+/* ================= 클릭하면 이름·속성 보기 ================= */
+const FIELD_KO = {
+  mbsnnm: '산줄기 이름', sbsnnm: '산줄기 이름', eczm_grad: '생태자연도 등급', park_name: '공원 이름', uname: '지역·지구 이름', alias: '명칭', remark: '비고',
+  sigg_name: '시군구', sig_kor_nm: '시군구', emd_kor_nm: '읍면동', ctp_kor_nm: '시도', full_nm: '행정구역', dyear: '지정 연도', dnum: '지정 번호',
+  wl_nm: '습지 이름', rivnm: '하천 이름', rivcd: '하천 코드', name: '이름', district: '구분', area: '면적', layer: 'CAD 레이어', text: '글자'
+};
+const NAME_KEYS = ['rivnm', 'name', 'park_name', 'mbsnnm', 'sbsnnm', 'wl_nm', 'full_nm', 'sig_kor_nm', 'emd_kor_nm', 'ctp_kor_nm', 'uname', 'alias', 'dgm_nm', 'district', 'remark', 'text'];
+function guessName(o, p){
+  if (o && o.src && o.src.kind === 'ecowfs') return `생태자연도 ${ecoGrade(p.eczm_grad)}등급`;
+  for (const k of NAME_KEYS){ const v = p[k] != null ? p[k] : p[k.toUpperCase()]; if (v != null && String(v).trim()) return String(v).trim(); }
+  const k2 = Object.keys(p).find(k => /(nm|name|명)$/i.test(k) && typeof p[k] === 'string' && p[k].trim());
+  return k2 ? p[k2].trim() : '';
+}
+const fbb = f => {
+  if (f._bb) return f._bb;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const walk = c => { if (typeof c[0] === 'number'){ if (c[0] < x0) x0 = c[0]; if (c[0] > x1) x1 = c[0]; if (c[1] < y0) y0 = c[1]; if (c[1] > y1) y1 = c[1]; } else c.forEach(walk); };
+  walk(f.geometry.coordinates);
+  Object.defineProperty(f, '_bb', { value: [x0, y0, x1, y1], enumerable: false, writable: true });
+  return f._bb;
+};
+function hitFeature(f, ll, cp, tolPx, tolDeg){
+  const g = f.geometry; if (!g) return false;
+  const b = fbb(f);
+  if (ll.lng < b[0] - tolDeg || ll.lng > b[2] + tolDeg || ll.lat < b[1] - tolDeg || ll.lat > b[3] + tolDeg) return false;
+  const t = g.type, pt = [ll.lng, ll.lat];
+  if (/Polygon/.test(t)){
+    const polys = t === 'Polygon' ? [g.coordinates] : g.coordinates;
+    return polys.some(p => inRing(pt, p[0]) && !p.slice(1).some(h => inRing(pt, h)));
+  }
+  const px = c => { const q = map.latLngToContainerPoint([c[1], c[0]]); return [q.x, q.y]; };
+  if (/LineString/.test(t)){
+    const lines = t === 'LineString' ? [g.coordinates] : g.coordinates, c0 = [cp.x, cp.y];
+    return lines.some(l => { for (let i = 1; i < l.length; i++) if (segDist(c0, px(l[i - 1]), px(l[i])) <= tolPx) return true; return false; });
+  }
+  if (/Point/.test(t)){
+    const pts = t === 'Point' ? [g.coordinates] : g.coordinates;
+    return pts.some(c => { const q = px(c); return Math.hypot(q[0] - cp.x, q[1] - cp.y) <= tolPx + 4; });
+  }
+  return false;
+}
+function identify(e){
+  const ll = e.latlng, cp = e.containerPoint || map.latLngToContainerPoint(ll), tolPx = 6;
+  const tolDeg = Math.abs(map.containerPointToLatLng([cp.x + tolPx, cp.y]).lng - ll.lng) * 1.5 + 1e-9;
+  const found = [];
+  layers.filter(o => o.visible && o.gj && o.gj.features).forEach(o => {
+    for (const f of o.gj.features){ if (hitFeature(f, ll, cp, tolPx, tolDeg)){ found.push({ o, f }); if (found.length > 12) break; } }
+  });
+  Object.keys(ADM).forEach(lv => {
+    if (!(admLineOn(lv) || admNameOn(lv)) || !admCache[lv]) return;
+    admCache[lv].forEach(en => { if (en.geom && hitFeature({ geometry: en.geom, get _bb(){ return en._bb2 || (en._bb2 = fbb({ geometry: en.geom })); } }, ll, cp, tolPx, tolDeg)) found.push({ adm: lv, name: en.name }); });
+  });
+  if (!found.length) return false;
+  const box = document.createElement('div'); box.className = 'idp';
+  found.slice(0, 12).forEach(h => {
+    const it = document.createElement('div'); it.className = 'it';
+    if (h.adm){
+      it.innerHTML = `<div class="ly">행정구역 · ${ADM[h.adm].short}</div><div class="nm">${esc(h.name)}</div><button>이 이름을 글자로 넣기</button>`;
+    } else {
+      const p = h.f.properties || {}, name = guessName(h.o, p);
+      const rows = Object.entries(p).filter(([k, v]) => v != null && String(v).trim() !== '' && !/^(_|geom|the_geom|shape)/i.test(k)).slice(0, 15)
+        .map(([k, v]) => `<tr><td>${esc(FIELD_KO[k] ? FIELD_KO[k] + ' (' + k + ')' : k)}</td><td>${esc(String(v)).slice(0, 80)}</td></tr>`).join('');
+      it.innerHTML = `<div class="ly">${esc(h.o.name)}</div><div class="nm">${esc(name || '(이름 정보 없음)')}</div>
+        ${name ? '<button>이 이름을 글자로 넣기</button>' : ''}${rows ? `<details><summary>속성 전체</summary><table>${rows}</table></details>` : ''}`;
+      h.name = name;
+    }
+    const b = it.querySelector('button');
+    if (b) b.onclick = () => { addAnn(Object.assign({}, annDraft, { text: h.name, lat: ll.lat, lng: ll.lng })); map.closePopup(); showToast(`'${h.name}' 글자를 넣었습니다. ① 작업 → 5. 글자 넣기에서 모양을 바꿀 수 있습니다.`); };
+    box.appendChild(it);
+  });
+  if (found.length > 12) box.insertAdjacentHTML('beforeend', '<div class="hint">겹친 자료가 많아 12개까지만 보입니다.</div>');
+  L.popup({ maxWidth: 360, autoPan: true }).setLatLng(ll).setContent(box).openOn(map);
+  return true;
+}
+$('#identOn').checked = store.get('identOn', '1') === '1';
+$('#identOn').onchange = e => store.set('identOn', e.target.checked ? '1' : '0');
+map.on('click', e => {
+  if (!$('#identOn').checked || placing || drawing) return;
+  if (!identify(e)) map.closePopup();
+});
+
+/* ================= 버퍼 (대상지역 설정) ================= */
+function buildBufSrc(){
+  const sel = $('#bufSrc'); if (!sel) return; const cur = sel.value;
+  const items = layers.filter(o => o.gj && o.gj.features && o.gj.features.length).map(o => [String(o.id), (o.src ? '[주제도] ' : '') + o.name]);
+  if (draws.length) items.push(['draws', '그린 선 (6번에서 그린 선 모두)']);
+  sel.innerHTML = items.length ? opts(items, cur) : '<option value="">레이어를 먼저 올려주세요</option>';
+}
+const distLabel = m => m >= 1000 ? (+(m / 1000).toFixed(2)) + 'km' : m + 'm';
+function bufStyleFor(kind, i, n){
+  const outer = i === n - 1;
+  if (kind === 'fill') return [S('fill', { color: '#ffffff', op: 30 }), S('stroke', { color: '#222222', w: 2, dash: 'solid' })];
+  if (kind === 'line') return [S('stroke', { color: '#222222', w: 2, dash: 'solid' })];
+  return outer ? [S('fill', { color: '#ffffff', op: 25 }), S('stroke', { color: '#111111', w: 2.5, dash: 'solid' })]
+               : [S('stroke', { color: '#111111', w: 2, dash: 'dash' })];
+}
+$('#bufMake').onclick = async () => {
+  if (!window.turf){ alert('버퍼 계산 도구를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'); return; }
+  const v = $('#bufSrc').value; if (!v){ alert('기준 레이어를 골라주세요.'); return; }
+  const dists = $('#bufDist').value.split(/[,\s]+/).map(Number).filter(x => x > 0).sort((a, b) => a - b);
+  if (!dists.length){ alert('거리를 m 단위 숫자로 넣어주세요. 예: 500, 1000'); return; }
+  let feats, srcName, srcLayer = null;
+  if (v === 'draws'){ feats = draws.map(d => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: d.pts.map(p => Array.isArray(p) ? [p[1], p[0]] : [p.lng, p.lat]) }, properties: {} })); srcName = '그린 선'; }
+  else { srcLayer = layerById(+v); feats = srcLayer.gj.features.filter(f => f.geometry); srcName = srcLayer.name; }
+  if (feats.length > 800 && !confirm(`도형이 ${feats.length}개라 계산이 오래 걸릴 수 있습니다. 계속할까요?`)) return;
+  busy(true); $('#bufMsg').textContent = '계산 중…';
+  await new Promise(r => setTimeout(r, 30));
+  try {
+    const kind = $('#bufStyle').value, made = [];
+    for (let i = 0; i < dists.length; i++){
+      const dm = dists[i];
+      let out = [];
+      feats.forEach(f => { try { const b = turf.buffer(f, dm, { units: 'meters', steps: 24 }); if (b) out.push(b); } catch(e){} });
+      if ($('#bufDissolve').checked && out.length > 1){
+        let acc = out[0];
+        for (let k = 1; k < out.length; k++){ try { acc = turf.union(acc, out[k]) || acc; } catch(e){} }
+        out = [acc];
+      }
+      const name = `${srcName} 반경 ${distLabel(dm)}`;
+      const gj = { type: 'FeatureCollection', features: out.map(f => ({ type: 'Feature', geometry: f.geometry, properties: { 기준: srcName, 거리_m: dm } })) };
+      const o = addLayer(name, gj, { type: 'polygon', style: { symbols: bufStyleFor(kind, i, dists.length), label: labelDefaults() }, quiet: true });
+      o.buf = { src: srcName, dist: dm };
+      const it = legendItems.find(x => x.lid === o.id); if (it) it.label = `반경 ${distLabel(dm)}`;
+      made.push(o);
+    }
+    /* 버퍼는 기준 레이어 바로 아래에 두어 노선이 가려지지 않게 */
+    if (srcLayer){
+      made.forEach(o => layers.splice(layers.indexOf(o), 1));
+      const at = layers.indexOf(srcLayer) + 1;
+      layers.splice(at, 0, ...made.slice().reverse());
+    }
+    refreshOrder(); buildPanel(); renderLegendAll();
+    $('#bufMsg').textContent = `${made.length}개 만들었습니다.`;
+  } catch(e){ console.error(e); alert('버퍼를 만들지 못했습니다: ' + e.message); $('#bufMsg').textContent = ''; }
+  finally { busy(false); }
+};
 
 /* ================= 파일 불러오기 ================= */
 const modal = html => new Promise(res => {
@@ -2788,7 +3013,7 @@ function download(name, url){ const a = document.createElement('a'); a.href = ur
 const fileBase = () => ($('#titleIn').value || '도면').replace(/[\\/:*?"<>|]/g, '_');
 async function capture(){ return capture2(); }
 async function capture2(){
-  vtxGroup.clearLayers();
+  vtxGroup.clearLayers(); map.closePopup();
   document.body.classList.add('exporting');
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
   await new Promise(r => setTimeout(r, 200));
@@ -2821,7 +3046,7 @@ $('#btnSaveProj').onclick = () => {
     title: $('#titleIn').value, cfg,
     toggles: Object.fromEntries($$('.tg').map(c => [c.dataset.t, c.checked])),
     pos: Object.fromEntries(OVL.map(id => { const el = $('#' + id), s = el.style; return [id, { left: s.left, top: s.top, right: s.right, bottom: s.bottom, transform: s.transform, moved: !!el.dataset.moved }]; })),
-    layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, style: o.style, gj: o.gj, src: o.src })),
+    layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, style: o.style, gj: o.gj, src: o.src, buf: o.buf })),
     legendItems: legendItems.map(({ _open, ...it }) => it),
     anns: anns.map(({ marker, id, ...a }) => a),
     draws: draws.map(({ group, id, ...d }) => d)
@@ -2906,7 +3131,7 @@ async function loadProject(d){
   Object.keys(ADM).forEach(lv => { admDrawn[lv] = -1; });
   ecoFetched = []; ecoSeen.clear();
   layers.filter(o => o.src && o.src.kind === 'ecowfs').forEach(o => o.gj.features.forEach((f, i) => ecoSeen.add('saved' + o.id + '_' + i)));
-  updateAdmin(); buildThemeList(); updateThemes(); updateEcoBox(); buildEgisList(); buildKeiList(); updateEgis();
+  updateAdmin(); buildThemeList(); updateThemes(); updateEcoBox(); buildEgisList(); buildKeiList(); buildRiverList(); updateEgis();
   if (mapLocked){ lockRatio = null; applyLockRatio(); }
 }
 
@@ -2929,6 +3154,7 @@ buildDrawList();
 updateEcoBox();
 buildEgisList();
 buildKeiList();
+buildRiverList();
 buildBaseList();
 applyAttr();
 updateHiddenRow();
