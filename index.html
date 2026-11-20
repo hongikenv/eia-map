@@ -217,7 +217,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.5</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.6</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -279,6 +279,11 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
       <label>끝점 끝</label><select id="dEnd"></select>
       <label>끝 모양 크기</label><span><input type="number" id="dCap" value="12" min="4" max="60">px</span>
       <label>흰 테두리</label><label><input type="checkbox" id="dHalo"> 선 둘레에 흰 테두리</label>
+      <label>선 위 글자</label><input type="text" id="dTop" placeholder="예: 2공구(T/K)   (| 는 줄바꿈)">
+      <label>선 아래 글자</label><span><input type="text" id="dBot" placeholder="예: L=21.280km|10.170km(신설)" style="flex:1;min-width:120px"><button id="dLen" title="그린 선의 길이를 아래 글자에 넣기">길이 넣기</button></span>
+      <label>글자</label><span><input type="number" id="dTSize" value="15" min="6" max="80" title="크기"><select id="dTWeight"></select><input type="color" id="dTColor" value="#e60012"></span>
+      <label>글꼴</label><select id="dTFont"></select>
+      <label>글자 꾸밈</label><span><label><input type="checkbox" id="dTHalo" checked>흰 외곽선</label><label><input type="checkbox" id="dTAlong" checked>선 방향 따라 기울이기</label></span>
     </div>
     <div class="row" style="margin-top:6px"><label><input type="checkbox" id="drawShowAll" checked> 선 모두 보이기</label><span class="hint" id="drawCount"></span></div>
     <div id="drawList"></div>
@@ -355,7 +360,13 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
       </details>
       <p class="hint" id="egis_msg"></p>
     </div>
-    <div class="src soon"><div class="srch"><b>산림청 · 산줄기</b><span class="badge gray">연결 예정</span><div class="hint">백두대간·정맥 등</div></div></div>
+    <div class="src" id="keiBox">
+      <div class="srch"><b>KEI 지역환경정보시스템 · 산줄기</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="hint">신산경표 산줄기 (박성태, 2010) · 한국환경연구원 GeoServer WFS</div></div>
+      <details class="thgrp" open><summary><input type="checkbox" id="kei_all" title="전체 켜기/끄기"> 백두대간 및 산줄기 <small class="hint" id="kei_cnt"></small></summary>
+        <div id="keiList"></div>
+      </details>
+      <p class="hint" id="kei_msg"></p>
+    </div>
     <p class="hint">지도를 옮기면 그 범위도 이어서 받아옵니다. 브이월드 주제도는 시군구가 보일 정도(1:10만 안팎), 생태자연도는 읍면동이 보일 정도로 확대해야 받아옵니다.</p>
   </div>
   <div class="sec">
@@ -868,8 +879,8 @@ $('#dkeyShow').onclick = () => { const i = $('#dkey'); i.type = i.type === 'pass
 function applyDataKey(){ store.set('dataGoKey', dataKey); ecoFetched = []; updateEcoBox(); updateEco(); }
 $('#vkeySave').onclick = () => {
   vwKey = $('#vkey').value.trim(); dataKey = $('#dkey').value.trim();
-  const nr = $('#relayIn').value.trim(); if (nr !== relayUrl){ relayUrl = nr; store.set('relayUrl', relayUrl); layers.forEach(o => { if (o.src && o.src.kind === 'egis'){ o._fetched = []; o.src.err = ''; } }); }
-  applyKeyChange(); applyDataKey(); updateEgis(); buildEgisList(); $('#settings').hidden = true;
+  const nr = $('#relayIn').value.trim(); if (nr !== relayUrl){ relayUrl = nr; store.set('relayUrl', relayUrl); layers.forEach(o => { if (o.src && (o.src.kind === 'egis' || o.src.kind === 'kei')){ o._fetched = []; o.src.err = ''; } }); }
+  applyKeyChange(); applyDataKey(); updateEgis(); buildEgisList(); buildKeiList(); $('#settings').hidden = true;
 };
 $('#vkeyDel').onclick = () => { if (!confirm('저장된 키(브이월드·공공데이터포털)를 모두 지울까요?')) return; vwKey = ''; dataKey = ''; $('#vkey').value = ''; $('#dkey').value = ''; applyKeyChange(); applyDataKey(); };
 function applyAttr(){ const c = map.attributionControl.getContainer(); if (c) c.style.display = $('#attrOn').checked ? '' : 'none'; store.set('attrOn', $('#attrOn').checked ? '1' : '0'); }
@@ -1564,7 +1575,15 @@ const EGIS = [
   ['eg_air', '대기환경규제지역', 'polygon', '#FFB300', { tn: 'me:ca_plg_air_restrict' }],
   ['eg_smallriver', '소하천구역', 'polygon', '#7986CB', { tn: 'EGIS:K33UJC100', ows: true, minZ: 11 }]
 ];
-const egisDef = id => EGIS.find(x => x[0] === id);
+const KEI = [
+  ['kei_l1', '백두대간', 'line', '#4E342E', { tn: 'keilocal:mtridge_l1_pl', nm: 'mbsnnm', w: 3.5, minZ: 6 }],
+  ['kei_l2', '정맥', 'line', '#795548', { tn: 'keilocal:mtridge_l2_pl', nm: 'mbsnnm', w: 2.5, minZ: 7 }],
+  ['kei_l3', '기맥', 'line', '#A1887F', { tn: 'keilocal:mtridge_l3_pl', nm: 'sbsnnm', w: 2, minZ: 8 }],
+  ['kei_l4', '지맥', 'line', '#8D6E63', { tn: 'keilocal:mtridge_l4_pl', nm: 'sbsnnm', w: 1.5, minZ: 9 }]
+];
+const keiUrl = (q, b) => 'https://eiaresearch.kei.re.kr/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application/json&srsName=EPSG:4326'
+  + `&typename=${q.tn}&bbox=${b.join(',')},EPSG:4326`;
+const egisDef = id => EGIS.find(x => x[0] === id) || KEI.find(x => x[0] === id);
 const egisLayerOf = id => layers.find(o => o.src && o.src.kind === 'egis' && o.src.id === id);
 const snap02 = b => { const s = 0.02; return [Math.floor(b[0] / s) * s, Math.floor(b[1] / s) * s, Math.ceil(b[2] / s) * s, Math.ceil(b[3] / s) * s].map(v => +v.toFixed(4)); };
 function egisUrl(q, b){
@@ -1592,20 +1611,21 @@ async function egisFetch(url){
 let egisBusy = false;
 async function updateEgis(){
   if (egisBusy) return;
-  const on = layers.filter(o => o.src && o.src.kind === 'egis' && o.visible); if (!on.length) return;
+  const on = layers.filter(o => o.src && (o.src.kind === 'egis' || o.src.kind === 'kei') && o.visible); if (!on.length) return;
   egisBusy = true;
   try {
     for (const o of on){
       const q = egisDef(o.src.id)[4];
-      if (map.getZoom() < (q.minZ || 8)){ $('#egis_msg').textContent = '조금 더 확대하면 받아옵니다.'; continue; }
+      const msgEl = o.src.kind === 'kei' ? $('#kei_msg') : $('#egis_msg');
+      if (map.getZoom() < (q.minZ || 8)){ msgEl.textContent = '조금 더 확대하면 받아옵니다.'; continue; }
       const v = map.getBounds().pad(0.05), b = snap02([v.getWest(), v.getSouth(), v.getEast(), v.getNorth()]);
       const lb = L.latLngBounds([b[1], b[0]], [b[3], b[2]]);
       o._fetched = o._fetched || [];
       if (o._fetched.some(fb => fb.contains(lb))) continue;
       o._keys = o._keys || new Set(o.gj.features.map(f => f._k).filter(Boolean));
-      $('#egis_msg').textContent = `'${o.name}' 받는 중…`;
+      msgEl.textContent = `'${o.name}' 받는 중…`;
       try {
-        const j = await egisFetch(egisUrl(q, b));
+        const j = await egisFetch(o.src.kind === 'kei' ? keiUrl(q, b) : egisUrl(q, b));
         let added = 0;
         (j.features || []).forEach((f, i) => {
           if (!f.geometry) return;
@@ -1615,17 +1635,17 @@ async function updateEgis(){
         });
         o._fetched.push(lb); o.src.err = '';
         if (added){ renderLayer(o); refreshOrder(); }
-        $('#egis_msg').textContent = '';
+        msgEl.textContent = '';
       } catch(e){
         o.src.err = e.message;
-        $('#egis_msg').innerHTML = e.needRelay
-          ? '환경공간정보서비스는 <b>중계 서버</b>를 거쳐야 받을 수 있습니다. ⚙ 설정에 중계 서버 주소를 넣어주세요.'
+        msgEl.innerHTML = e.needRelay
+          ? '이 자료는 <b>중계 서버</b>를 거쳐야 받을 수 있습니다. ⚙ 설정에 중계 서버 주소를 넣어주세요.'
           : `'${esc(o.name)}' 자료를 받지 못했습니다: ${esc(e.message)}`;
         break;
       }
     }
   } finally {
-    egisBusy = false; buildEgisList();
+    egisBusy = false; buildEgisList(); buildKeiList();
     $$('#themeLayerList .lyr').forEach(d => { const o = layerById(+d.dataset.lid); const fc = d.querySelector('.fcount'); if (o && fc) fc.textContent = o.gj.features.length + '개'; });
   }
 }
@@ -1647,6 +1667,29 @@ function buildEgisList(){
   $('#egis_cnt').textContent = `(${onCnt}/${EGIS.length})`;
   $('#egis_all').checked = onCnt === EGIS.length; $('#egis_all').indeterminate = onCnt > 0 && onCnt < EGIS.length;
 }
+function toggleKei(id, on, batch){
+  let o = layers.find(x => x.src && x.src.kind === 'kei' && x.src.id === id); const [, name, type, color, q] = egisDef(id);
+  if (!o){
+    if (!on) return;
+    const lb = Object.assign(labelDefaults(), { field: '', textColor: color, size: 12 });
+    o = addLayer(name, { type: 'FeatureCollection', features: [] }, { type, style: { symbols: [S('stroke', { color, w: q.w, dash: 'solid' })], label: lb }, src: { kind: 'kei', id }, quiet: true });
+  } else o.visible = on;
+  if (!batch){ refreshOrder(); buildPanel(); renderLegendAll(); buildKeiList(); if (on) updateEgis(); }
+}
+function buildKeiList(){
+  const box = $('#keiList'); box.innerHTML = ''; let onCnt = 0;
+  KEI.forEach(([id, name, type, color, q]) => {
+    const o = layers.find(x => x.src && x.src.kind === 'kei' && x.src.id === id), on = !!(o && o.visible); if (on) onCnt++;
+    const d = document.createElement('div'); d.className = 'thi' + (o && o.src.err ? ' err' : '');
+    d.innerHTML = `<input type="checkbox" id="kei_${id}" ${on ? 'checked' : ''}><span class="sw" style="height:0;border-width:${Math.ceil(q.w / 1.2)}px 0 0;border-color:${color};width:16px"></span><label for="kei_${id}">${esc(name)}</label>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
+    d.querySelector('input').onchange = e => toggleKei(id, e.target.checked);
+    box.appendChild(d);
+  });
+  $('#kei_cnt').textContent = `(${onCnt}/${KEI.length})`;
+  $('#kei_all').checked = onCnt === KEI.length; $('#kei_all').indeterminate = onCnt > 0 && onCnt < KEI.length;
+}
+$('#kei_all').onclick = e => e.stopPropagation();
+$('#kei_all').onchange = e => { KEI.forEach(([id]) => toggleKei(id, e.target.checked, true)); refreshOrder(); buildPanel(); renderLegendAll(); buildKeiList(); if (e.target.checked) updateEgis(); };
 $('#egis_all').onclick = e => e.stopPropagation();
 $('#egis_all').onchange = e => { EGIS.forEach(([id]) => toggleEgis(id, e.target.checked, true)); refreshOrder(); buildPanel(); renderLegendAll(); buildEgisList(); if (e.target.checked) updateEgis(); };
 $('#relayTest').onclick = async () => {
@@ -1794,7 +1837,7 @@ function deleteLayers(list){
     legendItems = legendItems.filter(x => x.lid !== o.id);
   });
   if (list.some(o => o.src && o.src.kind === 'ecowfs')){ ecoFetched = []; ecoSeen.clear(); }
-  refreshOrder(); buildPanel(); renderLegendAll(); buildThemeList(); buildEcoList(); buildEgisList();
+  refreshOrder(); buildPanel(); renderLegendAll(); buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList();
 }
 function selToolbar(box, theme){
   const grp = layers.filter(o => !!o.src === theme); if (!grp.length) return;
@@ -1863,7 +1906,7 @@ function buildPanel(){
       else o._sel = val;
       lastSelId = o.id; buildPanel();
     };
-    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); buildEcoList(); buildEgisList(); if (o.visible){ updateThemes(); updateEco(); updateEgis(); } } };
+    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); if (o.visible){ updateThemes(); updateEco(); updateEgis(); } } };
     d.querySelector('[data-k="name"]').onchange = e => {
       const it = legendItems.find(x => x.lid === o.id);
       if (it && it.label === o.name) it.label = e.target.value;
@@ -2326,11 +2369,39 @@ const DRAW_PRE = {
   arrow:  { color: '#e60012', w: 3, dash: 'solid', start: 'none', end: 'arrow', cap: 14, halo: true },
   line:   { color: '#e60012', w: 2.5, dash: 'solid', start: 'none', end: 'none', cap: 12, halo: false }
 };
+$('#dTWeight').innerHTML = opts(WEIGHTS, 700); $('#dTFont').innerHTML = fontOptions('Malgun Gothic');
+const DRAW_TXT = { top: '', bot: '', tSize: 15, tWeight: 700, tColor: '#e60012', tFont: 'Malgun Gothic', tHalo: true, tAlong: true };
+Object.keys(DRAW_PRE).forEach(k => { DRAW_PRE[k] = Object.assign({}, DRAW_TXT, DRAW_PRE[k], { tColor: DRAW_PRE[k].color }); });
 const draws = []; let drawSeq = 0, selDraw = null, drawing = null;
 let drawDraft = Object.assign({}, DRAW_PRE.dim);
 const drawGroup = L.layerGroup().addTo(map), vtxGroup = L.layerGroup().addTo(map);
-function drawFromForm(){ return { color: $('#dColor').value, w: +$('#dW').value || 2, dash: $('#dDash').value, start: $('#dStart').value, end: $('#dEnd').value, cap: +$('#dCap').value || 12, halo: $('#dHalo').checked }; }
-function formFromDraw(d){ $('#dColor').value = d.color; $('#dW').value = d.w; $('#dDash').value = d.dash; $('#dStart').value = d.start; $('#dEnd').value = d.end; $('#dCap').value = d.cap; $('#dHalo').checked = !!d.halo; }
+function drawFromForm(){ return { color: $('#dColor').value, w: +$('#dW').value || 2, dash: $('#dDash').value, start: $('#dStart').value, end: $('#dEnd').value, cap: +$('#dCap').value || 12, halo: $('#dHalo').checked,
+  top: $('#dTop').value, bot: $('#dBot').value, tSize: +$('#dTSize').value || 15, tWeight: +$('#dTWeight').value, tColor: $('#dTColor').value, tFont: $('#dTFont').value, tHalo: $('#dTHalo').checked, tAlong: $('#dTAlong').checked }; }
+function formFromDraw(d){ d = Object.assign({}, DRAW_TXT, d);
+  $('#dColor').value = d.color; $('#dW').value = d.w; $('#dDash').value = d.dash; $('#dStart').value = d.start; $('#dEnd').value = d.end; $('#dCap').value = d.cap; $('#dHalo').checked = !!d.halo;
+  $('#dTop').value = d.top || ''; $('#dBot').value = d.bot || ''; $('#dTSize').value = d.tSize; $('#dTWeight').value = d.tWeight; $('#dTColor').value = d.tColor; $('#dTFont').value = d.tFont; $('#dTHalo').checked = !!d.tHalo; $('#dTAlong').checked = !!d.tAlong; }
+/* 선 가운데(길이 기준)에 위·아래 글자 배치 */
+function lineTextMarkers(d){
+  const out = []; if (!d.top && !d.bot) return out;
+  const P = d.pts.map(ll => map.latLngToContainerPoint(ll)); let tot = 0; const seg = [];
+  for (let i = 1; i < P.length; i++){ const l = P[i].distanceTo(P[i - 1]); seg.push(l); tot += l; }
+  if (!tot) return out;
+  let acc = 0, k = 0; while (k < seg.length - 1 && acc + seg[k] < tot / 2){ acc += seg[k]; k++; }
+  const t = seg[k] ? (tot / 2 - acc) / seg[k] : 0, a = P[k], b = P[k + 1];
+  const mid = L.point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+  let ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+  if (ang > 90) ang -= 180; if (ang <= -90) ang += 180;
+  if (!d.tAlong) ang = 0;
+  const r = ang * Math.PI / 180, nx = Math.sin(r), ny = -Math.cos(r);   // 글자 기준 '위쪽' 방향
+  [['top', 1], ['bot', -1]].forEach(([key, sgn]) => {
+    const text = String(d[key] || '').trim(); if (!text) return;
+    const st = Object.assign(tsDefaults('text'), { text, size: d.tSize, weight: d.tWeight, font: d.tFont, textColor: d.tColor, haloColor: '#ffffff', haloW: d.tHalo ? 2 : 0, rotate: ang });
+    const sz = measureLabel(Object.assign({}, st, { rotate: 0 })), dist = d.w / 2 + 4 + sz[1] / 2;
+    const c = map.containerPointToLatLng([mid.x + nx * dist * sgn, mid.y + ny * dist * sgn]);
+    out.push(L.marker(c, { interactive: false, keyboard: false, icon: L.divIcon({ className: 'ann', html: annHtml(st), iconSize: null }) }));
+  });
+  return out;
+}
 /* 화면 픽셀 기준으로 끝 모양을 만들고 경위도로 되돌림 (확대·축소해도 크기 일정) */
 function capShapes(d, pts){
   const P = pts.map(ll => map.latLngToContainerPoint(ll)), out = { trimS: 0, trimE: 0, shapes: [] };
@@ -2378,6 +2449,7 @@ function renderDraw(d){
     if (sh.t === 'line') g.addLayer(L.polyline(sh.ll, Object.assign({}, base, { color: d.color, weight: d.w })));
     if (sh.t === 'dot') g.addLayer(L.circleMarker(sh.ll, Object.assign({}, base, { radius: sh.r, stroke: false, fill: true, fillColor: d.color, fillOpacity: 1 })));
   });
+  lineTextMarkers(d).forEach(m => g.addLayer(m));
   /* 클릭하기 쉽게 투명한 굵은 선을 위에 깔아 둠 */
   const hit = L.polyline(d.pts, { renderer: drawRenderer, interactive: true, color: '#000', opacity: 0, weight: Math.max(12, d.w + 8), bubblingMouseEvents: false });
   hit.on('click', e => { if (drawing){ addDrawPoint(e); return; } L.DomEvent.stop(e); selectDraw(d); });
@@ -2409,7 +2481,7 @@ function deselectDraw(){
 }
 function delDraw(d){ if (d.group) drawGroup.removeLayer(d.group); draws.splice(draws.indexOf(d), 1); if (selDraw === d) deselectDraw(); else buildDrawList(); }
 function addDraw(d, skip){
-  d = Object.assign({}, DRAW_PRE.line, { visible: true }, d); d.id = ++drawSeq; d.pts = d.pts.map(p => Array.isArray(p) ? p : [p.lat, p.lng]);
+  d = Object.assign({}, DRAW_PRE.line, { visible: true }, d); d.id = ++drawSeq; delete d.group; d.pts = d.pts.map(p => Array.isArray(p) ? p : [p.lat, p.lng]);
   draws.push(d); renderDraw(d); if (!skip) buildDrawList(); return d;
 }
 const CAP_ICON = { none: '', arrow: '▶', open: '>', arrowbar: '▶|', bar: '|', dot: '●' };
@@ -2420,7 +2492,7 @@ function buildDrawList(){
     const el = document.createElement('div'); el.className = 'ai' + (d === selDraw ? ' sel' : '');
     const sym = (CAP_ICON[d.start] || '').split('').reverse().join('').replace('▶', '◀') + '──' + (CAP_ICON[d.end] || '');
     el.innerHTML = `<input type="checkbox" ${d.visible ? 'checked' : ''} title="보이기"><span class="tp" style="color:${d.color}">${esc(sym)}</span>
-      <span class="at">선 ${draws.length - k} · 점 ${d.pts.length}개</span><button data-a="zoom" title="이 선으로 이동">◎</button><button data-a="del" title="삭제">✕</button>`;
+      <span class="at">${d.top ? esc(String(d.top).replace(/\|/g, ' ')) : '선 ' + (draws.length - k)} · 점 ${d.pts.length}개</span><button data-a="zoom" title="이 선으로 이동">◎</button><button data-a="del" title="삭제">✕</button>`;
     el.querySelector('input').onclick = e => { e.stopPropagation(); d.visible = e.target.checked; renderDraw(d); };
     el.querySelector('[data-a="zoom"]').onclick = e => { e.stopPropagation(); map.fitBounds(L.latLngBounds(d.pts), { padding: [60, 60], maxZoom: map.getZoom() }); selectDraw(d); };
     el.querySelector('[data-a="del"]').onclick = e => { e.stopPropagation(); if (confirm('이 선을 지울까요?')) delDraw(d); };
@@ -2428,10 +2500,16 @@ function buildDrawList(){
     box.appendChild(el);
   });
 }
-['#dColor', '#dDash', '#dStart', '#dEnd', '#dHalo'].forEach(s => $(s).addEventListener('change', onDrawForm));
-['#dW', '#dCap'].forEach(s => $(s).addEventListener('input', onDrawForm));
+['#dColor', '#dDash', '#dStart', '#dEnd', '#dHalo', '#dTWeight', '#dTColor', '#dTFont', '#dTHalo', '#dTAlong'].forEach(s => $(s).addEventListener('change', onDrawForm));
+['#dW', '#dCap', '#dTop', '#dBot', '#dTSize'].forEach(s => $(s).addEventListener('input', onDrawForm));
+$('#dLen').onclick = () => {
+  if (!selDraw){ alert('먼저 길이를 넣을 선을 눌러 선택해 주세요.'); return; }
+  let m = 0; for (let i = 1; i < selDraw.pts.length; i++) m += map.distance(selDraw.pts[i - 1], selDraw.pts[i]);
+  const txt = m >= 1000 ? `L=${(m / 1000).toFixed(3)}km` : `L=${Math.round(m)}m`;
+  $('#dBot').value = $('#dBot').value.trim() ? $('#dBot').value.trim() + '|' + txt : txt; onDrawForm();
+};
 function onDrawForm(){ const f = drawFromForm(); if (selDraw){ Object.assign(selDraw, f); renderDraw(selDraw); buildDrawList(); } else drawDraft = f; }
-$$('.dpre').forEach(b => b.onclick = () => { formFromDraw(DRAW_PRE[b.dataset.pre]); onDrawForm(); });
+$$('.dpre').forEach(b => b.onclick = () => { const keep = { top: $('#dTop').value, bot: $('#dBot').value }; formFromDraw(Object.assign({}, DRAW_PRE[b.dataset.pre], keep)); onDrawForm(); });
 $('#drawShowAll').onchange = renderAllDraws;
 $('#drawDeselect').onclick = deselectDraw;
 /* 그리기 */
@@ -2464,6 +2542,7 @@ function updateTemp(cur){
   else drawTemp.setLatLngs(pts);
 }
 function finishDrawing(){
+  drawDraft = Object.assign({}, drawDraft, drawFromForm());
   if (!drawing) return;
   const pts = drawing.pts.filter((p, i, a) => i === 0 || map.latLngToContainerPoint(p).distanceTo(map.latLngToContainerPoint(a[i - 1])) > 2);
   setDrawing(false);
@@ -2827,7 +2906,7 @@ async function loadProject(d){
   Object.keys(ADM).forEach(lv => { admDrawn[lv] = -1; });
   ecoFetched = []; ecoSeen.clear();
   layers.filter(o => o.src && o.src.kind === 'ecowfs').forEach(o => o.gj.features.forEach((f, i) => ecoSeen.add('saved' + o.id + '_' + i)));
-  updateAdmin(); buildThemeList(); updateThemes(); updateEcoBox(); buildEgisList(); updateEgis();
+  updateAdmin(); buildThemeList(); updateThemes(); updateEcoBox(); buildEgisList(); buildKeiList(); updateEgis();
   if (mapLocked){ lockRatio = null; applyLockRatio(); }
 }
 
@@ -2849,6 +2928,7 @@ updateKeyState();
 buildDrawList();
 updateEcoBox();
 buildEgisList();
+buildKeiList();
 buildBaseList();
 applyAttr();
 updateHiddenRow();
