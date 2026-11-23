@@ -228,7 +228,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.8</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.9</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -1361,6 +1361,15 @@ const THEMES = [
     ['LT_C_UQ111', '도시지역', 'polygon', '#f4a6a6'], ['LT_C_UQ112', '관리지역', 'polygon', '#f2cf7e'],
     ['LT_C_UQ113', '농림지역', 'polygon', '#b8e08a'], ['LT_C_UQ114', '자연환경보전지역', 'polygon', '#5fae62'],
     ['LT_C_UD801', '개발제한구역', 'polygon', '#8bc34a']]],
+  ['토지이용계획 · 도시계획', [
+    ['LT_C_UPISUQ161', '지구단위계획구역', 'polygon', '#7b1fa2'], ['LT_C_UPISUQ171', '개발행위허가제한지역', 'polygon', '#c2185b'],
+    ['LT_C_UQ121', '경관지구', 'polygon', '#26a69a'], ['LT_C_UQ129', '개발진흥지구', 'polygon', '#ef6c00']]],
+  ['도시계획시설', [
+    ['LT_C_UPISUQ151', '도로', 'polygon', '#9e9e9e'], ['LT_C_UPISUQ152', '교통시설', 'polygon', '#5c6bc0'],
+    ['LT_C_UPISUQ153', '공간시설 (공원·녹지 등)', 'polygon', '#43a047'], ['LT_C_UPISUQ154', '유통·공급시설', 'polygon', '#8d6e63'],
+    ['LT_C_UPISUQ155', '공공·문화체육시설', 'polygon', '#ec407a'], ['LT_C_UPISUQ156', '방재시설', 'polygon', '#29b6f6'],
+    ['LT_C_UPISUQ157', '보건위생시설', 'polygon', '#ab47bc'], ['LT_C_UPISUQ158', '환경기초시설', 'polygon', '#f57c00'],
+    ['LT_C_UPISUQ159', '기타 기반시설', 'polygon', '#78909c']]],
   ['산업단지', [
     ['LT_C_DAMDAN', '산업단지 경계', 'polygon', '#555555'], ['LT_C_DAMYOJ', '단지시설용지', 'polygon', '#9e9e9e'],
     ['LT_C_DAMYOD', '단지용도지역', 'polygon', '#bcaaa4'], ['LT_C_DAMYUCH', '단지유치업종', 'polygon', '#90a4ae']]],
@@ -2657,7 +2666,7 @@ document.addEventListener('keydown', e => {
 const FIELD_KO = {
   mbsnnm: '산줄기 이름', sbsnnm: '산줄기 이름', eczm_grad: '생태자연도 등급', park_name: '공원 이름', uname: '지역·지구 이름', alias: '명칭', remark: '비고',
   sigg_name: '시군구', sig_kor_nm: '시군구', emd_kor_nm: '읍면동', ctp_kor_nm: '시도', full_nm: '행정구역', dyear: '지정 연도', dnum: '지정 번호',
-  wl_nm: '습지 이름', rivnm: '하천 이름', rivcd: '하천 코드', name: '이름', district: '구분', area: '면적', layer: 'CAD 레이어', text: '글자'
+  wl_nm: '습지 이름', rivnm: '하천 이름', dgm_nm: '도면·시설 이름', dgm_ar: '면적', ntfdate: '고시일', sido_name: '시도', rivcd: '하천 코드', name: '이름', district: '구분', area: '면적', layer: 'CAD 레이어', text: '글자'
 };
 const NAME_KEYS = ['rivnm', 'name', 'park_name', 'mbsnnm', 'sbsnnm', 'wl_nm', 'full_nm', 'sig_kor_nm', 'emd_kor_nm', 'ctp_kor_nm', 'uname', 'alias', 'dgm_nm', 'district', 'remark', 'text'];
 function guessName(o, p){
