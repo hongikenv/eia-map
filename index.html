@@ -210,6 +210,19 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .thi .sw{width:14px;height:12px;border:1.5px solid;flex:none}
 .thi small{color:#889}
 .thi.err label{color:#b33}
+.thi label.tn{cursor:pointer;user-select:none;-webkit-user-select:none}
+.thi label.tn:hover{text-decoration:underline dotted}
+.thi.pinned label.tn{font-weight:600;color:#0a5a2e}
+.thi .pin{color:#0a5a2e!important;font-weight:600;background:#e3f3e8;border-radius:3px;padding:0 4px}
+.pinhelp{background:#eef6f0;border:1px solid #cfe5d6;border-radius:4px;padding:6px 8px;margin:6px 0;font-size:12px;color:#244}
+.lyr .drag{cursor:grab;color:#889;font-size:15px;padding:0 3px;user-select:none;flex:none}
+.lyr .drag:active{cursor:grabbing}
+.lyr.dragging{opacity:.45}
+.lyr.drop-before{box-shadow:0 -3px 0 #0a64d0}
+.lyr.drop-after{box-shadow:0 3px 0 #0a64d0}
+.lyr .badge.src{background:#e8eef8;color:#2a4a7a}
+#tabLyrN{opacity:.75;font-weight:400}
+textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:inherit;min-height:38px}
 .badge{font-size:10px;color:#fff;background:#3a7bd5;border-radius:3px;padding:0 4px;flex:none}
 .mbox{background:#fff;border-radius:6px;padding:16px 18px;min-width:340px;max-width:520px;max-height:85vh;overflow:auto}
 .mbox h3{margin:0 0 10px;font-size:15px}
@@ -228,8 +241,8 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v1.9</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
-  <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 출력</button></div>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.0</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 레이어 <small id="tabLyrN"></small></button><button class="tab" data-sheet="4">④ 출력</button></div>
   <div class="sheet" id="sheet1">
 
   <div class="sec">
@@ -241,34 +254,17 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>2. 행정구역</h2>
-    <table class="adm-t">
-      <tr><th>구분</th><th colspan="2">경계선</th><th colspan="2">이름</th></tr>
-      <tr><td>시도</td><td><input type="checkbox" class="admB" value="lt_c_adsido"></td><td><button class="stb" data-ed="line" data-lv="lt_c_adsido">스타일</button></td>
-        <td><input type="checkbox" class="admN" value="lt_c_adsido"></td><td><button class="stb" data-ed="name" data-lv="lt_c_adsido">스타일</button></td></tr>
-      <tr><td>시군구</td><td><input type="checkbox" class="admB" value="lt_c_adsigg"></td><td><button class="stb" data-ed="line" data-lv="lt_c_adsigg">스타일</button></td>
-        <td><input type="checkbox" class="admN" value="lt_c_adsigg"></td><td><button class="stb" data-ed="name" data-lv="lt_c_adsigg">스타일</button></td></tr>
-      <tr><td>읍면동</td><td><input type="checkbox" class="admB" value="lt_c_ademd"></td><td><button class="stb" data-ed="line" data-lv="lt_c_ademd">스타일</button></td>
-        <td><input type="checkbox" class="admN" value="lt_c_ademd"></td><td><button class="stb" data-ed="name" data-lv="lt_c_ademd">스타일</button></td></tr>
-    </table>
-    <div id="admEd"></div>
-    <div class="row" id="admHiddenRow" style="display:none"><span class="hint" id="admHiddenTxt"></span><button id="admShowAll2">숨긴 이름 모두 다시 보이기</button></div>
-    <div class="row"><button id="admResetPos">옮긴 이름 위치 되돌리기</button><button id="anToAnn">화면의 이름을 '글자'로 옮기기</button></div>
-    <p class="hint">출처: 브이월드 2D데이터 API (행정구역 시도·시군구·읍면동, 실시간 조회)<br>이름은 자기 구역 안에서, 켜진 경계선에 닿지 않는 자리에만 표시됩니다. 끌어서 옮기고, 우클릭하면 숨깁니다.</p>
-  </div>
-
-  <div class="sec">
-    <h2>3. 사업지구 · 레이어 올리기</h2>
+    <h2>2. 사업지구 · 레이어 올리기</h2>
     <div id="drop">SHP(zip), DXF, GeoJSON 파일을<br>여기에 끌어놓거나 클릭해서 선택
       <input type="file" id="fileIn" multiple accept=".zip,.shp,.dbf,.prj,.cpg,.shx,.dxf,.geojson,.json" hidden></div>
     <div class="row"><label>SHP 글자 인코딩</label>
       <select id="encSel"><option value="auto">자동 판별</option><option value="euc-kr">EUC-KR (CP949)</option><option value="utf-8">UTF-8</option></select></div>
-    <p class="hint">· SHP는 zip으로 묶거나 shp/dbf/prj를 함께 선택하세요. · DWG는 DXF로 저장해서 올려주세요. · 목록 위쪽 레이어가 지도에서 위에 그려집니다. 주제도(② 시트)보다는 항상 위에 그려집니다.</p>
-    <div id="layerList"></div>
+    <p class="hint">· SHP는 zip으로 묶거나 shp/dbf/prj를 함께 선택하세요. · DWG는 DXF로 저장해서 올려주세요. · 올린 레이어는 <b>③ 레이어</b> 시트에 들어가고, 거기서 순서·색·선·이름 표시를 정합니다.</p>
+    <div class="row"><button class="goLyr">③ 레이어 시트로 →</button></div>
   </div>
 
   <div class="sec">
-    <h2>4. 버퍼 · 대상지역 설정</h2>
+    <h2>3. 버퍼 · 대상지역 설정</h2>
     <div class="grid">
       <label>기준</label><select id="bufSrc"></select>
       <label>거리</label><span><input type="text" id="bufDist" value="500, 1000" style="width:120px">m <small class="hint">쉼표로 여러 개</small></span>
@@ -276,11 +272,11 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
       <label>모양</label><select id="bufStyle"><option value="eia">대상지역 설정도 (바깥 실선 · 안쪽 파선)</option><option value="fill">반투명 채움 + 실선</option><option value="line">테두리만 (실선)</option></select>
     </div>
     <div class="row"><button id="bufMake" class="pri">버퍼 만들기</button><span class="hint" id="bufMsg"></span></div>
-    <p class="hint">만든 버퍼는 3번 레이어 목록에 '○○ 반경 1km'처럼 들어갑니다. 색·선·채움은 다른 레이어처럼 바꿀 수 있고, 범례에도 들어갑니다.</p>
+    <p class="hint">만든 버퍼는 ③ 레이어 시트에 '○○ 반경 1km'처럼 들어갑니다. 색·선·채움은 다른 레이어처럼 바꿀 수 있고, 범례에도 들어갑니다.</p>
   </div>
 
   <div class="sec">
-    <h2>5. 글자 넣기</h2>
+    <h2>4. 글자 넣기</h2>
     <div class="row"><button id="annPlace" class="pri">＋ 지도 클릭해서 넣기</button><button id="annDeselect">선택 해제</button></div>
     <div id="annFormTitle">새 글자 기본 설정</div>
     <div id="annForm"></div>
@@ -290,7 +286,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>6. 선 · 화살표 그리기</h2>
+    <h2>5. 선 · 화살표 그리기</h2>
     <div class="row"><button id="drawStart" class="pri">＋ 선 그리기</button><button id="drawDeselect">선택 해제</button></div>
     <div class="row"><span class="hint">빠른 설정</span>
       <button class="dpre" data-pre="dim" title="양쪽 화살표">⟷ 구간선</button><button class="dpre" data-pre="dimbar" title="양 끝 화살표+막대">|⟷| 구간선</button>
@@ -312,13 +308,14 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
     <div id="drawList"></div>
     <p class="hint">지도를 클릭해 점을 찍고 <b>더블클릭(또는 Enter)</b>으로 끝냅니다. <b>Shift</b>를 누른 채 찍으면 수평·수직·45°로 곧게 그어집니다. Backspace: 마지막 점 취소 · Esc: 그리기 취소<br>
       선을 누르면 위 설정으로 고칠 수 있고, 꼭짓점(■)을 끌어 모양을 바꿉니다. 꼭짓점 우클릭: 점 삭제 · Delete 키: 선 삭제<br>
-      글자는 5. 글자 넣기의 '채운 박스' 등으로 선 끝에 붙이면 위치도 설명 상자가 됩니다.</p>
+      글자는 4. 글자 넣기의 '채운 박스' 등으로 선 끝에 붙이면 위치도 설명 상자가 됩니다.</p>
   </div>
 
   <div class="sec">
-    <h2>7. 범례</h2>
+    <h2>6. 범례</h2>
+    <div class="row"><label><input type="checkbox" id="legMaster"> 범례 항목 전체 넣기 / 빼기</label><span class="hint" id="legCnt"></span></div>
     <div id="legItems"></div>
-    <div class="row"><button id="legAdd">＋ 직접 항목 추가</button></div>
+    <div class="row"><button id="legAdd">＋ 직접 항목 추가</button><button id="legAllOn">모두 넣기</button><button id="legAllOff">모두 빼기</button></div>
     <details><summary>범례 스타일</summary>
       <div class="grid">
         <label>제목</label><span><input type="text" data-cfg="legend.title" style="width:110px"><label><input type="checkbox" data-cfg="legend.showTitle">표시</label></span>
@@ -334,13 +331,13 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
   </div>
 
   <div class="sec">
-    <h2>8. 지도 회전</h2>
+    <h2>7. 지도 회전</h2>
     <div class="row"><input type="range" id="rotR" min="-180" max="180" step="1" value="0" style="flex:1"><input type="number" id="rotN" min="-180" max="180" value="0">° <button id="rotZero">0°</button></div>
     <p class="hint" id="rotHint">사업지구 모양에 맞춰 지도를 돌릴 수 있습니다. 방위표는 자동으로 북쪽을 가리킵니다.</p>
   </div>
 
   <div class="sec">
-    <h2>9. 작업 파일</h2>
+    <h2>8. 작업 파일</h2>
     <div class="row"><button id="btnSaveProj">작업 저장(.json)</button><button id="btnLoadProj">작업 열기</button>
       <input type="file" id="projIn" accept=".json" hidden></div>
     <p class="hint">새 버전으로 바꾸기 전에는 꼭 작업 저장을 해두세요. 공유폴더에 두면 다른 사람도 열어서 이어 작업할 수 있습니다.</p>
@@ -349,8 +346,26 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 
   <div class="sheet" id="sheet2" hidden>
   <div class="sec">
-    <h2>1. 주제도 고르기</h2>
-    <div class="row"><button id="thAllOff">전체 해제</button><span class="hint">체크하면 지금 보이는 범위의 자료를 받아와 아래 2번 목록에 들어갑니다.</span></div>
+    <h2>1. 행정구역</h2>
+    <table class="adm-t">
+      <tr><th>구분</th><th colspan="2">경계선</th><th colspan="2">이름</th></tr>
+      <tr><td>시도</td><td><input type="checkbox" class="admB" value="lt_c_adsido"></td><td><button class="stb" data-ed="line" data-lv="lt_c_adsido">스타일</button></td>
+        <td><input type="checkbox" class="admN" value="lt_c_adsido"></td><td><button class="stb" data-ed="name" data-lv="lt_c_adsido">스타일</button></td></tr>
+      <tr><td>시군구</td><td><input type="checkbox" class="admB" value="lt_c_adsigg"></td><td><button class="stb" data-ed="line" data-lv="lt_c_adsigg">스타일</button></td>
+        <td><input type="checkbox" class="admN" value="lt_c_adsigg"></td><td><button class="stb" data-ed="name" data-lv="lt_c_adsigg">스타일</button></td></tr>
+      <tr><td>읍면동</td><td><input type="checkbox" class="admB" value="lt_c_ademd"></td><td><button class="stb" data-ed="line" data-lv="lt_c_ademd">스타일</button></td>
+        <td><input type="checkbox" class="admN" value="lt_c_ademd"></td><td><button class="stb" data-ed="name" data-lv="lt_c_ademd">스타일</button></td></tr>
+    </table>
+    <div id="admEd"></div>
+    <div class="row" id="admHiddenRow" style="display:none"><span class="hint" id="admHiddenTxt"></span><button id="admShowAll2">숨긴 이름 모두 다시 보이기</button></div>
+    <div class="row"><button id="admResetPos">옮긴 이름 위치 되돌리기</button><button id="anToAnn">화면의 이름을 '글자'로 옮기기</button></div>
+    <p class="hint">출처: 브이월드 2D데이터 API (행정구역 시도·시군구·읍면동, 실시간 조회)<br>이름은 자기 구역 안에서, 켜진 경계선에 닿지 않는 자리에만 표시됩니다. 끌어서 옮기고, 우클릭하면 숨깁니다.</p>
+  </div>
+
+  <div class="sec">
+    <h2>2. 주제도 고르기</h2>
+    <div class="row"><button id="thAllOff">미리보기 모두 끄기</button><span class="hint">체크하면 지도에 <b>미리보기</b>로 켜집니다.</span></div>
+    <div class="pinhelp">📌 이름을 <b>두 번 클릭</b>하면 도면에 쓸 <b>레이어로 잡혀</b> ③ 레이어 시트와 범례에 들어갑니다. 다시 두 번 클릭하면 미리보기로 돌아갑니다.</div>
     <div class="row"><label><input type="checkbox" id="identOn" checked> 지도를 클릭하면 그 자리 자료의 이름·속성 보기</label></div>
     <div class="src">
       <div class="srch"><b>브이월드 (국토교통부)</b><span class="badge">실시간</span><div class="hint">브이월드 2D데이터 API</div></div>
@@ -401,17 +416,25 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
     <p class="hint">지도를 옮기면 그 범위도 이어서 받아옵니다. 브이월드 주제도는 시군구가 보일 정도(1:10만 안팎), 생태자연도는 읍면동이 보일 정도로 확대해야 받아옵니다.</p>
   </div>
   <div class="sec">
-    <h2>2. 주제도 레이어 · 스타일</h2>
-    <p class="hint">위쪽 레이어가 지도에서 위에 그려집니다. 주제도는 항상 사업지구 등 직접 올린 레이어보다 아래에 그려집니다.</p>
-    <div id="themeLayerList"></div>
-  </div>
-  <div class="sec">
-    <p class="hint">여기서 켠 주제도도 범례에 자동으로 들어갑니다. 범례 내용은 ① 작업, 축척·방위표·출력은 ③ 출력 시트에서 합니다.</p>
-    <button id="goSheet1">① 작업 시트로</button> <button id="goSheet3">③ 출력 시트로</button>
+    <p class="hint">미리보기 주제도는 범례에 들어가지 않고, 레이어로 잡은 것보다 항상 아래에 그려집니다.</p>
+    <button id="goSheet1">① 작업 시트로</button> <button class="goLyr">③ 레이어 시트로</button>
   </div>
   </div>
 
   <div class="sheet" id="sheet3" hidden>
+  <div class="sec">
+    <h2>레이어 목록</h2>
+    <div class="row"><button id="lyrUpload" class="pri">＋ 파일 올리기 (SHP·DXF·GeoJSON)</button></div>
+    <p class="hint">직접 올린 파일, 버퍼, ② 주제도에서 두 번 클릭해 잡은 레이어가 모두 여기 모입니다.<br>
+      <b>⠿ 손잡이를 끌어서</b> 순서를 바꿉니다. 위쪽 레이어가 지도에서 위에 그려집니다. 행정구역 경계는 항상 맨 아래에 그려집니다.</p>
+    <div id="layerList"></div>
+  </div>
+  <div class="sec">
+    <button class="goSheet2">② 주제도 시트로</button> <button id="goSheet4">④ 출력 시트로</button>
+  </div>
+  </div>
+
+  <div class="sheet" id="sheet4" hidden>
   <div class="sec">
     <div class="lockbox">
       <b>🔒 출력 시트에서는 지도가 고정됩니다</b>
@@ -620,7 +643,7 @@ function labelInner(a){
     + `letter-spacing:${sp}em;color:${a.textColor};text-shadow:${haloCss(a.haloColor, a.haloW)};--bg:${rgba(a.bgColor, a.bgOp)};--bd:${a.borderColor};--gap:${Math.max(0, 0.2 + sp)}em`;
   const raw = String(a.text == null ? '' : a.text);
   const chars = [...raw.replace(/[\s|]/g, '')].map(c => `<b>${esc(c)}</b>`).join('');
-  const lines = a.vertical ? [...raw.replace(/\|/g, '')].map(esc).join('<br>') : esc(raw).replace(/\|/g, '<br>');
+  const lines = a.vertical ? [...raw.replace(/[|\r\n]/g, '')].map(esc).join('<br>') : esc(raw).replace(/\r?\n|\|/g, '<br>');
   switch (a.type){
     case 'admin': case 'ridge': return `<div class="a-${a.type}${a.vertical ? ' v' : ''}" style="${st};letter-spacing:0">${chars}</div>`;
     case 'dot': return `<div class="a-dot" style="${st}"><i></i><span>${lines}</span></div>`;
@@ -634,7 +657,7 @@ function annHtml(a){
 }
 function tsFormHtml(withText){
   return `<div class="grid">
-    ${withText ? '<label>글자</label><input type="text" data-ts="text" placeholder="비워두면 클릭할 때 물어봄 (| 는 줄바꿈)">' : ''}
+    ${withText ? '<label>글자</label><textarea data-ts="text" rows="2" placeholder="Enter로 줄바꿈. 비워두면 클릭할 때 물어봄"></textarea>' : ''}
     <label>모양</label><select data-ts="type">${opts(ANN_TYPES)}</select>
     <label>글꼴</label><select data-ts="font">${fontOptions()}</select>
     <label>크기·굵기</label><span><input type="number" data-ts="size" min="6" max="120"><select data-ts="weight">${opts(WEIGHTS)}</select></span>
@@ -1415,8 +1438,9 @@ function buildThemeList(){
       d.className = 'thi' + (o && o.src.err ? ' err' : '');
       d.innerHTML = `<input type="checkbox" id="th_${code}" ${o && o.visible ? 'checked' : ''}>
         <span class="sw" style="background:${rgba(col, type === 'point' ? 100 : type === 'line' ? 0 : 40)};border-color:${col};${type === 'point' ? 'border-radius:50%;width:11px;height:11px' : ''}"></span>
-        <label for="th_${code}">${esc(name)}</label>${o && o.src.err ? `<small title="${esc(o.src.err)}">⚠ 받기 실패</small>` : ''}`;
+        <label class="tn" title="두 번 클릭: 레이어로 잡기">${esc(name)}</label>${pinTag(o)}${o && o.src.err ? `<small title="${esc(o.src.err)}">⚠ 받기 실패</small>` : ''}`;
       d.querySelector('input').onchange = e => { toggleTheme(code, name, type, color, e.target.checked, true); afterThemeToggle(e.target.checked); };
+      bindPinRow(d, () => themeLayer(code), () => { toggleTheme(code, name, type, color, true, true); afterThemeToggle(true); });
       det.appendChild(d);
     });
     box.appendChild(det);
@@ -1432,7 +1456,7 @@ function toggleTheme(code, name, type, color, on, batch){
   } else o.visible = on;
   if (!batch) afterThemeToggle(on);
 }
-$('#thAllOff').onclick = () => { layers.forEach(o => { if (o.src) o.visible = false; }); afterThemeToggle(false); };
+$('#thAllOff').onclick = () => { layers.forEach(o => { if (o.src && !o.pinned) o.visible = false; }); afterThemeToggle(false); rebuildThemeLists(); };
 $('#thAdd').onclick = () => {
   const code = $('#thCode').value.trim().toUpperCase(), name = $('#thName').value.trim() || code, type = $('#thType').value;
   if (!/^[A-Z0-9_]+$/.test(code)){ alert('자료 코드를 확인해 주세요. (영문·숫자·_ 만, 예: LT_C_UQ114)'); return; }
@@ -1558,7 +1582,7 @@ async function updateEco(){
   } finally {
     ecoBusy = false;
     on.forEach(o => renderLayer(o)); refreshOrder();
-    buildEcoList(); $$('#themeLayerList .lyr').forEach(d => { const o = layerById(+d.dataset.lid); const fc = d.querySelector('.fcount'); if (o && fc) fc.textContent = o.gj.features.length + '개'; });
+    buildEcoList(); $$('#layerList .lyr').forEach(d => { const o = layerById(+d.dataset.lid); const fc = d.querySelector('.fcount'); if (o && fc) fc.textContent = o.gj.features.length + '개'; });
   }
 }
 function ecoStyle(g, color){
@@ -1582,8 +1606,9 @@ function buildEcoList(){
   ECO_GRADES.forEach(([g, name, color]) => {
     const o = ecoLayerOf(g), on = !!(o && o.visible); if (on) onCnt++;
     const d = document.createElement('div'); d.className = 'thi';
-    d.innerHTML = `<input type="checkbox" id="eco_${g}" ${on ? 'checked' : ''}><span class="sw" style="background:${color};border-color:#666"></span><label for="eco_${g}">${esc(name)}</label>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
+    d.innerHTML = `<input type="checkbox" id="eco_${g}" ${on ? 'checked' : ''}><span class="sw" style="background:${color};border-color:#666"></span><label class="tn" title="두 번 클릭: 레이어로 잡기">${esc(name)}</label>${pinTag(o)}${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
     d.querySelector('input').onchange = e => toggleEco(g, e.target.checked);
+    bindPinRow(d, () => ecoLayerOf(g), () => toggleEco(g, true));
     box.appendChild(d);
   });
   $('#eco_cnt').textContent = `(${onCnt}/${ECO_GRADES.length})`;
@@ -1716,7 +1741,7 @@ async function updateEgis(){
     }
   } finally {
     egisBusy = false; buildEgisList(); buildKeiList(); buildRiverList(); buildRiverList();
-    $$('#themeLayerList .lyr').forEach(d => { const o = layerById(+d.dataset.lid); const fc = d.querySelector('.fcount'); if (o && fc) fc.textContent = o.gj.features.length + '개'; });
+    $$('#layerList .lyr').forEach(d => { const o = layerById(+d.dataset.lid); const fc = d.querySelector('.fcount'); if (o && fc) fc.textContent = o.gj.features.length + '개'; });
   }
 }
 function toggleEgis(id, on, batch){
@@ -1730,8 +1755,9 @@ function buildEgisList(){
   EGIS.forEach(([id, name, type, color]) => {
     const o = egisLayerOf(id), on = !!(o && o.visible); if (on) onCnt++;
     const d = document.createElement('div'); d.className = 'thi' + (o && o.src.err ? ' err' : '');
-    d.innerHTML = `<input type="checkbox" id="egis_${id}" ${on ? 'checked' : ''}><span class="sw" style="background:${rgba(color, 40)};border-color:${color}"></span><label for="egis_${id}">${esc(name)}</label>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
+    d.innerHTML = `<input type="checkbox" id="egis_${id}" ${on ? 'checked' : ''}><span class="sw" style="background:${rgba(color, 40)};border-color:${color}"></span><label class="tn" title="두 번 클릭: 레이어로 잡기">${esc(name)}</label>${pinTag(o)}${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
     d.querySelector('input').onchange = e => toggleEgis(id, e.target.checked);
+    bindPinRow(d, () => egisLayerOf(id), () => toggleEgis(id, true));
     box.appendChild(d);
   });
   $('#egis_cnt').textContent = `(${onCnt}/${EGIS.length})`;
@@ -1761,9 +1787,10 @@ function buildRiverList(){
   RIVER.forEach(([id, name, type, color, q]) => {
     const kind = q.rim ? 'rim' : 'egis', o = layers.find(x => x.src && x.src.kind === kind && x.src.id === id), on = !!(o && o.visible); if (on) onCnt++;
     const d = document.createElement('div'); d.className = 'thi' + (o && o.src.err ? ' err' : '');
-    d.innerHTML = `<input type="checkbox" id="riv_${id}" ${on ? 'checked' : ''}><span class="sw" style="background:${type === 'polygon' ? rgba(color, 45) : 'none'};${type === 'line' ? `height:0;border-width:${q.w}px 0 0;width:16px;` : ''}border-color:${color}"></span><label for="riv_${id}">${esc(name)}</label>
+    d.innerHTML = `<input type="checkbox" id="riv_${id}" ${on ? 'checked' : ''}><span class="sw" style="background:${type === 'polygon' ? rgba(color, 45) : 'none'};${type === 'line' ? `height:0;border-width:${q.w}px 0 0;width:16px;` : ''}border-color:${color}"></span><label class="tn" title="두 번 클릭: 레이어로 잡기">${esc(name)}</label>${pinTag(o)}
       <small class="hint">${q.rim ? '하천정보관리시스템' : '환경공간정보서비스'}</small>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
     d.querySelector('input').onchange = e => toggleRiver(id, e.target.checked);
+    bindPinRow(d, () => layers.find(x => x.src && x.src.kind === kind && x.src.id === id), () => toggleRiver(id, true));
     box.appendChild(d);
   });
   $('#riv_cnt').textContent = `(${onCnt}/${RIVER.length})`;
@@ -1776,8 +1803,9 @@ function buildKeiList(){
   KEI.forEach(([id, name, type, color, q]) => {
     const o = layers.find(x => x.src && x.src.kind === 'kei' && x.src.id === id), on = !!(o && o.visible); if (on) onCnt++;
     const d = document.createElement('div'); d.className = 'thi' + (o && o.src.err ? ' err' : '');
-    d.innerHTML = `<input type="checkbox" id="kei_${id}" ${on ? 'checked' : ''}><span class="sw" style="height:0;border-width:${Math.ceil(q.w / 1.2)}px 0 0;border-color:${color};width:16px"></span><label for="kei_${id}">${esc(name)}</label>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
+    d.innerHTML = `<input type="checkbox" id="kei_${id}" ${on ? 'checked' : ''}><span class="sw" style="height:0;border-width:${Math.ceil(q.w / 1.2)}px 0 0;border-color:${color};width:16px"></span><label class="tn" title="두 번 클릭: 레이어로 잡기">${esc(name)}</label>${pinTag(o)}${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
     d.querySelector('input').onchange = e => toggleKei(id, e.target.checked);
+    bindPinRow(d, () => layers.find(x => x.src && x.src.kind === 'kei' && x.src.id === id), () => toggleKei(id, true));
     box.appendChild(d);
   });
   $('#kei_cnt').textContent = `(${onCnt}/${KEI.length})`;
@@ -1841,8 +1869,9 @@ function addLayer(name, gj, extra = {}){
   const pal = PALETTE[layers.length % PALETTE.length];
   const style = extra.style ? migrateStyle(type, extra.style) : { symbols: defaultSymbols(type, pal), label: labelDefaults() };
   const o = { id: ++lid, name, gj, type, visible: extra.visible !== false, style, src: extra.src || null };
+  o.pinned = extra.pinned != null ? !!extra.pinned : !o.src;   // 주제도는 처음엔 미리보기
   layers.unshift(o);
-  if (!extra.noLegend) legendItems.unshift({ key: 'L' + o.id, lid: o.id, label: name, show: extra.legend !== false });
+  if (!extra.noLegend && o.pinned) legendItems.unshift({ key: 'L' + o.id, lid: o.id, label: name, show: extra.legend !== false });
   renderLayer(o);
   if (!extra.quiet){ refreshOrder(); buildPanel(); renderLegendAll(); }
   return o;
@@ -1887,18 +1916,49 @@ function renderLayer(o){
   }
   o.group = g;
 }
+const isLyr = o => !o.src || o.pinned;          // 레이어 시트에 있는 것 (직접 올린 것 + 주제도에서 잡은 것)
 function refreshOrder(){
   layers.forEach(o => o.group && map.removeLayer(o.group));
-  [true, false].forEach(theme => {
-    for (let i = layers.length - 1; i >= 0; i--){ const o = layers[i]; if (!!o.src === theme && o.visible) map.addLayer(o.group); }
+  [false, true].forEach(lyr => {   // 미리보기 주제도를 먼저(아래), 레이어를 나중(위)에
+    for (let i = layers.length - 1; i >= 0; i--){ const o = layers[i]; if (isLyr(o) === lyr && o.visible && o.group) map.addLayer(o.group); }
+  });
+  const n = layers.filter(isLyr).length, t = $('#tabLyrN'); if (t) t.textContent = n ? n : '';
+}
+const SRC_NAME = { vworld: '브이월드', ecowfs: '에코뱅크', egis: '환경공간정보', kei: 'KEI 산줄기', rim: '하천정보' };
+function rebuildThemeLists(){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); }
+function pinLayer(o){
+  if (!o || o.pinned) return;
+  o.pinned = true; o.visible = true;
+  const i = layers.indexOf(o); layers.splice(i, 1); layers.unshift(o);   // 레이어 목록 맨 위로
+  if (!legendItems.some(x => x.lid === o.id)) legendItems.unshift({ key: 'L' + o.id, lid: o.id, label: o.name, show: true });
+  refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists();
+  showToast(`📌 '${o.name}'을(를) 레이어로 잡았습니다. ③ 레이어 시트에서 순서·스타일을 바꿀 수 있습니다.`);
+}
+function unpinLayer(o){
+  if (!o || !o.pinned || !o.src) return;
+  o.pinned = false; o._sel = false;
+  legendItems = legendItems.filter(x => x.lid !== o.id);
+  refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists();
+  showToast(`'${o.name}'을(를) 레이어에서 빼고 미리보기로 돌렸습니다.`);
+}
+/* 주제도 목록 한 줄: 이름 두 번 클릭 → 레이어로 잡기 / 풀기 */
+function bindPinRow(d, find, turnOn){
+  const o0 = find(); if (o0 && o0.pinned) d.classList.add('pinned');
+  d.addEventListener('dblclick', e => {
+    if (e.target.tagName === 'INPUT') return;
+    e.preventDefault(); window.getSelection && window.getSelection().removeAllRanges();
+    let o = find();
+    if (o && o.pinned){ unpinLayer(o); return; }
+    if (!o || !o.visible){ turnOn(); o = find(); }
+    if (o) pinLayer(o);
   });
 }
+const pinTag = o => o && o.pinned ? '<small class="pin" title="레이어로 잡혀 있음 · 두 번 클릭하면 미리보기로">📌 레이어</small>' : '';
 function layerBounds(o){ try { const b = L.geoJSON(o.gj).getBounds(); return b.isValid() ? b : null; } catch(e){ return null; } }
 const layerSymObj = o => ({ id: o.id, type: o.type, symbols: o.style.symbols });
 
 function buildPanelEmpty(){
-  if (!$('#layerList').children.length) $('#layerList').innerHTML = '<p class="hint">아직 올린 레이어가 없습니다.</p>';
-  if (!$('#themeLayerList').children.length) $('#themeLayerList').innerHTML = '<p class="hint">위 1번에서 주제도를 체크하면 여기에 나타나고, 색·선·패턴과 이름 표시를 바꿀 수 있습니다.</p>';
+  if (!$('#layerList .lyr')) $('#layerList').insertAdjacentHTML('beforeend', '<p class="hint">아직 레이어가 없습니다. 파일을 올리거나, ② 주제도에서 이름을 두 번 클릭해 잡아주세요.</p>');
 }
 let lastSelId = null;
 /* 스타일 복사·붙여넣기 (이 PC 브라우저에 기억 → 다른 작업 파일에서도 붙여넣기 가능) */
@@ -1934,8 +1994,8 @@ function deleteLayers(list){
   if (list.some(o => o.src && o.src.kind === 'ecowfs')){ ecoFetched = []; ecoSeen.clear(); }
   refreshOrder(); buildPanel(); renderLegendAll(); buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList();
 }
-function selToolbar(box, theme){
-  const grp = layers.filter(o => !!o.src === theme); if (!grp.length) return;
+function selToolbar(box){
+  const grp = layers.filter(isLyr); if (!grp.length) return;
   const n = grp.filter(o => o._sel).length, t = document.createElement('div'); t.className = 'seltools';
   t.innerHTML = `<button data-s="all">전체 선택</button><button data-s="none" ${n ? '' : 'disabled'}>선택 해제</button>
     <button data-s="hide" ${n ? '' : 'disabled'}>선택 숨기기</button><button data-s="paste" ${n && styleClip ? '' : 'disabled'} title="${styleClip ? esc(`'${styleClip.from}' 스타일`) : '먼저 스타일 복사'}">선택에 스타일 붙여넣기</button>
@@ -1944,7 +2004,7 @@ function selToolbar(box, theme){
     const a = b.dataset.s, sel = grp.filter(o => o._sel);
     if (a === 'all') grp.forEach(o => o._sel = true);
     else if (a === 'none') grp.forEach(o => o._sel = false);
-    else if (a === 'hide'){ sel.forEach(o => { o.visible = false; o._sel = false; }); refreshOrder(); renderLegendAll(); buildThemeList(); buildEcoList(); }
+    else if (a === 'hide'){ sel.forEach(o => { o.visible = false; o._sel = false; }); refreshOrder(); renderLegendAll(); rebuildThemeLists(); }
     else if (a === 'del'){ if (!confirm(`선택한 레이어 ${sel.length}개를 지울까요?`)) return; deleteLayers(sel); return; }
     else if (a === 'paste'){ pasteStyle(sel); return; }
     buildPanel();
@@ -1953,26 +2013,25 @@ function selToolbar(box, theme){
 }
 document.addEventListener('keydown', e => {
   if (e.key !== 'Delete' || /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) return;
-  const sel = layers.filter(o => o._sel); if (!sel.length) return;
+  const sel = layers.filter(o => o._sel && isLyr(o)); if (!sel.length) return;
   if (confirm(`선택한 레이어 ${sel.length}개를 지울까요?`)) deleteLayers(sel);
 });
 function buildPanel(){
   buildBufSrc();
-  const box1 = $('#layerList'), box2 = $('#themeLayerList');
-  box1.innerHTML = ''; box2.innerHTML = '';
-  const sameGroup = (a, b) => !!a.src === !!b.src;
-  selToolbar(box1, false); selToolbar(box2, true);
-  layers.forEach((o, i) => {
-    const box = o.src ? box2 : box1;
+  const box = $('#layerList'); box.innerHTML = '';
+  selToolbar(box);
+  const list = layers.filter(isLyr);
+  list.forEach((o, i) => {
     const d = document.createElement('div'); d.className = 'lyr'; d.dataset.lid = o.id;
 
     const keys = propKeys(o.gj);
     d.innerHTML = `
       <div class="lh">
+        <span class="drag" title="끌어서 순서 바꾸기">⠿</span>
         <input type="checkbox" class="selcb" ${o._sel ? 'checked' : ''} title="선택 (Shift+클릭: 범위 선택, Delete 키: 삭제)">
         <button class="eye ${o.visible ? 'on' : ''}" data-k="visible" title="보이기 / 숨기기">${o.visible ? '👁' : '—'}</button>
         <span class="sym">${legendSym(layerSymObj(o), 'P')}</span>
-        ${o.src ? `<span class="badge" title="브이월드 2D데이터 API · ${esc(o.src.code)}">브이월드 2D데이터</span>` : ''}
+        ${o.src ? `<span class="badge src" title="② 주제도에서 잡은 레이어 · ${esc(SRC_NAME[o.src.kind] || '')}${o.src.code ? ' ' + esc(o.src.code) : ''}">${esc(SRC_NAME[o.src.kind] || '주제도')}</span>` : ''}
         <input class="nm" data-k="name" value="${esc(o.name)}" title="레이어 이름">
         <button data-a="up" title="위로">▲</button><button data-a="down" title="아래로">▼</button>
         <button data-a="zoom" title="이 레이어로 이동">◎</button><button data-a="del" title="삭제">✕</button>
@@ -1996,13 +2055,13 @@ function buildPanel(){
     const lts = d.querySelector('.lts'); fillTsForm(lts, o.style.label);
     bindTsForm(lts, () => o.style.label, () => { clearTimeout(o._lt); o._lt = setTimeout(() => { renderLayer(o); refreshOrder(); }, 150); });
     d.querySelector('.selcb').onclick = e => {
-      const grp = layers.filter(x => sameGroup(x, o)), val = e.target.checked;
+      const grp = list, val = e.target.checked;
       const ia = grp.findIndex(x => x.id === lastSelId), ib = grp.findIndex(x => x.id === o.id);
       if (e.shiftKey && ia >= 0){ for (let k = Math.min(ia, ib); k <= Math.max(ia, ib); k++) grp[k]._sel = val; }
       else o._sel = val;
       lastSelId = o.id; buildPanel();
     };
-    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (o.visible){ updateThemes(); updateEco(); updateEgis(); } } };
+    d.querySelector('[data-k="visible"]').onclick = () => { o.visible = !o.visible; buildPanel(); refreshOrder(); renderLegendAll(); if (o.src){ rebuildThemeLists(); if (o.visible){ updateThemes(); updateEco(); updateEgis(); } } };
     d.querySelector('[data-k="name"]').onchange = e => {
       const it = legendItems.find(x => x.lid === o.id);
       if (it && it.label === o.name) it.label = e.target.value;
@@ -2011,22 +2070,55 @@ function buildPanel(){
     d.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
       const a = b.dataset.a;
       if (a === 'up' || a === 'down'){
-        let j = i;
-        do { j += a === 'up' ? -1 : 1; } while (j >= 0 && j < layers.length && !sameGroup(layers[j], o));
-        if (j < 0 || j >= layers.length) return;
-        [layers[j], layers[i]] = [layers[i], layers[j]];
+        const j = i + (a === 'up' ? -1 : 1); if (j < 0 || j >= list.length) return;
+        moveLayer(o, list[j], a === 'up' ? 'before' : 'after');
       }
       else if (a === 'zoom'){ const bd = layerBounds(o); if (bd) map.fitBounds(bd, { padding: [30, 30] }); return; }
       else if (a === 'del'){
-        if (!confirm(`'${o.name}' 레이어를 지울까요?`)) return;
+        if (!confirm(o.src ? `'${o.name}' 레이어를 지울까요? (② 주제도에서 다시 켤 수 있습니다)` : `'${o.name}' 레이어를 지울까요?`)) return;
         deleteLayers([o]); return;
       } else return;
       refreshOrder(); buildPanel(); renderLegendAll();
     });
+    /* 끌어서 순서 바꾸기: 손잡이를 잡았을 때만 끌 수 있게 (안의 입력칸이 방해받지 않도록) */
+    const h = d.querySelector('.drag');
+    h.addEventListener('mousedown', () => { d.draggable = true; });
+    h.addEventListener('mouseup', () => { d.draggable = false; });
+    d.addEventListener('dragstart', e => { if (!d.draggable){ e.preventDefault(); return; } dragLid = o.id; d.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(o.id)); } catch(_){} });
+    d.addEventListener('dragend', () => { d.draggable = false; dragLid = null; $$('#layerList .lyr').forEach(x => x.classList.remove('dragging', 'drop-before', 'drop-after')); });
     box.appendChild(d);
   });
   buildPanelEmpty();
 }
+let dragLid = null;
+function moveLayer(o, target, where){
+  if (!o || !target || o === target) return;
+  const list = layers.filter(isLyr).filter(x => x !== o), rest = layers.filter(x => !isLyr(x));
+  let k = list.indexOf(target); if (where === 'after') k++;
+  list.splice(k, 0, o);
+  layers.splice(0, layers.length, ...list, ...rest);
+  refreshOrder(); buildPanel(); renderLegendAll();
+}
+(() => {
+  const box = $('#layerList');
+  const rowAt = e => { const r = e.target.closest && e.target.closest('.lyr'); return r && box.contains(r) ? r : null; };
+  const isFile = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
+  box.addEventListener('dragover', e => {
+    if (dragLid == null){ if (isFile(e)) e.preventDefault(); return; }
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    $$('#layerList .lyr').forEach(x => x.classList.remove('drop-before', 'drop-after'));
+    const r = rowAt(e); if (!r || +r.dataset.lid === dragLid) return;
+    const bb = r.getBoundingClientRect(); r.classList.add(e.clientY < bb.top + bb.height / 2 ? 'drop-before' : 'drop-after');
+  });
+  box.addEventListener('drop', e => {
+    if (dragLid == null){ if (isFile(e)){ e.preventDefault(); handleFiles(e.dataTransfer.files); } return; }
+    e.preventDefault();
+    const r = rowAt(e), o = layerById(dragLid); dragLid = null;
+    if (!r || !o) { buildPanel(); return; }
+    const bb = r.getBoundingClientRect();
+    moveLayer(o, layerById(+r.dataset.lid), e.clientY < bb.top + bb.height / 2 ? 'before' : 'after');
+  });
+})();
 
 /* ================= 도면 요소 설정 ================= */
 const cfgGet = p => p.split('.').reduce((o, k) => o[k], cfg);
@@ -2051,7 +2143,7 @@ function itemObj(it){
   return { id: it.key, type: it.type, symbols: it.symbols };
 }
 function itemVisible(it){
-  if (it.lid != null) return !!(layerById(it.lid) || {}).visible;
+  if (it.lid != null){ const o = layerById(it.lid); return !!(o && o.visible && isLyr(o)); }
   if (it.adm) return admLineOn(it.adm);
   return true;
 }
@@ -2085,7 +2177,7 @@ function buildLegendEditor(){
       </div>
       ${custom ? `<details ${it._open ? 'open' : ''}><summary>기호 모양</summary><div class="row"><label>종류</label><select data-type>${opts([['polygon', '면'], ['line', '선'], ['point', '점']], it.type)}</select></div>${symEditorHtml(it.type, it.symbols)}</details>`
         : (itemVisible(it) ? '' : `<div class="hint">${it.adm ? '경계선이 꺼져' : '레이어가 꺼져'} 있어 범례에서 빠집니다.</div>`)}`;
-    d.querySelector('[data-k="show"]').onchange = e => { it.show = e.target.checked; renderLegend(); placeDefaults(); };
+    d.querySelector('[data-k="show"]').onchange = e => { it.show = e.target.checked; renderLegend(); placeDefaults(); updLegMaster(); };
     d.querySelector('[data-k="label"]').oninput = e => { it.label = e.target.value; renderLegend(); };
     d.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
       const a = b.dataset.a;
@@ -2103,7 +2195,17 @@ function buildLegendEditor(){
     box.appendChild(d);
   });
 }
-function renderLegendAll(){ renderLegend(); buildLegendEditor(); placeDefaults(); }
+function renderLegendAll(){ renderLegend(); buildLegendEditor(); placeDefaults(); updLegMaster(); }
+function updLegMaster(){
+  const m = $('#legMaster'); if (!m) return;
+  const n = legendItems.filter(it => itemObj(it)).length, on = legendItems.filter(it => it.show && itemObj(it)).length;
+  m.checked = n > 0 && on === n; m.indeterminate = on > 0 && on < n; m.disabled = !n;
+  $('#legCnt').textContent = n ? `(${on}/${n})` : '';
+}
+const legSetAll = on => { legendItems.forEach(it => it.show = on); renderLegendAll(); };
+$('#legMaster').onchange = e => legSetAll(e.target.checked);
+$('#legAllOn').onclick = () => legSetAll(true);
+$('#legAllOff').onclick = () => legSetAll(false);
 $('#legAdd').onclick = () => {
   legendItems.push({ key: 'C' + (++legSeq), lid: null, label: '새 항목', show: true, type: 'polygon', _open: true,
     symbols: [S('fill', { color: '#f2c94c', op: 60 }), S('stroke', { color: '#333333', w: 1, dash: 'solid' })] });
@@ -2387,7 +2489,7 @@ function refreshAnn(a){ a.marker.setIcon(annIcon(a)); markSel(); }
 function selectAnn(a){
   if (selDraw) deselectDraw();
   selAnn = a; fillTsForm($('#annForm'), a);
-  $('#annFormTitle').textContent = `선택한 글자 수정 중: ${a.text}`; $('#annFormTitle').classList.add('editing');
+  $('#annFormTitle').textContent = `선택한 글자 수정 중: ${String(a.text).replace(/[|\r\n]+/g, ' ')}`; $('#annFormTitle').classList.add('editing');
   markSel(); buildAnnList();
 }
 function deselectAnn(){
@@ -2415,7 +2517,7 @@ function buildAnnList(){
   anns.slice().reverse().forEach(a => {
     const d = document.createElement('div'); d.className = 'ai' + (a === selAnn ? ' sel' : '');
     d.innerHTML = `<input type="checkbox" ${a.visible ? 'checked' : ''} title="보이기"><span class="tp">${esc(annTypeName(a.type))}</span>
-      <span class="at">${esc(String(a.text).replace(/\|/g, ' '))}</span><button data-a="zoom" title="이 글자로 이동">◎</button><button data-a="del" title="삭제">✕</button>`;
+      <span class="at">${esc(String(a.text).replace(/[|\r\n]+/g, ' '))}</span><button data-a="zoom" title="이 글자로 이동">◎</button><button data-a="del" title="삭제">✕</button>`;
     d.querySelector('input').onclick = e => { e.stopPropagation(); a.visible = e.target.checked; applyAnnVis(); };
     d.querySelector('[data-a="zoom"]').onclick = e => { e.stopPropagation(); map.panTo([a.lat, a.lng]); selectAnn(a); };
     d.querySelector('[data-a="del"]').onclick = e => { e.stopPropagation(); if (confirm(`'${a.text}' 글자를 지울까요?`)) delAnn(a); };
@@ -2427,8 +2529,8 @@ bindTsForm($('#annForm'), () => selAnn || annDraft, (k, o) => {
   if (o !== selAnn) return;
   refreshAnn(o);
   if (k === 'text'){
-    $('#annFormTitle').textContent = `선택한 글자 수정 중: ${o.text}`;
-    const row = $('#annList .ai.sel .at'); if (row) row.textContent = String(o.text).replace(/\|/g, ' ');
+    $('#annFormTitle').textContent = `선택한 글자 수정 중: ${String(o.text).replace(/[|\r\n]+/g, ' ')}`;
+    const row = $('#annList .ai.sel .at'); if (row) row.textContent = String(o.text).replace(/[|\r\n]+/g, ' ');
   } else if (k === 'type') buildAnnList();
 });
 $('#annShowAll').onchange = applyAnnVis;
@@ -2447,8 +2549,8 @@ document.addEventListener('keydown', e => {
 });
 map.on('click', e => {
   if (!placing || mapLocked || drawing) return;
-  let t = String(annDraft.text || '').trim();
-  if (!t) t = (prompt('넣을 글자를 입력하세요 (| 는 줄바꿈)') || '').trim();
+  let t = String(annDraft.text || '').replace(/^\s+|\s+$/g, '');
+  if (!t) t = (prompt('넣을 글자를 입력하세요 (| 는 줄바꿈 · 여러 줄은 왼쪽 \'글자\' 칸에 Enter로)') || '').trim();
   if (!t) return;
   addAnn(Object.assign({}, annDraft, { text: t, lat: e.latlng.lat, lng: e.latlng.lng }));
   annDraft.text = ''; const ti = $('#annForm [data-ts="text"]'); if (ti) ti.value = '';
@@ -3006,6 +3108,7 @@ async function handleFiles(fileList){
   if (ok.length){
     let b = null; ok.forEach(o => { const lb = layerBounds(o); if (lb) b = b ? b.extend(lb) : L.latLngBounds(lb.getSouthWest(), lb.getNorthEast()); });
     if (b) map.fitBounds(b, { padding: [30, 30] });
+    if (store.get('sheet', '1') !== '3') showToast(`레이어 ${ok.length}개를 올렸습니다. 순서·스타일은 ③ 레이어 시트에서 바꿉니다.`);
   }
 }
 const drop = $('#drop');
@@ -3046,7 +3149,7 @@ $('#btnPdf').onclick = async () => {
 };
 $('#btnSaveProj').onclick = () => {
   const data = {
-    app: 'eia-map', v: 5,
+    app: 'eia-map', v: 6,
     view: { c: map.getCenter(), z: map.getZoom() },
     baseState,
     adminLines: $$('.admB').filter(c => c.checked).map(c => c.value),
@@ -3055,7 +3158,7 @@ $('#btnSaveProj').onclick = () => {
     title: $('#titleIn').value, cfg,
     toggles: Object.fromEntries($$('.tg').map(c => [c.dataset.t, c.checked])),
     pos: Object.fromEntries(OVL.map(id => { const el = $('#' + id), s = el.style; return [id, { left: s.left, top: s.top, right: s.right, bottom: s.bottom, transform: s.transform, moved: !!el.dataset.moved }]; })),
-    layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, style: o.style, gj: o.gj, src: o.src, buf: o.buf })),
+    layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, pinned: !!o.pinned, style: o.style, gj: o.gj, src: o.src, buf: o.buf })),
     legendItems: legendItems.map(({ _open, ...it }) => it),
     anns: anns.map(({ marker, id, ...a }) => a),
     draws: draws.map(({ group, id, ...d }) => d)
@@ -3116,7 +3219,8 @@ async function loadProject(d){
   });
   const idMap = {};
   (d.layers || []).filter(l => !(l.src && l.src.kind === 'ecobank')).slice().reverse().forEach(l => {
-    const o = addLayer(l.name, l.gj, { type: l.type, visible: l.visible, legend: l.legend, style: l.style, noLegend: !!d.legendItems, src: l.src || null });
+    const o = addLayer(l.name, l.gj, { type: l.type, visible: l.visible, legend: l.legend, style: l.style, noLegend: !!d.legendItems, src: l.src || null,
+      pinned: !l.src || ((d.v || 1) < 6 ? true : !!l.pinned), quiet: true });   // 이전 버전 작업의 주제도는 레이어로 잡힌 것으로
     idMap[l.id] = o.id;
   });
   if (d.legendItems){
@@ -3134,6 +3238,7 @@ async function loadProject(d){
   (d.anns || []).forEach(a => addAnn(a, true));
   draws.slice().forEach(x => { if (x.group) drawGroup.removeLayer(x.group); }); draws.length = 0; selDraw = null;
   (d.draws || []).forEach(x => addDraw(x, true)); buildDrawList(); renderVertices();
+  refreshOrder(); buildPanel();
   buildAnnList(); syncCfgUI(); layoutFrame(); applyCfg();
   if (d.view) map.setView(d.view.c, d.view.z);
   setRotation(cfg.map.bearing || 0);
@@ -3149,11 +3254,14 @@ function showSheet(n){
   $$('#tabs .tab').forEach(b => b.classList.toggle('on', b.dataset.sheet === String(n)));
   $$('.sheet').forEach(el => el.hidden = el.id !== 'sheet' + n);
   $('#side').scrollTop = 0; store.set('sheet', String(n));
-  setMapLock(String(n) === '3');
+  setMapLock(String(n) === '4');
 }
 $$('#tabs .tab').forEach(b => b.onclick = () => showSheet(b.dataset.sheet));
 $('#goSheet1').onclick = () => showSheet(1);
-$('#goSheet3').onclick = () => showSheet(3);
+$$('.goLyr').forEach(b => b.onclick = () => showSheet(3));
+$$('.goSheet2').forEach(b => b.onclick = () => showSheet(2));
+$('#goSheet4').onclick = () => showSheet(4);
+$('#lyrUpload').onclick = () => $('#fileIn').click();
 
 /* ================= 시작 ================= */
 showSheet(store.get('sheet', '1'));
