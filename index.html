@@ -198,7 +198,9 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .idp .pt .v{font-family:Consolas,monospace;font-size:11.5px}
 .idp .pt button{margin:1px 0 1px 4px;padding:0 5px}
 .idp .addr{margin:2px 0;line-height:1.4}
-#workbar{position:absolute;top:8px;right:8px;z-index:1200;display:flex;gap:4px;align-items:center;background:rgba(255,255,255,.95);border:1px solid #ccd;border-radius:6px;padding:4px 6px;box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:12px}
+#workbar{position:absolute;top:8px;right:8px;z-index:1200;display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:rgba(255,255,255,.95);border:1px solid #ccd;border-radius:6px;padding:4px 6px;box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:12px}
+#lyrDock #workbar{position:static;border:none;border-bottom:1px solid #ccd;border-radius:0;box-shadow:none;background:#fff;padding:6px 8px}
+#lyrDock #workbar #curFile{flex:1 1 100%;max-width:none;font-weight:600}
 #workbar button{font-size:12px;padding:3px 8px}
 #workbar #curFile{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#456;padding:0 4px}
 #workbar button.on{background:#1d3b2a;color:#fff;border-color:#1d3b2a}
@@ -216,6 +218,22 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #lyrDock #lyrNewMenu button{color:#222;border:none;text-align:left;padding:6px 10px;font-size:12px;border-radius:0}
 #lyrDock #lyrNewMenu button:hover{background:#e6f0ff}
 .lyr.sel{background:#e6f0ff;border-color:#7aa7e6}
+.lyr .lh{cursor:grab}
+.lyr .lh input,.lyr .lh button,.lyr .lh select{cursor:auto}
+.lyr.dragging,.grp.dragging{opacity:.4}
+.lyr.drop-before,.grp-h.drop-before{box-shadow:0 -3px 0 #0a64d0}
+.lyr.drop-after,.grp-h.drop-after{box-shadow:0 3px 0 #0a64d0}
+.grp-h.drop-into{background:#cfe0fb!important;outline:2px solid #0a64d0}
+body.lyr-dragging,body.lyr-dragging *{cursor:grabbing!important;user-select:none}
+#dragGhost{position:fixed;z-index:9000;pointer-events:none;background:#fff;border:1px solid #0a64d0;border-radius:4px;padding:3px 8px;font-size:12px;box-shadow:0 3px 10px rgba(0,0,0,.3);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grp{border:1px solid #b9c3d0;border-radius:5px;margin:6px 0;background:#eef2f7}
+.grp-h{display:flex;align-items:center;gap:3px;padding:4px 6px;cursor:grab;border-radius:5px}
+.grp-h .nm{flex:1;min-width:60px;font-weight:600;background:transparent;border:1px solid transparent}
+.grp-h .nm:hover,.grp-h .nm:focus{background:#fff;border-color:#ccd}
+.grp-h .tw{border:none;background:transparent;padding:0 2px;font-size:12px}
+.grp-h button{font-size:11px;padding:1px 5px}
+.grp-b{padding:0 4px 4px 14px}
+.grp.closed .grp-b{display:none}
 .lyr.sketching{outline:2px solid #e67e00}
 .lyr button.sk.on{background:#e67e00;color:#fff;border-color:#e67e00}
 #workbar .sep{width:1px;height:18px;background:#ccd;margin:0 2px}
@@ -224,6 +242,11 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #sketchBar[hidden]{display:none}
 #selBox{position:absolute;z-index:1100;border:1.5px dashed #0a64d0;background:rgba(10,100,208,.08);pointer-events:none}
 #selBox[hidden]{display:none}
+#pickBar{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:1200;background:#fff;border:2px solid #ff6a00;border-radius:6px;padding:5px 9px;font-size:12px;box-shadow:0 2px 10px rgba(0,0,0,.3);max-width:80%}
+#pickBar[hidden]{display:none}
+#pickNames{color:#555;display:inline-block;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.vtx-h{background:#fff;border:2px solid #e67e00;border-radius:2px;box-sizing:border-box;cursor:move}
+.vtx-m{background:rgba(230,126,0,.45);border:1px solid #fff;border-radius:50%;box-sizing:border-box;cursor:copy}
 #map.tool-select{cursor:default}
 #map.tool-select.leaflet-grab{cursor:grab}
 #map.drawmode,#map.drawmode.leaflet-grab{cursor:crosshair}
@@ -279,7 +302,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.3</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.4</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -549,6 +572,8 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
   </div>
   <div id="sketchBar" hidden><b id="sketchName"></b> <span id="sketchHelp"></span> <button id="sketchEnd" class="pri">그리기 끝내기</button></div>
   <div id="selBox" hidden></div>
+  <div id="pickBar" hidden>🧺 <b id="pickN"></b> <span id="pickNames"></span>
+    <button id="pickMake" class="pri">한 레이어로 만들기</button> <button id="pickClear">비우기</button></div>
   <div id="coordBar" hidden></div>
   <div id="frame"><div id="mapbox">
     <div id="map"></div>
@@ -568,7 +593,8 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
       <span id="lyrNewMenu" hidden><button data-nt="polygon">▭ 면 (구역)</button><button data-nt="line">╱ 선</button><button data-nt="point">● 점 (지점)</button></span></span>
     <button id="lyrWinUp" title="SHP·DXF·GeoJSON 파일 올리기">＋ 파일</button><button id="lyrWinClose" title="레이어 창 닫기">✕</button></span></div>
   <div class="wb"><div id="layerList"></div>
-    <p class="hint" style="margin-top:8px">⠿ 끌어서 순서 · 위쪽이 지도 위에 그려짐 · 지도에서 <b>↖ 선택</b> 상태로 끌면 여러 레이어를 한꺼번에 선택 · ✏ 직접 그리기</p></div>
+    <p class="hint" style="margin-top:8px">· 줄을 잡고 <b>위아래로 끌어</b> 순서 바꾸기 (위쪽이 지도 위에 그려짐) · 📁 그룹 위에 놓으면 그룹 안으로<br>
+      · 지도에서 끌기: 여러 레이어 선택 · <b>Ctrl+클릭</b>: 도형 여러 개 담아 한 레이어로<br>· ✏ 직접 그리기·고치기 (■ 끌기, ● 점 추가, ■ 우클릭 삭제)</p></div>
 </div>
 
 <div id="modal" hidden><div class="mbox"><div id="mbody"></div><div class="mbtn"><button id="mok" class="pri">확인</button> <button id="mcancel">취소</button></div></div></div>
@@ -741,13 +767,14 @@ function bindTsForm(root, getObj, onChange){
 /* ================= 기호 층 (채우기 · 패턴 · 선 · 점 기호) ================= */
 const PATTERNS = [['diag', '빗금 ／'], ['diag2', '빗금 ＼'], ['cross', '엇갈린 빗금 ×'], ['horiz', '가로줄'], ['vert', '세로줄'], ['grid', '격자'], ['dots', '점']];
 const SHAPES = [['circle', '원'], ['square', '사각형'], ['triangle', '삼각형'], ['diamond', '마름모'], ['star', '별'], ['cross', '십자']];
-const SYM_NAMES = { fill: '채우기', pattern: '패턴', stroke: '선', marker: '점 기호' };
+const SYM_NAMES = { fill: '채우기', pattern: '패턴', stroke: '선', marker: '점 기호', shadow: '그림자' };
 function newSym(k, color){
   switch (k){
     case 'fill': return { k, color, op: 35 };
     case 'pattern': return { k, pat: 'diag', color: '#444444', gap: 10, w: 1.2, op: 100 };
     case 'stroke': return { k, color, w: 2, dash: 'solid', op: 100 };
     case 'marker': return { k, shape: 'circle', size: 10, fill: color, stroke: '#ffffff', sw: 1.5, op: 100 };
+    case 'shadow': return { k, color: '#000000', op: 35, dx: 3, dy: 3, blur: 4 };
   }
 }
 function defaultSymbols(type, color){
@@ -835,11 +862,18 @@ function legendSym(obj, pfx, k = 1){
   if (!syms.length) body = '<text x="23" y="13" font-size="11" font-weight="700" text-anchor="middle" fill="#222">가</text>';
   else if (type === 'point'){
     syms.forEach(s => {
+      if (s.k === 'shadow'){ const sh = Math.max(-3, Math.min(3, s.dx / 2)), sv = Math.max(-3, Math.min(3, s.dy / 2)); body += `<circle cx="${23 + sh}" cy="${9 + sv}" r="6" fill="${s.color}" opacity="${s.op / 100}"/>`; return; }
       if (s.k !== 'marker') return;
       const sz = Math.min(s.size, 14), sw = Math.min(+s.sw || 0, 2), W = sz + sw * 2;
       body += `<g transform="translate(${23 - W / 2},${9 - W / 2})">${shapeSvg(Object.assign({}, s, { sw }), sz).replace(/<svg[^>]*>|<\/svg>/g, '')}</g>`;
     });
   } else syms.forEach((s, i) => {
+    if (s.k === 'shadow'){
+      const sh = Math.max(-3, Math.min(3, s.dx / 2)), sv = Math.max(-3, Math.min(3, s.dy / 2)), lw = Math.min(Math.max(...syms.filter(x => x.k === 'stroke').map(x => +x.w || 1), 1), 9);
+      body += type === 'line' ? `<line x1="${3 + sh}" y1="${9 + sv}" x2="${43 + sh}" y2="${9 + sv}" stroke="${s.color}" stroke-width="${lw + 1}" stroke-opacity="${s.op / 100}"/>`
+        : `<rect x="${4 + sh}" y="${3 + sv}" width="38" height="12" fill="${s.color}" fill-opacity="${s.op / 100}"/>`;
+      return;
+    }
     if (s.k === 'stroke'){
       const lw = Math.min(+s.w || 1, type === 'line' ? 9 : 4), da = dashArr(s.dash, lw), dash = da ? `stroke-dasharray="${da.join(' ')}"` : '';
       body += type === 'line'
@@ -858,12 +892,13 @@ function symRow(s, i){
     case 'fill': f = `<input type="color" data-f="color" value="${s.color}">${opr}`; break;
     case 'pattern': f = `<select data-f="pat">${opts(PATTERNS, s.pat)}</select><input type="color" data-f="color" value="${s.color}"><input type="number" data-f="gap" value="${s.gap}" min="3" max="40" title="간격(px)"><input type="number" data-f="w" value="${s.w}" min="0.5" max="8" step="0.5" title="굵기">${opr}`; break;
     case 'stroke': f = `<input type="color" data-f="color" value="${s.color}"><input type="number" data-f="w" value="${s.w}" min="0.5" max="30" step="0.5" title="굵기"><select data-f="dash">${opts(DASHES, s.dash)}</select>${opr}`; break;
+    case 'shadow': f = `<input type="color" data-f="color" value="${s.color}" title="그림자 색"><span title="오른쪽(+)·왼쪽(-) px">↔<input type="number" data-f="dx" value="${s.dx}" min="-30" max="30" step="0.5"></span><span title="아래(+)·위(-) px">↕<input type="number" data-f="dy" value="${s.dy}" min="-30" max="30" step="0.5"></span><span title="흐림 정도 px">흐림<input type="number" data-f="blur" value="${s.blur}" min="0" max="20" step="0.5"></span>${opr}`; break;
     case 'marker': f = `<select data-f="shape">${opts(SHAPES, s.shape)}</select><input type="number" data-f="size" value="${s.size}" min="2" max="60" title="크기"><input type="color" data-f="fill" value="${s.fill}" title="채움색"><input type="color" data-f="stroke" value="${s.stroke}" title="테두리색"><input type="number" data-f="sw" value="${s.sw}" min="0" max="10" step="0.5" title="테두리 굵기">${opr}`; break;
   }
   return `<div class="symrow" data-i="${i}"><span class="sk">${SYM_NAMES[s.k]}</span><span class="sf">${f}</span><span class="sb"><button data-sa="up" title="위로">▲</button><button data-sa="down" title="아래로">▼</button><button data-sa="del" title="삭제">✕</button></span></div>`;
 }
 function symEditorHtml(type, symbols, onlyStroke){
-  const kinds = onlyStroke ? ['stroke'] : type === 'point' ? ['marker'] : type === 'line' ? ['stroke'] : ['fill', 'pattern', 'stroke'];
+  const kinds = (onlyStroke ? ['stroke'] : type === 'point' ? ['marker'] : type === 'line' ? ['stroke'] : ['fill', 'pattern', 'stroke']).concat(['shadow']);
   const rows = symbols.map((s, i) => [s, i]).reverse().map(([s, i]) => symRow(s, i)).join('');
   const pre = onlyStroke ? PRESETS.line.filter(p => p[0] !== 'road') : (PRESETS[type] || []);
   return `<div class="symed">${rows || '<div class="hint">기호 없음 (이름만 표시)</div>'}
@@ -891,7 +926,8 @@ function bindSymEditor(root, type, getSyms, setSyms, onChange, onRebuild, onlySt
   });
   ed.querySelectorAll('[data-add]').forEach(b => b.onclick = () => {
     const arr = getSyms(), col = (arr.find(s => s.color) || arr.find(s => s.fill) || {}).color || '#e60012';
-    arr.push(newSym(b.dataset.add, col)); onRebuild();
+    if (b.dataset.add === 'shadow') arr.unshift(newSym('shadow')); else arr.push(newSym(b.dataset.add, col));   // 그림자는 맨 아래 층
+    onRebuild();
   });
   const ps = ed.querySelector('[data-preset]');
   if (ps) ps.onchange = () => {
@@ -1922,7 +1958,7 @@ function addLayer(name, gj, extra = {}){
   const type = extra.type || detectType(gj);
   const pal = PALETTE[layers.length % PALETTE.length];
   const style = extra.style ? migrateStyle(type, extra.style) : { symbols: defaultSymbols(type, pal), label: labelDefaults() };
-  const o = { id: ++lid, name, gj, type, visible: extra.visible !== false, style, src: extra.src || null };
+  const o = { id: ++lid, name, gj, type, visible: extra.visible !== false, style, src: extra.src || null, grp: extra.grp == null ? null : extra.grp };
   o.pinned = extra.pinned != null ? !!extra.pinned : !o.src;   // 주제도는 처음엔 미리보기
   layers.unshift(o);
   if (!extra.noLegend && o.pinned) legendItems.unshift({ key: 'L' + o.id, lid: o.id, label: name, show: extra.legend !== false });
@@ -1942,7 +1978,9 @@ function renderLayer(o){
   const g = L.layerGroup(), feats = o.gj.features || [];
   const pick = re => ({ type: 'FeatureCollection', features: feats.filter(f => f.geometry && re.test(f.geometry.type)) });
   const polys = pick(/Polygon/), lines = pick(/LineString/), pts = pick(/Point/);
+  const maxW = Math.max(1, ...(o.style.symbols || []).filter(x => x.k === 'stroke').map(x => +x.w || 1));
   (o.style.symbols || []).forEach(s => {
+    if (s.k === 'shadow'){ shadowLayers(s, polys, lines, pts, maxW, o).forEach(l => g.addLayer(l)); return; }
     if (s.k === 'fill' && polys.features.length)
       g.addLayer(L.geoJSON(polys, { renderer, interactive: false, style: { stroke: false, fill: true, fillColor: s.color, fillOpacity: s.op / 100 } }));
     else if (s.k === 'pattern' && polys.features.length)
@@ -1971,6 +2009,33 @@ function renderLayer(o){
   o.group = g;
 }
 const isLyr = o => !o.src || o.pinned;          // 레이어 시트에 있는 것 (직접 올린 것 + 주제도에서 잡은 것)
+/* 그림자: 화면 픽셀만큼 옮긴 복사본을 흐리게 겹쳐 그림 (확대·축소·회전하면 다시 계산) */
+function shiftFC(fc, dx, dy){
+  const sh = c => typeof c[0] === 'number' ? [c[0] + dx, c[1] + dy] : c.map(sh);
+  return { type: 'FeatureCollection', features: fc.features.map(f => ({ type: 'Feature', properties: {}, geometry: { type: f.geometry.type, coordinates: sh(f.geometry.coordinates) } })) };
+}
+function shadowLayers(s, polys, lines, pts, maxW, o){
+  const sz = map.getSize(), c = L.point(sz.x / 2, sz.y / 2);
+  const a = map.containerPointToLatLng(c), b = map.containerPointToLatLng(c.add([+s.dx || 0, +s.dy || 0]));
+  const dx = b.lng - a.lng, dy = b.lat - a.lat, op = (+s.op || 0) / 100, bl = Math.max(0, +s.blur || 0), out = [];
+  const soft = (fc, base, fillIt) => {
+    if (!fc.features.length) return;
+    const sf = shiftFC(fc, dx, dy);
+    const steps = bl > 0 ? [[bl * 2, op * 0.25], [bl * 1.2, op * 0.35], [bl * 0.5, op * 0.5]] : [];
+    steps.forEach(([w, a2]) => out.push(L.geoJSON(sf, { renderer, interactive: false, style: { stroke: true, color: s.color, weight: base + w, opacity: a2, fill: false, lineJoin: 'round', lineCap: 'round' } })));
+    out.push(L.geoJSON(sf, { renderer, interactive: false, style: fillIt ? { stroke: false, fill: true, fillColor: s.color, fillOpacity: op } : { stroke: true, color: s.color, weight: base, opacity: op, fill: false, lineJoin: 'round', lineCap: 'round' } }));
+  };
+  soft(polys, 0.5, true); soft(lines, maxW, false);
+  if (pts.features.length){
+    const ms = (o.style.symbols || []).find(x => x.k === 'marker'), r = ms ? ms.size / 2 + (+ms.sw || 0) : 5;
+    const sf = shiftFC(pts, dx, dy);
+    out.push(L.geoJSON(sf, { pointToLayer: (f, ll) => L.circleMarker(ll, { renderer, interactive: false, radius: r + bl / 2, stroke: false, fill: true, fillColor: s.color, fillOpacity: op * 0.5 }) }));
+    out.push(L.geoJSON(sf, { pointToLayer: (f, ll) => L.circleMarker(ll, { renderer, interactive: false, radius: r, stroke: false, fill: true, fillColor: s.color, fillOpacity: op }) }));
+  }
+  return out;
+}
+const hasShadow = o => (o.style.symbols || []).some(x => x.k === 'shadow');
+map.on('zoomend rotate', () => { const sh = layers.filter(o => o.visible && hasShadow(o)); if (sh.length){ sh.forEach(renderLayer); refreshOrder(); } });
 function refreshOrder(){
   layers.forEach(o => o.group && map.removeLayer(o.group));
   [false, true].forEach(lyr => {   // 미리보기 주제도를 먼저(아래), 레이어를 나중(위)에
@@ -1983,7 +2048,7 @@ const SRC_NAME = { vworld: '브이월드', ecowfs: '에코뱅크', egis: '환경
 function rebuildThemeLists(){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); }
 function pinLayer(o){
   if (!o || o.pinned) return;
-  o.pinned = true; o.visible = true;
+  o.pinned = true; o.visible = true; o.grp = null;
   const i = layers.indexOf(o); layers.splice(i, 1); layers.unshift(o);   // 레이어 목록 맨 위로
   if (!legendItems.some(x => x.lid === o.id)) legendItems.unshift({ key: 'L' + o.id, lid: o.id, label: o.name, show: true });
   refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists();
@@ -1991,7 +2056,7 @@ function pinLayer(o){
 }
 function unpinLayer(o){
   if (!o || !o.pinned || !o.src) return;
-  o.pinned = false; o._sel = false;
+  o.pinned = false; o._sel = false; o.grp = null;
   legendItems = legendItems.filter(x => x.lid !== o.id);
   refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists();
   showToast(`'${o.name}'을(를) 레이어에서 빼고 미리보기로 돌렸습니다.`);
@@ -2055,6 +2120,7 @@ function selToolbar(box){
   const n = grp.filter(o => o._sel).length, t = document.createElement('div'); t.className = 'seltools';
   t.innerHTML = `<button data-s="all">전체 선택</button><button data-s="none" ${n ? '' : 'disabled'}>선택 해제</button>
     <button data-s="hide" ${n ? '' : 'disabled'}>선택 숨기기</button><button data-s="paste" ${n && styleClip ? '' : 'disabled'} title="${styleClip ? esc(`'${styleClip.from}' 스타일`) : '먼저 스타일 복사'}">선택에 스타일 붙여넣기</button>
+    <button data-s="group" ${n ? '' : 'disabled'} title="선택한 레이어를 폴더(그룹)로 묶기">📁 그룹으로 묶기</button>
     <button data-s="del" class="danger" ${n ? '' : 'disabled'}>선택 삭제${n ? ` (${n})` : ''}</button>`;
   t.querySelectorAll('[data-s]').forEach(b => b.onclick = () => {
     const a = b.dataset.s, sel = grp.filter(o => o._sel);
@@ -2063,6 +2129,17 @@ function selToolbar(box){
     else if (a === 'hide'){ sel.forEach(o => { o.visible = false; o._sel = false; }); refreshOrder(); renderLegendAll(); rebuildThemeLists(); }
     else if (a === 'del'){ if (!confirm(`선택한 레이어 ${sel.length}개를 지울까요?`)) return; deleteLayers(sel); return; }
     else if (a === 'paste'){ pasteStyle(sel); return; }
+    else if (a === 'group'){
+      const g = { id: ++grpSeq, name: '그룹 ' + grpSeq, open: true }; groups.push(g);
+      const L0 = layers.filter(isLyr), first = L0.find(o => o._sel);
+      sel.forEach(o => { o.grp = g.id; o._sel = false; });
+      /* 맨 위에 있던 선택 레이어 자리로 모음 */
+      const rest = layers.filter(x => !isLyr(x)), others = L0.filter(o => !sel.includes(o)), at = L0.indexOf(first);
+      const before = L0.slice(0, at).filter(o => !sel.includes(o));
+      layers.splice(0, layers.length, ...before, ...sel, ...others.filter(o => !before.includes(o)), ...rest);
+      normalizeGroups(); refreshOrder(); buildPanel(); renderLegendAll(); schedCheckpoint();
+      showToast(`📁 '${g.name}'으로 묶었습니다. 이름을 눌러 바꿀 수 있습니다.`); return;
+    }
     buildPanel();
   });
   box.appendChild(t);
@@ -2072,18 +2149,23 @@ document.addEventListener('keydown', e => {
   const sel = layers.filter(o => o._sel && isLyr(o)); if (!sel.length) return;
   if (confirm(`선택한 레이어 ${sel.length}개를 지울까요?`)) deleteLayers(sel);
 });
-function buildPanel(){
-  buildBufSrc();
-  const box = $('#layerList'); box.innerHTML = '';
-  selToolbar(box);
-  const list = layers.filter(isLyr);
-  list.forEach((o, i) => {
+let groups = [], grpSeq = 0;
+const grpById = id => groups.find(g => g.id === id);
+/* 같은 그룹 레이어는 항상 붙어 있게 정리 */
+function normalizeGroups(){
+  const L0 = layers.filter(isLyr), rest = layers.filter(x => !isLyr(x)), valid = new Set(groups.map(g => g.id));
+  layers.forEach(o => { if (o.grp != null && (!valid.has(o.grp) || !isLyr(o))) o.grp = null; });
+  const out = [], done = new Set();
+  L0.forEach(o => { if (o.grp == null) out.push(o); else if (!done.has(o.grp)){ done.add(o.grp); L0.filter(x => x.grp === o.grp).forEach(x => out.push(x)); } });
+  layers.splice(0, layers.length, ...out, ...rest);
+}
+function layerRow(o, list){
     const d = document.createElement('div'); d.className = 'lyr' + (o._sel ? ' sel' : '') + (sketch && sketch.o === o ? ' sketching' : ''); d.dataset.lid = o.id;
 
     const keys = propKeys(o.gj);
     d.innerHTML = `
       <div class="lh">
-        <span class="drag" title="끌어서 순서 바꾸기">⠿</span>
+        <span class="drag" title="끌어서 순서 바꾸기 (줄 아무 곳이나 잡고 끌어도 됩니다)">⠿</span>
         <input type="checkbox" class="selcb" ${o._sel ? 'checked' : ''} title="선택 (Shift+클릭: 범위 선택, Delete 키: 삭제)">
         <button class="eye ${o.visible ? 'on' : ''}" data-k="visible" title="보이기 / 숨기기">${o.visible ? '👁' : '—'}</button>
         <span class="sym">${legendSym(layerSymObj(o), 'P')}</span>
@@ -2127,8 +2209,8 @@ function buildPanel(){
     d.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
       const a = b.dataset.a;
       if (a === 'up' || a === 'down'){
-        const j = i + (a === 'up' ? -1 : 1); if (j < 0 || j >= list.length) return;
-        moveLayer(o, list[j], a === 'up' ? 'before' : 'after');
+        const i = list.indexOf(o), j = i + (a === 'up' ? -1 : 1); if (j < 0 || j >= list.length) return;
+        applyDrop({ o }, { o: list[j] }, a === 'up' ? 'before' : 'after'); return;
       }
       else if (a === 'sketch'){ if (sketch && sketch.o === o) stopSketch(); else startSketch(o); return; }
       else if (a === 'zoom'){ const bd = layerBounds(o); if (bd) map.fitBounds(bd, { padding: [30, 30] }); return; }
@@ -2138,45 +2220,124 @@ function buildPanel(){
       } else return;
       refreshOrder(); buildPanel(); renderLegendAll();
     });
-    /* 끌어서 순서 바꾸기: 손잡이를 잡았을 때만 끌 수 있게 (안의 입력칸이 방해받지 않도록) */
-    const h = d.querySelector('.drag');
-    h.addEventListener('mousedown', () => { d.draggable = true; });
-    h.addEventListener('mouseup', () => { d.draggable = false; });
-    d.addEventListener('dragstart', e => { if (!d.draggable){ e.preventDefault(); return; } dragLid = o.id; d.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(o.id)); } catch(_){} });
-    d.addEventListener('dragend', () => { d.draggable = false; dragLid = null; $$('#layerList .lyr').forEach(x => x.classList.remove('dragging', 'drop-before', 'drop-after')); });
-    box.appendChild(d);
+    return d;
+}
+function groupBox(g, members, list){
+  const w = document.createElement('div'); w.className = 'grp' + (g.open ? '' : ' closed'); w.dataset.gid = g.id;
+  const vis = members.filter(o => o.visible).length, sel = members.length && members.every(o => o._sel);
+  w.innerHTML = `<div class="grp-h">
+      <span class="drag" title="끌어서 그룹째 옮기기">⠿</span>
+      <input type="checkbox" class="gsel" ${sel ? 'checked' : ''} title="그룹 안 레이어 모두 선택">
+      <button class="tw" title="펼치기 / 접기">${g.open ? '▾' : '▸'}</button>
+      <button class="eye ${vis ? 'on' : ''}" title="그룹 전체 보이기 / 숨기기">${vis ? '👁' : '—'}</button>
+      <span class="fold">📁</span><input class="nm" value="${esc(g.name)}" title="그룹 이름">
+      <small class="hint">${members.length}</small>
+      <button data-g="ungroup" title="그룹만 풀기 (레이어는 남음)">풀기</button><button data-g="del" title="그룹과 안의 레이어 모두 삭제">✕</button>
+    </div><div class="grp-b"></div>`;
+  const h = w.querySelector('.grp-h');
+  h.querySelector('.gsel').onclick = e => { members.forEach(o => o._sel = e.target.checked); buildPanel(); };
+  h.querySelector('.tw').onclick = () => { g.open = !g.open; buildPanel(); };
+  h.querySelector('.eye').onclick = () => { const on = !vis; members.forEach(o => o.visible = on); refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists(); };
+  h.querySelector('.nm').onchange = e => { g.name = e.target.value; };
+  h.querySelector('[data-g="ungroup"]').onclick = () => { members.forEach(o => o.grp = null); groups = groups.filter(x => x !== g); normalizeGroups(); buildPanel(); schedCheckpoint(); };
+  h.querySelector('[data-g="del"]').onclick = () => {
+    if (!confirm(`'${g.name}' 그룹과 안의 레이어 ${members.length}개를 지울까요?`)) return;
+    groups = groups.filter(x => x !== g); deleteLayers(members);
+  };
+  const b = w.querySelector('.grp-b');
+  if (g.open) members.forEach(o => b.appendChild(layerRow(o, list)));
+  if (g.open && !members.length) b.innerHTML = '<p class="hint" style="margin:3px 0 3px 18px">비어 있음 · 레이어를 끌어다 넣으세요</p>';
+  return w;
+}
+function buildPanel(){
+  buildBufSrc();
+  normalizeGroups();
+  const box = $('#layerList'); box.innerHTML = '';
+  selToolbar(box);
+  const list = layers.filter(isLyr), done = new Set();
+  groups.filter(g => !list.some(o => o.grp === g.id)).forEach(g => box.appendChild(groupBox(g, [], list)));
+  list.forEach(o => {
+    if (o.grp == null){ box.appendChild(layerRow(o, list)); return; }
+    if (done.has(o.grp)) return; done.add(o.grp);
+    box.appendChild(groupBox(grpById(o.grp), list.filter(x => x.grp === o.grp), list));
   });
   buildPanelEmpty();
   updateSelHL();
 }
-let dragLid = null;
-function moveLayer(o, target, where){
-  if (!o || !target || o === target) return;
-  const list = layers.filter(isLyr).filter(x => x !== o), rest = layers.filter(x => !isLyr(x));
-  let k = list.indexOf(target); if (where === 'after') k++;
-  list.splice(k, 0, o);
-  layers.splice(0, layers.length, ...list, ...rest);
-  refreshOrder(); buildPanel(); renderLegendAll();
+/* 끌어서 순서 바꾸기 / 그룹에 넣고 빼기 */
+function applyDrop(src, tgt, zone){
+  let L0 = layers.filter(isLyr); const rest = layers.filter(x => !isLyr(x));
+  const moving = src.o ? [src.o] : L0.filter(x => x.grp === src.g.id);
+  if (!moving.length){ if (src.g){ groups = groups.filter(x => x !== src.g); const t = tgt.g ? groups.indexOf(tgt.g) : -1; groups.splice(t < 0 ? 0 : t + (zone === 'before' ? 0 : 1), 0, src.g); buildPanel(); } return; }
+  if (tgt.o && moving.includes(tgt.o)) return;
+  L0 = L0.filter(x => !moving.includes(x));
+  let idx = 0, newGrp = null;
+  const span = gid => { const m = L0.filter(x => x.grp === gid); return m.length ? [L0.indexOf(m[0]), L0.indexOf(m[m.length - 1]) + 1] : [0, 0]; };
+  if (tgt.o){
+    const t = tgt.o;
+    if (src.g && t.grp != null){ const [a, b] = span(t.grp); idx = zone === 'before' ? a : b; }
+    else { idx = L0.indexOf(t) + (zone === 'after' ? 1 : 0); newGrp = t.grp == null ? null : t.grp; }
+  } else {
+    const [a, b] = span(tgt.g.id);
+    if (zone === 'into' && src.o){ newGrp = tgt.g.id; idx = a; tgt.g.open = true; }
+    else idx = zone === 'before' ? a : b;
+  }
+  if (src.o) src.o.grp = newGrp;
+  L0.splice(Math.max(0, Math.min(idx, L0.length)), 0, ...moving);
+  layers.splice(0, layers.length, ...L0, ...rest);
+  normalizeGroups(); refreshOrder(); buildPanel(); renderLegendAll(); schedCheckpoint();
 }
+function moveLayer(o, target, where){ applyDrop({ o }, { o: target }, where); }
 (() => {
   const box = $('#layerList');
-  const rowAt = e => { const r = e.target.closest && e.target.closest('.lyr'); return r && box.contains(r) ? r : null; };
+  let st = null, ghost = null, cur = null;
+  const clearMarks = () => $$('#layerList .drop-before,#layerList .drop-after,#layerList .drop-into').forEach(x => x.classList.remove('drop-before', 'drop-after', 'drop-into'));
+  box.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    const h = e.target.closest('.lh, .grp-h'); if (!h || !box.contains(h)) return;
+    if (e.target.closest('input, button, select, textarea, label') && !e.target.closest('.drag')) return;
+    const row = h.closest('.lyr, .grp');
+    st = { x: e.clientX, y: e.clientY, row, src: row.classList.contains('grp') ? { g: grpById(+row.dataset.gid) } : { o: layerById(+row.dataset.lid) }, on: false };
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!st) return;
+    if (!st.on){
+      if (Math.hypot(e.clientX - st.x, e.clientY - st.y) < 5) return;
+      st.on = true; st.row.classList.add('dragging');
+      ghost = document.createElement('div'); ghost.id = 'dragGhost';
+      ghost.textContent = st.src.o ? '⠿ ' + st.src.o.name : '📁 ' + st.src.g.name; document.body.appendChild(ghost);
+      document.body.classList.add('lyr-dragging');
+    }
+    Object.assign(ghost.style, { left: e.clientX + 12 + 'px', top: e.clientY + 6 + 'px' });
+    const wb = box.closest('.wb'), wr = wb.getBoundingClientRect();
+    if (e.clientY < wr.top + 30) wb.scrollTop -= 12; else if (e.clientY > wr.bottom - 30) wb.scrollTop += 12;
+    clearMarks(); cur = null;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const t = el && el.closest && el.closest('#layerList .lyr, #layerList .grp-h'); if (!t || st.row.contains(t)) return;
+    const r = t.getBoundingClientRect(), f = (e.clientY - r.top) / r.height;
+    if (t.classList.contains('grp-h')){
+      const g = grpById(+t.closest('.grp').dataset.gid);
+      const zone = st.src.g ? (f < 0.5 ? 'before' : 'after') : (f < 0.25 ? 'before' : (f > 0.75 && !g.open) ? 'after' : 'into');
+      cur = { tgt: { g }, zone }; t.classList.add('drop-' + zone);
+    } else {
+      const zone = f < 0.5 ? 'before' : 'after';
+      cur = { tgt: { o: layerById(+t.dataset.lid) }, zone }; t.classList.add('drop-' + zone);
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    if (!st) return;
+    const s0 = st; st = null;
+    if (ghost){ ghost.remove(); ghost = null; }
+    document.body.classList.remove('lyr-dragging'); clearMarks();
+    if (!s0.on) return;
+    s0.row.classList.remove('dragging');
+    if (cur) applyDrop(s0.src, cur.tgt, cur.zone); else buildPanel();
+    cur = null;
+  });
   const isFile = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
-  box.addEventListener('dragover', e => {
-    if (dragLid == null){ if (isFile(e)){ e.preventDefault(); e.stopPropagation(); } return; }
-    e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move';
-    $$('#layerList .lyr').forEach(x => x.classList.remove('drop-before', 'drop-after'));
-    const r = rowAt(e); if (!r || +r.dataset.lid === dragLid) return;
-    const bb = r.getBoundingClientRect(); r.classList.add(e.clientY < bb.top + bb.height / 2 ? 'drop-before' : 'drop-after');
-  });
-  box.addEventListener('drop', e => {
-    if (dragLid == null){ if (isFile(e)){ e.preventDefault(); e.stopPropagation(); handleFiles(e.dataTransfer.files); } return; }
-    e.preventDefault(); e.stopPropagation();
-    const r = rowAt(e), o = layerById(dragLid); dragLid = null;
-    if (!r || !o) { buildPanel(); return; }
-    const bb = r.getBoundingClientRect();
-    moveLayer(o, layerById(+r.dataset.lid), e.clientY < bb.top + bb.height / 2 ? 'before' : 'after');
-  });
+  box.addEventListener('dragover', e => { if (isFile(e)){ e.preventDefault(); e.stopPropagation(); } });
+  box.addEventListener('drop', e => { if (isFile(e)){ e.preventDefault(); e.stopPropagation(); handleFiles(e.dataTransfer.files); } });
 })();
 
 /* ================= 도면 요소 설정 ================= */
@@ -2901,20 +3062,17 @@ function copyTxt(t){
 }
 /* 주소: ① 연속지적도(브이월드 2D데이터 API, 지금 키로 바로 됨) → 지번  ② 브이월드 지오코더 API → 도로명 (키에 '지오코더' 사용 신청 필요) */
 async function getParcel(ll){
-  const url = 'https://api.vworld.kr/req/data?service=data&version=2.0&request=GetFeature&format=json&errorformat=json&size=1&page=1'
-    + `&geometry=false&attribute=true&crs=EPSG:4326&geomFilter=POINT(${ll.lng.toFixed(7)} ${ll.lat.toFixed(7)})`
-    + `&data=LP_PA_CBND_BUBUN&key=${encodeURIComponent(getKey())}&domain=${encodeURIComponent(location.origin)}`;
-  const d = await jsonp(url), r = d && d.response;
-  if (!r) throw new Error('응답 없음');
-  if (r.status === 'NOT_FOUND') return null;
-  if (r.status !== 'OK') throw new Error((r.error && (r.error.text || r.error.code)) || r.status);
-  const f = r.result && r.result.featureCollection && r.result.featureCollection.features && r.result.featureCollection.features[0];
-  if (!f) return null;
+  const d0 = 0.0004, b = L.latLngBounds([ll.lat - d0, ll.lng - d0], [ll.lat + d0, ll.lng + d0]), cand = [];
+  await vwData('LP_PA_CBND_BUBUN', b, f => cand.push(f), 1);
+  if (!cand.length) return null;
+  const pt = [ll.lng, ll.lat];
+  const inside = f => { const g = f.geometry; if (!g) return false; const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : []; return polys.some(p => inRing(pt, p[0])); };
+  const f = cand.find(inside); if (!f) return null;
   const p = f.properties || {};
-  const jb = String(p.jibun || '');
+  const jb = String(p.jibun || p.JIBUN || '');
   const jimok = (jb.match(/[가-힣]+$/) || [''])[0];
-  const addr = String(p.addr || '').trim() || jb;
-  return { text: addr, jimok, price: p.jiga || '' };
+  const addr = String(p.addr || p.ADDR || '').trim() || jb;
+  return { text: addr, jimok, price: p.jiga || p.JIGA || '' };
 }
 async function getRoadAddr(ll){
   const url = 'https://api.vworld.kr/req/address?service=address&request=getAddress&version=2.0&crs=epsg:4326&format=json'
@@ -3008,6 +3166,8 @@ function identify(e, withPoint){
         done(`📌 '${nm}'을(를) 새 레이어로 추가했습니다.`);
       }]);
     }
+    const picked = isPicked(h);
+    acts.push([picked ? '🧺 담은 것에서 빼기' : '🧺 담기 (여러 개 → 한 레이어)', '', () => { togglePick(h); map.closePopup(); }]);
     if (h.name) acts.push(['이 이름을 글자로 넣기', '', () => { addAnn(Object.assign({}, annDraft, { text: h.name, lat: ll.lat, lng: ll.lng })); done(`'${h.name}' 글자를 넣었습니다. ① 작업 → 4. 글자 넣기에서 모양을 바꿀 수 있습니다.`); }]);
     const ab = it.querySelector('.acts');
     acts.forEach(([t, c, fn]) => { const b = document.createElement('button'); b.textContent = t; if (c) b.className = c; b.onclick = fn; ab.appendChild(b); });
@@ -3031,6 +3191,7 @@ $('#identOn').checked = store.get('identOn', '1') === '1';
 $('#identOn').onchange = e => store.set('identOn', e.target.checked ? '1' : '0');
 map.on('click', e => {
   if (!$('#identOn').checked || placing || drawing || sketch) return;
+  if (e.originalEvent && (e.originalEvent.ctrlKey || e.originalEvent.metaKey)) return;
   if (!identify(e)) map.closePopup();
 });
 
@@ -3314,13 +3475,13 @@ function download(name, url){ const a = document.createElement('a'); a.href = ur
 const fileBase = () => ($('#titleIn').value || '도면').replace(/[\\/:*?"<>|]/g, '_');
 async function capture(){ return capture2(); }
 async function capture2(){
-  vtxGroup.clearLayers(); map.closePopup(); map.removeLayer(selHL); if (sketch) map.removeLayer(sketch.tmp);
+  vtxGroup.clearLayers(); map.closePopup(); map.removeLayer(selHL); map.removeLayer(pickHL); map.removeLayer(editHL); if (sketch) map.removeLayer(sketch.tmp);
   document.body.classList.add('exporting');
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
   await new Promise(r => setTimeout(r, 200));
   try {
     return await html2canvas(frame, { useCORS: true, allowTaint: false, scale: outScale(), backgroundColor: '#ffffff', logging: false });
-  } finally { document.body.classList.remove('exporting'); renderVertices(); selHL.addTo(map); if (sketch) sketch.tmp.addTo(map); }
+  } finally { document.body.classList.remove('exporting'); renderVertices(); selHL.addTo(map); pickHL.addTo(map); editHL.addTo(map); if (sketch) sketch.tmp.addTo(map); }
 }
 $('#btnJpg').onclick = async () => {
   busy(true);
@@ -3347,7 +3508,8 @@ function projData(){
     title: $('#titleIn').value, cfg,
     toggles: Object.fromEntries($$('.tg').map(c => [c.dataset.t, c.checked])),
     pos: Object.fromEntries(OVL.map(id => { const el = $('#' + id), s = el.style; return [id, { left: s.left, top: s.top, right: s.right, bottom: s.bottom, transform: s.transform, moved: !!el.dataset.moved }]; })),
-    layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, pinned: !!o.pinned, style: o.style, gj: o.gj, src: o.src, buf: o.buf })),
+    layers: layers.map(o => ({ id: o.id, name: o.name, type: o.type, visible: o.visible, pinned: !!o.pinned, grp: o.grp == null ? null : o.grp, style: o.style, gj: o.gj, src: o.src, buf: o.buf })),
+    groups: groups.map(({ id, name, open }) => ({ id, name, open })),
     legendItems: legendItems.map(({ _open, ...it }) => it),
     anns: anns.map(({ marker, id, ...a }) => a),
     draws: draws.map(({ group, id, ...d }) => d)
@@ -3443,6 +3605,7 @@ function migrateCfg(dc){
 async function loadProject(d){
   if (d.app !== 'eia-map') throw new Error('이 도구의 작업 파일이 아닙니다.');
   layers.forEach(o => map.removeLayer(o.group)); layers.length = 0; legendItems = [];
+  groups = (d.groups || []).map(g => Object.assign({}, g)); grpSeq = groups.reduce((m, g) => Math.max(m, g.id), 0);
   anns.forEach(a => map.removeLayer(a.marker)); anns.length = 0; selAnn = null;
   if (Array.isArray(d.baseState)){
     baseState = d.baseState.filter(b => BASES.some(x => x[0] === b.id));
@@ -3481,7 +3644,7 @@ async function loadProject(d){
   const idMap = {};
   (d.layers || []).filter(l => !(l.src && l.src.kind === 'ecobank')).slice().reverse().forEach(l => {
     const o = addLayer(l.name, l.gj, { type: l.type, visible: l.visible, legend: l.legend, style: l.style, noLegend: !!d.legendItems, src: l.src || null,
-      pinned: !l.src || ((d.v || 1) < 6 ? true : !!l.pinned), quiet: true });   // 이전 버전 작업의 주제도는 레이어로 잡힌 것으로
+      pinned: !l.src || ((d.v || 1) < 6 ? true : !!l.pinned), quiet: true, grp: l.grp });   // 이전 버전 작업의 주제도는 레이어로 잡힌 것으로
     idMap[l.id] = o.id;
   });
   if (d.legendItems){
@@ -3526,7 +3689,9 @@ $$('.goLyr').forEach(b => b.onclick = () => setLyrWin(true));
 /* ================= 레이어 창 (오른쪽에 붙은 패널, 포토샵처럼) ================= */
 const dockOn = () => !$('#lyrDock').classList.contains('off');
 function setLyrWin(on){
-  $('#lyrDock').classList.toggle('off', !on); $('#btnLyrWin').classList.toggle('on', on);
+  $('#lyrDock').classList.toggle('off', !on);
+  /* 레이어 창이 열려 있으면 파일·되돌리기 도구는 창 맨 위에, 닫혀 있으면 지도 오른쪽 위에 */
+  if (on) $('#lyrDock').insertBefore($('#workbar'), $('#lyrDock .wh')); else $('#work').appendChild($('#workbar')); $('#btnLyrWin').classList.toggle('on', on);
   store.set('lyrDock', on ? '1' : '0');
   requestAnimationFrame(layoutFrame);
 }
@@ -3633,8 +3798,11 @@ function selectByBox(p1, p2, add){
 })();
 /* 선택 도구로 지도를 클릭하면 그 자리 레이어 선택 */
 map.on('click', e => {
-  if (tool !== 'select' || drawing || placing || sketch || mapLocked) return;
-  const add = e.originalEvent && (e.originalEvent.shiftKey || e.originalEvent.ctrlKey || e.originalEvent.metaKey);
+  if (drawing || placing || sketch || mapLocked) return;
+  const oe = e.originalEvent || {};
+  if (oe.ctrlKey || oe.metaKey){ const h = hitsAt(e)[0]; if (h) togglePick(h); else showToast('그 자리에 담을 도형이 없습니다.'); return; }
+  if (tool !== 'select') return;
+  const add = oe.shiftKey;
   const hit = hitsAt(e).find(h => h.o && isLyr(h.o));
   if (!add) layers.forEach(o => o._sel = false);
   if (hit) hit.o._sel = add ? !hit.o._sel : true;
@@ -3653,14 +3821,16 @@ function startSketch(o){
   sketch = { o, pts: [], tmp: L.layerGroup().addTo(map) };
   map.doubleClickZoom.disable(); $('#map').classList.add('drawmode');
   $('#sketchName').textContent = `✏ '${o.name}'에 그리는 중`;
-  $('#sketchHelp').textContent = o.type === 'point' ? '· 클릭: 점 찍기 · Esc: 끝' : `· 클릭: 꼭짓점 · 더블클릭/Enter: ${o.type === 'polygon' ? '면' : '선'} 하나 완성 · Backspace: 점 취소 · Shift: 수평·수직·45° · Esc: 끝`;
+  $('#sketchHelp').textContent = (o.type === 'point' ? '· 클릭: 점 찍기' : `· 클릭: 꼭짓점 · 더블클릭/Enter: ${o.type === 'polygon' ? '면' : '선'} 하나 완성 · Backspace: 점 취소 · Shift: 45°`)
+    + ' · 고치기: ■ 끌기 / ● 눌러 점 추가 / ■ 우클릭 점 삭제 · Esc: 끝';
   $('#sketchBar').hidden = false;
-  buildPanel();
+  o._editCopy = null;
+  buildPanel(); renderEditHandles();
 }
 function stopSketch(){
   if (!sketch) return;
   finishSketchFeature();
-  sketch.tmp.remove(); sketch = null;
+  sketch.tmp.remove(); const so = sketch.o; sketch = null; so._editCopy = null; editHL.clearLayers();
   if (!mapLocked) map.doubleClickZoom.enable();
   $('#map').classList.remove('drawmode'); $('#sketchBar').hidden = true;
   buildPanel(); schedCheckpoint();
@@ -3687,8 +3857,8 @@ function sketchTmp(cur){
 }
 function pushFeature(o, g){
   o.gj = { type: 'FeatureCollection', features: [...o.gj.features, { type: 'Feature', geometry: g, properties: {} }] };
-  o.gjv = (o.gjv || 0) + 1;
-  renderLayer(o); refreshOrder(); renderLegendAll();
+  o.gjv = (o.gjv || 0) + 1; o._editCopy = null;
+  renderLayer(o); refreshOrder(); renderLegendAll(); renderEditHandles();
   const fc = $(`#layerList [data-lid="${o.id}"] .fcount`); if (fc) fc.textContent = o.gj.features.length + '개';
   schedCheckpoint();
 }
@@ -3714,13 +3884,120 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'Backspace'){ e.preventDefault(); sketch.pts.pop(); sketchTmp(null); }
 }, true);
 
+/* ================= 도형 담기: 여러 도형(다른 구역·다른 레이어도 가능)을 한 레이어로 ================= */
+let picks = [];
+const pickHL = L.layerGroup().addTo(map);
+const pickKey = h => h.adm ? 'A|' + h.adm + '|' + h.en.id : 'F|' + h.o.id + '|' + h.o.gj.features.indexOf(h.f);
+const isPicked = h => picks.some(p => p.key === pickKey(h));
+function pickGeom(p){ return p.adm ? p.en.geom : p.f.geometry; }
+function togglePick(h){
+  const k = pickKey(h), i = picks.findIndex(p => p.key === k);
+  if (i >= 0) picks.splice(i, 1);
+  else picks.push(Object.assign({ key: k, name: h.name || (h.f ? guessName(h.o, h.f.properties || {}) : '') }, h));
+  updatePicks();
+}
+function updatePicks(){
+  pickHL.clearLayers();
+  picks.forEach(p => pickHL.addLayer(L.geoJSON({ type: 'Feature', geometry: pickGeom(p), properties: {} }, { renderer: drawRenderer, interactive: false,
+    style: { color: '#ff6a00', weight: 4, opacity: 0.9, fill: /Polygon/.test(pickGeom(p).type), fillColor: '#ff6a00', fillOpacity: 0.12 },
+    pointToLayer: (f, ll) => L.circleMarker(ll, { renderer: drawRenderer, interactive: false, radius: 9, color: '#ff6a00', weight: 3, fill: false }) })));
+  $('#pickBar').hidden = !picks.length;
+  $('#pickN').textContent = `${picks.length}개 담음`;
+  const nm = [...new Set(picks.map(p => p.name).filter(Boolean))];
+  $('#pickNames').textContent = nm.length ? '· ' + nm.join(', ') : '';
+}
+$('#pickClear').onclick = () => { picks = []; updatePicks(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && picks.length && !sketch && !drawing && !typing()){ picks = []; updatePicks(); } });
+$('#pickMake').onclick = () => {
+  if (!picks.length) return;
+  const feats = picks.map(p => ({ type: 'Feature', geometry: JSON.parse(JSON.stringify(pickGeom(p))), properties: p.adm ? { 이름: p.en.name, 구분: ADM[p.adm].short } : JSON.parse(JSON.stringify(p.f.properties || {})) }));
+  const first = picks[0], same = picks.every(p => (p.adm || p.o.id) === (first.adm || first.o.id));
+  const type = feats.every(f => /Polygon/.test(f.geometry.type)) ? 'polygon' : feats.every(f => /LineString/.test(f.geometry.type)) ? 'line' : feats.every(f => /Point/.test(f.geometry.type)) ? 'point' : (first.o ? first.o.type : 'polygon');
+  let style = null;
+  if (same && first.o) style = JSON.parse(JSON.stringify(first.o.style));
+  else if (same && first.adm) style = { symbols: JSON.parse(JSON.stringify(admLineSyms[first.adm])), label: labelDefaults() };
+  const nm = [...new Set(picks.map(p => p.name).filter(Boolean))];
+  const name = nm.length ? (nm.length > 3 ? nm.slice(0, 3).join(' · ') + ` 외 ${nm.length - 3}` : nm.join(' · ')) : (first.o ? first.o.name : '담은 도형');
+  addLayer(name, { type: 'FeatureCollection', features: feats }, Object.assign({ type }, style ? { style } : {}));
+  showToast(`📌 도형 ${feats.length}개로 '${name}' 레이어를 만들었습니다.`);
+  picks = []; updatePicks();
+};
+
+/* ================= 그린 도형 고치기: 그리기(✏) 중에는 꼭짓점 ■을 끌어 옮기고, ●을 눌러 점 추가, ■ 우클릭으로 점 삭제 ================= */
+const editHL = L.layerGroup().addTo(map);
+const EDIT_MAX = 1500;
+function geomPaths(g){   // 고칠 수 있는 좌표 배열들: [{arr, ring}]
+  const t = g.type, c = g.coordinates, out = [];
+  if (t === 'LineString') out.push({ arr: c, ring: false });
+  else if (t === 'MultiLineString') c.forEach(a => out.push({ arr: a, ring: false }));
+  else if (t === 'Polygon') c.forEach(a => out.push({ arr: a, ring: true }));
+  else if (t === 'MultiPolygon') c.forEach(p => p.forEach(a => out.push({ arr: a, ring: true })));
+  return out;
+}
+function editWorking(o){   // 고치기 시작할 때 한 번 복사 (되돌리기용으로 원래 것은 그대로 둠)
+  if (o._editCopy !== o.gj){ o.gj = JSON.parse(JSON.stringify(o.gj)); o.gjv = (o.gjv || 0) + 1; o._editCopy = o.gj; }
+  return o.gj;
+}
+let editRaf = 0;
+const editRedraw = o => { cancelAnimationFrame(editRaf); editRaf = requestAnimationFrame(() => { renderLayer(o); refreshOrder(); }); };
+function renderEditHandles(){
+  editHL.clearLayers();
+  if (!sketch) return;
+  const o = sketch.o, vb = map.getBounds().pad(0.05); let n = 0;
+  const icon = (cls, sz) => L.divIcon({ className: cls, iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
+  o.gj.features.forEach((f, fi) => {
+    if (!f.geometry || n > EDIT_MAX) return;
+    if (f.geometry.type === 'Point'){
+      const c = f.geometry.coordinates; if (!vb.contains([c[1], c[0]])) return; n++;
+      const m = L.marker([c[1], c[0]], { draggable: true, icon: icon('vtx-h', 11), zIndexOffset: 1000 });
+      m.on('dragstart', () => { editWorking(o); });
+      m.on('drag', ev => { const ll = ev.target.getLatLng(); o.gj.features[fi].geometry.coordinates = [ll.lng, ll.lat]; editRedraw(o); });
+      m.on('dragend', () => { editRedraw(o); schedCheckpoint(); });
+      m.on('contextmenu', ev => { L.DomEvent.preventDefault(ev.originalEvent); L.DomEvent.stop(ev); editWorking(o); o.gj.features.splice(fi, 1); o._editCopy = null; o.gj = { type: 'FeatureCollection', features: o.gj.features }; o._editCopy = o.gj; renderLayer(o); refreshOrder(); renderEditHandles(); schedCheckpoint(); });
+      editHL.addLayer(m); return;
+    }
+    geomPaths(f.geometry).forEach((P, pi) => {
+      const cnt = P.ring ? P.arr.length - 1 : P.arr.length;
+      for (let vi = 0; vi < cnt && n <= EDIT_MAX; vi++){
+        const c = P.arr[vi];
+        if (vb.contains([c[1], c[0]])){
+          n++;
+          const m = L.marker([c[1], c[0]], { draggable: true, icon: icon('vtx-h', 11), zIndexOffset: 1000 });
+          const arrOf = () => geomPaths(o.gj.features[fi].geometry)[pi].arr;
+          m.on('dragstart', () => { editWorking(o); });
+          m.on('drag', ev => { const ll = ev.target.getLatLng(), A = arrOf(); A[vi] = [ll.lng, ll.lat]; if (P.ring && vi === 0) A[A.length - 1] = [ll.lng, ll.lat]; editRedraw(o); });
+          m.on('dragend', () => { renderLayer(o); refreshOrder(); renderEditHandles(); schedCheckpoint(); });
+          m.on('contextmenu', ev => {
+            L.DomEvent.preventDefault(ev.originalEvent); L.DomEvent.stop(ev);
+            editWorking(o); const A = arrOf(), min = P.ring ? 4 : 2;
+            if (A.length <= min){ if (confirm('점이 너무 적어집니다. 이 도형을 통째로 지울까요?')){ o.gj.features.splice(fi, 1); } else return; }
+            else { A.splice(vi, 1); if (P.ring && vi === 0) A[A.length - 1] = A[0].slice(); }
+            renderLayer(o); refreshOrder(); renderEditHandles(); schedCheckpoint();
+          });
+          editHL.addLayer(m);
+        }
+        const nx = P.arr[(vi + 1) % P.arr.length];
+        if (!P.ring && vi === cnt - 1) continue;
+        const mid = [(c[0] + nx[0]) / 2, (c[1] + nx[1]) / 2];
+        if (!vb.contains([mid[1], mid[0]])) continue;
+        const mm = L.marker([mid[1], mid[0]], { icon: icon('vtx-m', 9), zIndexOffset: 900 });
+        mm.on('click', ev => { L.DomEvent.stop(ev); editWorking(o); const A = geomPaths(o.gj.features[fi].geometry)[pi].arr; A.splice(vi + 1, 0, mid); renderLayer(o); refreshOrder(); renderEditHandles(); schedCheckpoint(); });
+        editHL.addLayer(mm);
+      }
+    });
+  });
+  if (n > EDIT_MAX) showToast('꼭짓점이 많아 일부만 보입니다. 고칠 곳을 확대해 주세요.');
+}
+map.on('moveend zoomend', () => { if (sketch) renderEditHandles(); });
+
 /* ================= 되돌리기 · 다시 하기 (Ctrl+Z / Ctrl+Y) ================= */
 const UNDO_MAX = 80, hist = [], fut = [];
 let restoring = false, ckT = null;
 const skipPriv = (k, v) => (k && k[0] === '_') ? undefined : v;
 function snapState(){
   return JSON.stringify({
-    L: layers.map(o => [o.id, o.name, o.type, o.visible, !!o.pinned, o.style, o.gjv || 0, o.buf || null]),
+    L: layers.map(o => [o.id, o.name, o.type, o.visible, !!o.pinned, o.style, o.gjv || 0, o.buf || null, o.grp == null ? null : o.grp]),
+    G: groups,
     lg: legendItems, an: anns.map(({ marker, id, ...a }) => a), dr: draws.map(({ group, id, ...d }) => d),
     cfg, adm: [admLineSyms, admTsLv, admPos, [...admHidden]], title: $('#titleIn').value
   }, skipPriv);
@@ -3742,11 +4019,12 @@ function restoreState(en){
     if (sketch) { sketch.pts = []; stopSketch(); }
     if (drawing) setDrawing(false);
     map.closePopup();
-    const next = d.L.map(([id, name, type, visible, pinned, style, gjv, buf]) => {
+    groups = (d.G || []).map(g => Object.assign({}, g));
+    const next = d.L.map(([id, name, type, visible, pinned, style, gjv, buf, grp]) => {
       const o = en.objs.get(id) || layerById(id); if (!o) return null;
       const st = JSON.stringify(style), gj = en.gj.get(id) || o.gj;
       const changed = !o.group || o.type !== type || JSON.stringify(o.style, skipPriv) !== st || o.gj !== gj;
-      Object.assign(o, { name, type, visible, pinned, style: JSON.parse(st), gjv, buf, gj });
+      Object.assign(o, { name, type, visible, pinned, style: JSON.parse(st), gjv, buf, gj, grp: grp == null ? null : grp });
       if (changed) renderLayer(o);
       return o;
     }).filter(Boolean);
@@ -3767,6 +4045,7 @@ function restoreState(en){
     syncCfgUI(); if (JSON.stringify(cfg.paper) !== paperBefore) layoutFrame(); applyCfg();
     refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists();
     deselectAnn(); deselectDraw(); buildAnnList(); buildDrawList();
+    picks = []; updatePicks();
   } finally { restoring = false; }
 }
 function undo(){
