@@ -302,7 +302,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.4</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.4.1</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -3178,7 +3178,7 @@ function identify(e, withPoint){
   return true;
 }
 map.on('contextmenu', e => {
-  if (placing || drawing || sketch || (e.originalEvent && e.originalEvent.defaultPrevented)) return;
+  if (placing || drawing || sketch) return;   // (Leaflet이 우클릭 기본 메뉴를 미리 막아 두므로 defaultPrevented로 거르면 안 됨)
   identify(e, true);
 });
 /* 마우스 위치 좌표 (도면에는 안 나옴) */
