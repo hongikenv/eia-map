@@ -203,13 +203,30 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #workbar #curFile{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#456;padding:0 4px}
 #workbar button.on{background:#1d3b2a;color:#fff;border-color:#1d3b2a}
 #coordBar{position:absolute;left:8px;bottom:8px;z-index:1200;background:rgba(255,255,255,.9);border:1px solid #ccd;border-radius:4px;padding:2px 7px;font:11.5px Consolas,monospace;color:#234;pointer-events:none}
-#lyrWin{position:absolute;top:52px;right:8px;width:350px;height:60%;min-width:260px;min-height:160px;z-index:1150;background:#f6f7f9;border:1px solid #99a;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;flex-direction:column;resize:both;overflow:hidden}
-#lyrWin[hidden]{display:none}
-#lyrWin .wh{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#1d3b2a;color:#fff;cursor:move;user-select:none;font-weight:600;font-size:13px}
-#lyrWin .wh button{margin-left:auto;background:transparent;color:#fff;border-color:rgba(255,255,255,.6);font-size:11px;padding:1px 6px;cursor:pointer}
-#lyrWin .wh button+button{margin-left:0}
-#lyrWin .wb{flex:1;overflow:auto;padding:4px 8px}
-#lyrWinNote{display:none}
+#lyrDock{width:340px;flex:none;height:100%;background:#f6f7f9;border-left:1px solid #99a;display:flex;flex-direction:column;position:relative;min-width:240px;max-width:700px}
+#lyrDock.off{display:none}
+#dockGrip{position:absolute;left:-3px;top:0;bottom:0;width:6px;cursor:ew-resize;z-index:5}
+#lyrDock .wh{display:flex;align-items:center;gap:6px;padding:8px 8px;background:#1d3b2a;color:#fff;font-weight:600;font-size:13px}
+#lyrDock .wbtns{margin-left:auto;display:flex;gap:3px;position:relative}
+#lyrDock .wh button{background:transparent;color:#fff;border-color:rgba(255,255,255,.6);font-size:11px;padding:1px 6px;cursor:pointer}
+#lyrDock .wb{flex:1;overflow:auto;padding:4px 8px}
+.newwrap{position:relative}
+#lyrNewMenu{position:absolute;top:100%;right:0;margin-top:3px;background:#fff;border:1px solid #99a;border-radius:4px;box-shadow:0 3px 10px rgba(0,0,0,.25);display:flex;flex-direction:column;z-index:20;min-width:120px}
+#lyrNewMenu[hidden]{display:none}
+#lyrDock #lyrNewMenu button{color:#222;border:none;text-align:left;padding:6px 10px;font-size:12px;border-radius:0}
+#lyrDock #lyrNewMenu button:hover{background:#e6f0ff}
+.lyr.sel{background:#e6f0ff;border-color:#7aa7e6}
+.lyr.sketching{outline:2px solid #e67e00}
+.lyr button.sk.on{background:#e67e00;color:#fff;border-color:#e67e00}
+#workbar .sep{width:1px;height:18px;background:#ccd;margin:0 2px}
+#workbar button:disabled{opacity:.35}
+#sketchBar{position:absolute;top:8px;left:8px;z-index:1200;background:#fff3e0;border:1px solid #e67e00;border-radius:6px;padding:5px 8px;font-size:12px;box-shadow:0 1px 6px rgba(0,0,0,.25);max-width:55%}
+#sketchBar[hidden]{display:none}
+#selBox{position:absolute;z-index:1100;border:1.5px dashed #0a64d0;background:rgba(10,100,208,.08);pointer-events:none}
+#selBox[hidden]{display:none}
+#map.tool-select{cursor:default}
+#map.tool-select.leaflet-grab{cursor:grab}
+#map.drawmode,#map.drawmode.leaflet-grab{cursor:crosshair}
 #saveDlg .grid input{flex:1}
 .modalx{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:5000}
 .exporting .leaflet-popup-pane{display:none}
@@ -243,7 +260,6 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .lyr.drop-before{box-shadow:0 -3px 0 #0a64d0}
 .lyr.drop-after{box-shadow:0 3px 0 #0a64d0}
 .lyr .badge.src{background:#e8eef8;color:#2a4a7a}
-#tabLyrN{opacity:.75;font-weight:400}
 textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:inherit;min-height:38px}
 .badge{font-size:10px;color:#fff;background:#3a7bd5;border-radius:3px;padding:0 4px;flex:none}
 .mbox{background:#fff;border-radius:6px;padding:16px 18px;min-width:340px;max-width:520px;max-height:85vh;overflow:auto}
@@ -263,8 +279,8 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.2</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
-  <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 레이어 <small id="tabLyrN"></small></button><button class="tab" data-sheet="4">④ 출력</button></div>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.3</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
   <div class="sec">
@@ -281,8 +297,8 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
       <input type="file" id="fileIn" multiple accept=".zip,.shp,.dbf,.prj,.cpg,.shx,.dxf,.geojson,.json" hidden></div>
     <div class="row"><label>SHP 글자 인코딩</label>
       <select id="encSel"><option value="auto">자동 판별</option><option value="euc-kr">EUC-KR (CP949)</option><option value="utf-8">UTF-8</option></select></div>
-    <p class="hint">· SHP는 zip으로 묶거나 shp/dbf/prj를 함께 선택하세요. · DWG는 DXF로 저장해서 올려주세요. · 올린 레이어는 <b>③ 레이어</b> 시트에 들어가고, 거기서 순서·색·선·이름 표시를 정합니다.</p>
-    <div class="row"><button class="goLyr">③ 레이어 시트로 →</button></div>
+    <p class="hint">· SHP는 zip으로 묶거나 shp/dbf/prj를 함께 선택하세요. · DWG는 DXF로 저장해서 올려주세요. · 올린 레이어는 <b>오른쪽 레이어 창</b>에 들어가고, 거기서 순서·색·선·이름 표시를 정합니다. 레이어 창에서 <b>＋ 새 레이어</b>로 직접 그릴 수도 있습니다.</p>
+    <div class="row"><button class="goLyr">🗂 레이어 창 열기</button></div>
   </div>
 
   <div class="sec">
@@ -294,7 +310,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
       <label>모양</label><select id="bufStyle"><option value="eia">대상지역 설정도 (바깥 실선 · 안쪽 파선)</option><option value="fill">반투명 채움 + 실선</option><option value="line">테두리만 (실선)</option></select>
     </div>
     <div class="row"><button id="bufMake" class="pri">버퍼 만들기</button><span class="hint" id="bufMsg"></span></div>
-    <p class="hint">만든 버퍼는 ③ 레이어 시트에 '○○ 반경 1km'처럼 들어갑니다. 색·선·채움은 다른 레이어처럼 바꿀 수 있고, 범례에도 들어갑니다.</p>
+    <p class="hint">만든 버퍼는 오른쪽 레이어 창에 '○○ 반경 1km'처럼 들어갑니다. 색·선·채움은 다른 레이어처럼 바꿀 수 있고, 범례에도 들어갑니다.</p>
   </div>
 
   <div class="sec">
@@ -384,7 +400,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
   <div class="sec">
     <h2>2. 주제도 고르기</h2>
     <div class="row"><button id="thAllOff">미리보기 모두 끄기</button><span class="hint">체크하면 지도에 <b>미리보기</b>로 켜집니다.</span></div>
-    <div class="pinhelp">📌 이름을 <b>두 번 클릭</b>하거나, 지도에서 그 자료를 <b>우클릭 → 레이어로 추가</b>하면 도면에 쓸 레이어로 잡혀 ③ 레이어와 범례에 들어갑니다. 다시 두 번 클릭하면 미리보기로 돌아갑니다.</div>
+    <div class="pinhelp">📌 이름을 <b>두 번 클릭</b>하거나, 지도에서 그 자료를 <b>우클릭 → 레이어로 추가</b>하면 도면에 쓸 레이어로 잡혀 오른쪽 레이어 창과 범례에 들어갑니다. 다시 두 번 클릭하면 미리보기로 돌아갑니다.</div>
     <div class="row"><label><input type="checkbox" id="identOn" checked> 지도를 클릭하면 그 자리 자료의 이름·속성 보기</label><span class="hint">우클릭은 항상: 이름·속성 + 좌표·주소 + 레이어로 추가</span></div>
     <div class="src">
       <div class="srch"><b>브이월드 (국토교통부)</b><span class="badge">실시간</span><div class="hint">브이월드 2D데이터 API</div></div>
@@ -436,21 +452,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
   </div>
   <div class="sec">
     <p class="hint">미리보기 주제도는 범례에 들어가지 않고, 레이어로 잡은 것보다 항상 아래에 그려집니다.</p>
-    <button id="goSheet1">① 작업 시트로</button> <button class="goLyr">③ 레이어 시트로</button>
-  </div>
-  </div>
-
-  <div class="sheet" id="sheet3" hidden>
-  <div class="sec">
-    <h2>레이어 목록</h2>
-    <div class="row"><button id="lyrUpload" class="pri">＋ 파일 올리기 (SHP·DXF·GeoJSON)</button></div>
-    <p class="hint">직접 올린 파일, 버퍼, ② 주제도에서 두 번 클릭해 잡은 레이어가 모두 여기 모입니다.<br>
-      <b>⠿ 손잡이를 끌어서</b> 순서를 바꿉니다. 위쪽 레이어가 지도에서 위에 그려집니다. 행정구역 경계는 항상 맨 아래에 그려집니다.</p>
-    <div id="lyrWinNote" class="pinhelp">🗂 레이어 목록이 지도 위 <b>레이어 창</b>에 열려 있습니다. <button id="lyrWinBack">여기로 가져오기</button></div>
-    <div id="lyrHome"><div id="layerList"></div></div>
-  </div>
-  <div class="sec">
-    <button class="goSheet2">② 주제도 시트로</button> <button id="goSheet4">④ 출력 시트로</button>
+    <button id="goSheet1">① 작업 시트로</button> <button class="goLyr">🗂 레이어 창 열기</button>
   </div>
   </div>
 
@@ -537,14 +539,16 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
     <span id="curFile" title="지금 열린 작업 파일">새 작업</span>
     <button id="btnLoadProj" title="작업 열기 (Ctrl+O)">📂 열기</button>
     <button id="btnSaveProj" class="pri" title="작업 저장 (Ctrl+S) · 다른 이름으로 저장 (Ctrl+Shift+S)">💾 저장</button>
-    <button id="btnLyrWin" title="레이어 창 열기/닫기 (Ctrl+L)">🗂 레이어 창</button>
+    <span class="sep"></span>
+    <button id="btnUndo" title="되돌리기 (Ctrl+Z)" disabled>↶</button><button id="btnRedo" title="다시 하기 (Ctrl+Y)" disabled>↷</button>
+    <span class="sep"></span>
+    <button id="toolSel" class="tool" title="선택: 끌어서 여러 레이어를 한꺼번에 선택 (지도 이동은 Space를 누른 채 끌기 또는 휠 버튼 끌기)">↖ 선택</button><button id="toolPan" class="tool" title="이동: 끌어서 지도 옮기기">✋ 이동</button>
+    <span class="sep"></span>
+    <button id="btnLyrWin" title="레이어 창 열기/닫기 (Ctrl+L)">🗂 레이어</button>
     <input type="file" id="projIn" accept=".json" hidden>
   </div>
-  <div id="lyrWin" hidden>
-    <div class="wh" id="lyrWinHead">🗂 레이어 <small id="lyrWinN" style="font-weight:400;opacity:.8"></small>
-      <button id="lyrWinUp" title="파일 올리기">＋ 파일</button><button id="lyrWinClose" title="닫기">✕</button></div>
-    <div class="wb" id="lyrWinBody"></div>
-  </div>
+  <div id="sketchBar" hidden><b id="sketchName"></b> <span id="sketchHelp"></span> <button id="sketchEnd" class="pri">그리기 끝내기</button></div>
+  <div id="selBox" hidden></div>
   <div id="coordBar" hidden></div>
   <div id="frame"><div id="mapbox">
     <div id="map"></div>
@@ -555,6 +559,16 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
     <div id="legend" class="ovl"></div>
     <div id="doguk" style="display:none"><div></div></div>
   </div></div>
+</div>
+
+<div id="lyrDock">
+  <div id="dockGrip" title="끌어서 폭 조절"></div>
+  <div class="wh">🗂 레이어 <small id="lyrWinN" style="font-weight:400;opacity:.8"></small>
+    <span class="wbtns"><span class="newwrap"><button id="lyrNew" title="빈 레이어를 만들어 직접 그리기">＋ 새 레이어</button>
+      <span id="lyrNewMenu" hidden><button data-nt="polygon">▭ 면 (구역)</button><button data-nt="line">╱ 선</button><button data-nt="point">● 점 (지점)</button></span></span>
+    <button id="lyrWinUp" title="SHP·DXF·GeoJSON 파일 올리기">＋ 파일</button><button id="lyrWinClose" title="레이어 창 닫기">✕</button></span></div>
+  <div class="wb"><div id="layerList"></div>
+    <p class="hint" style="margin-top:8px">⠿ 끌어서 순서 · 위쪽이 지도 위에 그려짐 · 지도에서 <b>↖ 선택</b> 상태로 끌면 여러 레이어를 한꺼번에 선택 · ✏ 직접 그리기</p></div>
 </div>
 
 <div id="modal" hidden><div class="mbox"><div id="mbody"></div><div class="mbtn"><button id="mok" class="pri">확인</button> <button id="mcancel">취소</button></div></div></div>
@@ -1962,7 +1976,7 @@ function refreshOrder(){
   [false, true].forEach(lyr => {   // 미리보기 주제도를 먼저(아래), 레이어를 나중(위)에
     for (let i = layers.length - 1; i >= 0; i--){ const o = layers[i]; if (isLyr(o) === lyr && o.visible && o.group) map.addLayer(o.group); }
   });
-  const n = layers.filter(isLyr).length, t = $('#tabLyrN'); if (t) t.textContent = n ? n : '';
+  const n = layers.filter(isLyr).length;
   const t2 = $('#lyrWinN'); if (t2) t2.textContent = n ? `(${n})` : '';
 }
 const SRC_NAME = { vworld: '브이월드', ecowfs: '에코뱅크', egis: '환경공간정보', kei: 'KEI 산줄기', rim: '하천정보' };
@@ -1973,7 +1987,7 @@ function pinLayer(o){
   const i = layers.indexOf(o); layers.splice(i, 1); layers.unshift(o);   // 레이어 목록 맨 위로
   if (!legendItems.some(x => x.lid === o.id)) legendItems.unshift({ key: 'L' + o.id, lid: o.id, label: o.name, show: true });
   refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists();
-  showToast(`📌 '${o.name}'을(를) 레이어로 잡았습니다. ③ 레이어 시트에서 순서·스타일을 바꿀 수 있습니다.`);
+  showToast(`📌 '${o.name}'을(를) 레이어로 잡았습니다. 오른쪽 레이어 창에서 순서·스타일을 바꿀 수 있습니다.`);
 }
 function unpinLayer(o){
   if (!o || !o.pinned || !o.src) return;
@@ -1999,7 +2013,7 @@ function layerBounds(o){ try { const b = L.geoJSON(o.gj).getBounds(); return b.i
 const layerSymObj = o => ({ id: o.id, type: o.type, symbols: o.style.symbols });
 
 function buildPanelEmpty(){
-  if (!$('#layerList .lyr')) $('#layerList').insertAdjacentHTML('beforeend', '<p class="hint">아직 레이어가 없습니다. 파일을 올리거나, ② 주제도에서 이름을 두 번 클릭해 잡아주세요.</p>');
+  if (!$('#layerList .lyr')) $('#layerList').insertAdjacentHTML('beforeend', '<p class="hint">아직 레이어가 없습니다.<br>· 위 <b>＋ 파일</b>로 SHP·DXF를 올리거나<br>· <b>＋ 새 레이어</b>로 직접 그리거나<br>· ② 주제도에서 이름을 두 번 클릭(또는 지도 우클릭 → 레이어로 추가)하세요.</p>');
 }
 let lastSelId = null;
 /* 스타일 복사·붙여넣기 (이 PC 브라우저에 기억 → 다른 작업 파일에서도 붙여넣기 가능) */
@@ -2027,6 +2041,7 @@ function showToast(m){
   t.textContent = m; t.style.opacity = '1'; clearTimeout(toastT); toastT = setTimeout(() => { t.style.opacity = '0'; }, 2600);
 }
 function deleteLayers(list){
+  if (sketch && list.includes(sketch.o)){ sketch.pts = []; stopSketch(); }
   list.forEach(o => {
     if (o.group) map.removeLayer(o.group);
     const i = layers.indexOf(o); if (i >= 0) layers.splice(i, 1);
@@ -2063,7 +2078,7 @@ function buildPanel(){
   selToolbar(box);
   const list = layers.filter(isLyr);
   list.forEach((o, i) => {
-    const d = document.createElement('div'); d.className = 'lyr'; d.dataset.lid = o.id;
+    const d = document.createElement('div'); d.className = 'lyr' + (o._sel ? ' sel' : '') + (sketch && sketch.o === o ? ' sketching' : ''); d.dataset.lid = o.id;
 
     const keys = propKeys(o.gj);
     d.innerHTML = `
@@ -2075,6 +2090,7 @@ function buildPanel(){
         ${o.src ? `<span class="badge src" title="② 주제도에서 잡은 레이어 · ${esc(SRC_NAME[o.src.kind] || '')}${o.src.code ? ' ' + esc(o.src.code) : ''}">${esc(SRC_NAME[o.src.kind] || '주제도')}</span>` : ''}
         <input class="nm" data-k="name" value="${esc(o.name)}" title="레이어 이름">
         <button data-a="up" title="위로">▲</button><button data-a="down" title="아래로">▼</button>
+        ${o.src ? '' : `<button data-a="sketch" class="sk ${sketch && sketch.o === o ? 'on' : ''}" title="이 레이어에 직접 그리기 (${({ point: '점', line: '선', polygon: '면' })[o.type]})">✏</button>`}
         <button data-a="zoom" title="이 레이어로 이동">◎</button><button data-a="del" title="삭제">✕</button>
       </div>
       ${o.src && o.src.mode === 'wms' ? '<div class="hint">브이월드 그림(WMS)으로 표시 중이라 스타일을 바꿀 수 없습니다.</div>' : ''}
@@ -2114,6 +2130,7 @@ function buildPanel(){
         const j = i + (a === 'up' ? -1 : 1); if (j < 0 || j >= list.length) return;
         moveLayer(o, list[j], a === 'up' ? 'before' : 'after');
       }
+      else if (a === 'sketch'){ if (sketch && sketch.o === o) stopSketch(); else startSketch(o); return; }
       else if (a === 'zoom'){ const bd = layerBounds(o); if (bd) map.fitBounds(bd, { padding: [30, 30] }); return; }
       else if (a === 'del'){
         if (!confirm(o.src ? `'${o.name}' 레이어를 지울까요? (② 주제도에서 다시 켤 수 있습니다)` : `'${o.name}' 레이어를 지울까요?`)) return;
@@ -2130,6 +2147,7 @@ function buildPanel(){
     box.appendChild(d);
   });
   buildPanelEmpty();
+  updateSelHL();
 }
 let dragLid = null;
 function moveLayer(o, target, where){
@@ -2332,6 +2350,7 @@ function setMapLock(on){
   renderVertices();
   if (on){ if (typeof placing !== 'undefined' && placing) setPlacing(false); lockRatio = null; applyLockRatio(); }
   else lockRatio = null;
+  if (!on && typeof applyTool === 'function') applyTool();
 }
 $('#fixBtn').onclick = () => {
   const N = Math.round(+$('#fixN').value); if (!(N >= 100)) return;
@@ -2699,7 +2718,7 @@ function renderDraw(d){
   lineTextMarkers(d).forEach(m => g.addLayer(m));
   /* 클릭하기 쉽게 투명한 굵은 선을 위에 깔아 둠 */
   const hit = L.polyline(d.pts, { renderer: drawRenderer, interactive: true, color: '#000', opacity: 0, weight: Math.max(12, d.w + 8), bubblingMouseEvents: false });
-  hit.on('click', e => { if (drawing){ addDrawPoint(e); return; } L.DomEvent.stop(e); selectDraw(d); });
+  hit.on('click', e => { if (drawing){ addDrawPoint(e); return; } if (sketch){ L.DomEvent.stop(e); map.fire('click', { latlng: e.latlng, containerPoint: e.containerPoint, originalEvent: e.originalEvent }); return; } L.DomEvent.stop(e); selectDraw(d); });
   g.addLayer(hit);
   drawGroup.addLayer(g);
 }
@@ -2861,7 +2880,7 @@ function admToLayer(lv, list, name){
   if (!list.length){ showToast('화면 안에 받아온 구역이 없습니다. 경계선을 켜고 조금 기다린 뒤 다시 해 주세요.'); return null; }
   const o = addLayer(name, { type: 'FeatureCollection', features: list.map(en => admFeature(lv, en)) },
     { type: 'polygon', style: { symbols: JSON.parse(JSON.stringify(admLineSyms[lv])), label: labelDefaults() } });
-  showToast(`📌 '${name}'을(를) 레이어로 추가했습니다. ③ 레이어에서 색·선을 바꿀 수 있습니다.`);
+  showToast(`📌 '${name}'을(를) 레이어로 추가했습니다. 레이어 창에서 색·선을 바꿀 수 있습니다.`);
   return o;
 }
 $('#admToLyr').onclick = () => {
@@ -2880,15 +2899,43 @@ function copyTxt(t){
   const done = () => showToast('복사했습니다: ' + t);
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => prompt('복사하세요', t)); else prompt('복사하세요', t);
 }
-async function getAddress(ll){
-  if (!getKey()) throw new Error('브이월드 키가 없습니다');
-  const url = 'https://api.vworld.kr/req/address?service=address&request=getAddress&version=2.0&crs=epsg:4326&format=json&errorformat=json'
-    + `&point=${ll.lng.toFixed(7)},${ll.lat.toFixed(7)}&type=both&zipcode=true&simple=false&key=${encodeURIComponent(getKey())}&domain=${encodeURIComponent(location.origin)}`;
+/* 주소: ① 연속지적도(브이월드 2D데이터 API, 지금 키로 바로 됨) → 지번  ② 브이월드 지오코더 API → 도로명 (키에 '지오코더' 사용 신청 필요) */
+async function getParcel(ll){
+  const url = 'https://api.vworld.kr/req/data?service=data&version=2.0&request=GetFeature&format=json&errorformat=json&size=1&page=1'
+    + `&geometry=false&attribute=true&crs=EPSG:4326&geomFilter=POINT(${ll.lng.toFixed(7)} ${ll.lat.toFixed(7)})`
+    + `&data=LP_PA_CBND_BUBUN&key=${encodeURIComponent(getKey())}&domain=${encodeURIComponent(location.origin)}`;
   const d = await jsonp(url), r = d && d.response;
   if (!r) throw new Error('응답 없음');
-  if (r.status === 'NOT_FOUND') return [];
+  if (r.status === 'NOT_FOUND') return null;
   if (r.status !== 'OK') throw new Error((r.error && (r.error.text || r.error.code)) || r.status);
-  return (r.result || []).map(x => ({ type: x.type, text: x.text, zip: x.zipcode }));
+  const f = r.result && r.result.featureCollection && r.result.featureCollection.features && r.result.featureCollection.features[0];
+  if (!f) return null;
+  const p = f.properties || {};
+  const jb = String(p.jibun || '');
+  const jimok = (jb.match(/[가-힣]+$/) || [''])[0];
+  const addr = String(p.addr || '').trim() || jb;
+  return { text: addr, jimok, price: p.jiga || '' };
+}
+async function getRoadAddr(ll){
+  const url = 'https://api.vworld.kr/req/address?service=address&request=getAddress&version=2.0&crs=epsg:4326&format=json'
+    + `&point=${ll.lng.toFixed(7)},${ll.lat.toFixed(7)}&type=road&zipcode=true&simple=false&key=${encodeURIComponent(getKey())}`;
+  const d = await Promise.race([jsonp(url), sleep(8000).then(() => { throw new Error('응답 시간 초과'); })]), r = d && d.response;
+  if (!r) throw new Error('응답 없음');
+  if (r.status === 'NOT_FOUND') return null;
+  if (r.status !== 'OK') throw new Error((r.error && (r.error.text || r.error.code)) || r.status);
+  const x = (r.result || [])[0]; return x ? { text: x.text, zip: x.zipcode } : null;
+}
+function admNameAt(ll){
+  const out = [];
+  ['lt_c_adsido', 'lt_c_adsigg', 'lt_c_ademd'].forEach(lv => {
+    if (!admCache[lv]) return;
+    for (const en of admCache[lv].values()){
+      if (!en.geom) continue;
+      const g = en.geom, polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+      if (polys.some(p => inRing([ll.lng, ll.lat], p[0]))){ out.push(en.name); break; }
+    }
+  });
+  return out.join(' ');
 }
 function pointBox(ll){
   const tm = toTM(ll), d = document.createElement('div'); d.className = 'pt';
@@ -2896,21 +2943,24 @@ function pointBox(ll){
   d.innerHTML = `<div class="ly">📍 이 지점</div>
     <div><span class="k">위도·경도</span><span class="v">${ws}</span><button data-c="w">복사</button></div>
     <div><span class="k">TM 5186</span><span class="v">E ${fmtN(tm[0], 1)} · N ${fmtN(tm[1], 1)}</span><button data-c="t">복사</button></div>
-    <div class="addr hint">주소 찾는 중…</div>`;
+    <div class="addr"><div data-r="j"><span class="k">지번</span><span class="hint">찾는 중…</span></div><div data-r="r"><span class="k">도로명</span><span class="hint">찾는 중…</span></div></div>`;
   d.querySelector('[data-c="w"]').onclick = () => copyTxt(ws);
   d.querySelector('[data-c="t"]').onclick = () => copyTxt(ts);
-  const ad = d.querySelector('.addr');
-  getAddress(ll).then(list => {
-    if (!list.length){ ad.textContent = '주소 없음 (산지·바다 등)'; return; }
-    ad.classList.remove('hint'); ad.innerHTML = '';
-    list.sort((a, b) => (a.type === 'parcel' ? 0 : 1) - (b.type === 'parcel' ? 0 : 1)).forEach(a => {
-      const row = document.createElement('div');
-      row.innerHTML = `<span class="k">${a.type === 'road' ? '도로명' : '지번'}</span>${esc(a.text)}${a.zip ? ` <small class="hint">(${esc(a.zip)})</small>` : ''}<button data-c>복사</button><button data-g>글자로</button>`;
-      row.querySelector('[data-c]').onclick = () => copyTxt(a.text);
-      row.querySelector('[data-g]').onclick = () => { addAnn(Object.assign({}, annDraft, { text: a.text, lat: ll.lat, lng: ll.lng })); map.closePopup(); showToast('주소를 글자로 넣었습니다.'); };
-      ad.appendChild(row);
-    });
-  }).catch(err => { ad.textContent = '주소를 찾지 못했습니다: ' + err.message; });
+  const row = (key, label, text, extra) => {
+    const el = d.querySelector(`[data-r="${key}"]`); el.innerHTML = `<span class="k">${label}</span>`;
+    if (!text){ el.insertAdjacentHTML('beforeend', `<span class="hint">${extra || '없음'}</span>`); return; }
+    el.insertAdjacentHTML('beforeend', `${esc(text)}${extra ? ` <small class="hint">${extra}</small>` : ''}<button data-c>복사</button><button data-g>글자로</button>`);
+    el.querySelector('[data-c]').onclick = () => copyTxt(text);
+    el.querySelector('[data-g]').onclick = () => { addAnn(Object.assign({}, annDraft, { text, lat: ll.lat, lng: ll.lng })); map.closePopup(); showToast('주소를 글자로 넣었습니다.'); };
+  };
+  if (!getKey()){ row('j', '지번', '', '⚙ 설정에 브이월드 키가 필요합니다'); row('r', '도로명', '', ''); return d; }
+  getParcel(ll).then(p => {
+    if (p) row('j', '지번', p.text, esc([p.jimok && '지목 ' + p.jimok, p.price && '공시지가 ' + Number(p.price).toLocaleString() + '원/㎡'].filter(Boolean).join(' · ')));
+    else { const an = admNameAt(ll); row('j', an ? '행정구역' : '지번', an || '', an ? '' : '지번 없음 (하천·바다 등)'); }
+  }).catch(err => { const an = admNameAt(ll); if (an) row('j', '행정구역', an, ''); else row('j', '지번', '', '찾지 못함: ' + esc(err.message)); });
+  getRoadAddr(ll).then(r => row('r', '도로명', r ? r.text : '', r ? (r.zip ? '(' + esc(r.zip) + ')' : '') : '근처 도로명 주소 없음'))
+    .catch(err => row('r', '도로명', '', /key|인증|INCORRECT|UNAVAILABLE|권한|시간/i.test(err.message)
+      ? '안 나옴 — 브이월드 키에 <b>지오코더 API</b> 사용이 신청되어 있지 않을 수 있습니다' : '찾지 못함: ' + esc(err.message)));
   return d;
 }
 function hitsAt(e){
@@ -2947,6 +2997,10 @@ function identify(e, withPoint){
         <div class="acts"></div>${rows ? `<details><summary>속성 전체</summary><table>${rows}</table></details>` : ''}`;
       h.name = name;
       if (h.o.src && !h.o.pinned) acts.push([`📌 '${h.o.name}' 레이어로 추가`, 'pin', () => { map.closePopup(); pinLayer(h.o); }]);
+      if (!h.o.src) acts.push(['🗑 이 도형 지우기', '', () => {
+        h.o.gj = { type: 'FeatureCollection', features: h.o.gj.features.filter(x => x !== h.f) }; h.o.gjv = (h.o.gjv || 0) + 1;
+        renderLayer(h.o); refreshOrder(); buildPanel(); renderLegendAll(); schedCheckpoint(); done('도형을 지웠습니다. (Ctrl+Z로 되돌리기)');
+      }]);
       acts.push([name ? `'${name}'만 새 레이어로` : '이 도형만 새 레이어로', '', () => {
         const nm = name || h.o.name + ' (일부)';
         addLayer(nm, { type: 'FeatureCollection', features: [JSON.parse(JSON.stringify({ type: 'Feature', geometry: h.f.geometry, properties: h.f.properties || {} }))] },
@@ -2964,19 +3018,19 @@ function identify(e, withPoint){
   return true;
 }
 map.on('contextmenu', e => {
-  if (placing || drawing || (e.originalEvent && e.originalEvent.defaultPrevented)) return;
+  if (placing || drawing || sketch || (e.originalEvent && e.originalEvent.defaultPrevented)) return;
   identify(e, true);
 });
 /* 마우스 위치 좌표 (도면에는 안 나옴) */
 map.on('mousemove', e => {
   const c = $('#coordBar'), tm = toTM(e.latlng); c.hidden = false;
-  c.textContent = `위도 ${e.latlng.lat.toFixed(5)}  경도 ${e.latlng.lng.toFixed(5)}  ·  TM E ${fmtN(tm[0], 0)}  N ${fmtN(tm[1], 0)}  ·  우클릭: 좌표·주소`;
+  c.textContent = `위도 ${e.latlng.lat.toFixed(5)}  경도 ${e.latlng.lng.toFixed(5)}  ·  TM E ${fmtN(tm[0], 0)}  N ${fmtN(tm[1], 0)}  ·  우클릭: 좌표·주소${tool === 'select' ? '  ·  지도 이동: Space+끌기 / 휠 버튼 끌기' : ''}`;
 });
 map.on('mouseout', () => { $('#coordBar').hidden = true; });
 $('#identOn').checked = store.get('identOn', '1') === '1';
 $('#identOn').onchange = e => store.set('identOn', e.target.checked ? '1' : '0');
 map.on('click', e => {
-  if (!$('#identOn').checked || placing || drawing) return;
+  if (!$('#identOn').checked || placing || drawing || sketch) return;
   if (!identify(e)) map.closePopup();
 });
 
@@ -3243,7 +3297,7 @@ async function handleFiles(fileList){
   if (ok.length){
     let b = null; ok.forEach(o => { const lb = layerBounds(o); if (lb) b = b ? b.extend(lb) : L.latLngBounds(lb.getSouthWest(), lb.getNorthEast()); });
     if (b) map.fitBounds(b, { padding: [30, 30] });
-    if (store.get('sheet', '1') !== '3' && $('#lyrWin').hidden) showToast(`레이어 ${ok.length}개를 올렸습니다. 순서·스타일은 ③ 레이어 시트에서 바꿉니다.`);
+    if (!dockOn()) showToast(`레이어 ${ok.length}개를 올렸습니다. 🗂 레이어 창에서 순서·스타일을 바꿉니다.`);
   }
 }
 const drop = $('#drop');
@@ -3260,13 +3314,13 @@ function download(name, url){ const a = document.createElement('a'); a.href = ur
 const fileBase = () => ($('#titleIn').value || '도면').replace(/[\\/:*?"<>|]/g, '_');
 async function capture(){ return capture2(); }
 async function capture2(){
-  vtxGroup.clearLayers(); map.closePopup();
+  vtxGroup.clearLayers(); map.closePopup(); map.removeLayer(selHL); if (sketch) map.removeLayer(sketch.tmp);
   document.body.classList.add('exporting');
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
   await new Promise(r => setTimeout(r, 200));
   try {
     return await html2canvas(frame, { useCORS: true, allowTaint: false, scale: outScale(), backgroundColor: '#ffffff', logging: false });
-  } finally { document.body.classList.remove('exporting'); renderVertices(); }
+  } finally { document.body.classList.remove('exporting'); renderVertices(); selHL.addTo(map); if (sketch) sketch.tmp.addTo(map); }
 }
 $('#btnJpg').onclick = async () => {
   busy(true);
@@ -3375,7 +3429,7 @@ document.addEventListener('keydown', e => {
     else if (curFile.handle) saveProj(curFile.name, false);
     else openSaveDlg(false);
   } else if (k === 'o' && !e.shiftKey){ e.preventDefault(); openProj(); }
-  else if (k === 'l' && !e.shiftKey){ e.preventDefault(); setLyrWin($('#lyrWin').hidden); }
+  else if (k === 'l' && !e.shiftKey){ e.preventDefault(); setLyrWin(!dockOn()); }
 }, true);
 setCurFile('', null);
 function migrateCfg(dc){
@@ -3458,47 +3512,280 @@ async function loadProject(d){
 
 /* ================= 시트 ================= */
 function showSheet(n){
+  if (String(n) === '3') n = 1;   // 예전 '레이어' 시트 → 작업 시트
   $$('#tabs .tab').forEach(b => b.classList.toggle('on', b.dataset.sheet === String(n)));
   $$('.sheet').forEach(el => el.hidden = el.id !== 'sheet' + n);
   $('#side').scrollTop = 0; store.set('sheet', String(n));
   setMapLock(String(n) === '4');
+  if (String(n) === '4' && typeof stopSketch === 'function') stopSketch();
 }
 $$('#tabs .tab').forEach(b => b.onclick = () => showSheet(b.dataset.sheet));
 $('#goSheet1').onclick = () => showSheet(1);
-$$('.goLyr').forEach(b => b.onclick = () => showSheet(3));
-$$('.goSheet2').forEach(b => b.onclick = () => showSheet(2));
-$('#goSheet4').onclick = () => showSheet(4);
-$('#lyrUpload').onclick = () => $('#fileIn').click();
-/* 레이어 창 (지도 위에 떠 있는 레이어 목록) */
+$$('.goLyr').forEach(b => b.onclick = () => setLyrWin(true));
+
+/* ================= 레이어 창 (오른쪽에 붙은 패널, 포토샵처럼) ================= */
+const dockOn = () => !$('#lyrDock').classList.contains('off');
 function setLyrWin(on){
-  const w = $('#lyrWin'), list = $('#layerList');
-  w.hidden = !on; $('#btnLyrWin').classList.toggle('on', on);
-  (on ? $('#lyrWinBody') : $('#lyrHome')).appendChild(list);
-  $('#lyrWinNote').style.display = on ? 'block' : 'none';
-  store.set('lyrWin', on ? '1' : '0');
+  $('#lyrDock').classList.toggle('off', !on); $('#btnLyrWin').classList.toggle('on', on);
+  store.set('lyrDock', on ? '1' : '0');
+  requestAnimationFrame(layoutFrame);
 }
-$('#btnLyrWin').onclick = () => setLyrWin($('#lyrWin').hidden);
+$('#btnLyrWin').onclick = () => setLyrWin(!dockOn());
 $('#lyrWinClose').onclick = () => setLyrWin(false);
-$('#lyrWinBack').onclick = () => setLyrWin(false);
 $('#lyrWinUp').onclick = () => $('#fileIn').click();
 (() => {
-  const w = $('#lyrWin'), h = $('#lyrWinHead'); let st = null;
-  try { const p = JSON.parse(store.get('lyrWinPos', 'null')); if (p){ Object.assign(w.style, { left: p.l, top: p.t, right: 'auto', width: p.w, height: p.h }); } } catch(e){}
-  h.addEventListener('mousedown', e => {
-    if (e.target.tagName === 'BUTTON') return;
-    const r = w.getBoundingClientRect(), pr = $('#work').getBoundingClientRect();
-    st = { dx: e.clientX - r.left, dy: e.clientY - r.top, pr }; e.preventDefault();
+  const d = $('#lyrDock'), g = $('#dockGrip'); let st = null;
+  const w0 = +store.get('lyrDockW', '0'); if (w0) d.style.width = w0 + 'px';
+  g.addEventListener('mousedown', e => { st = { x: e.clientX, w: d.offsetWidth }; e.preventDefault(); });
+  document.addEventListener('mousemove', e => { if (st){ d.style.width = Math.max(240, Math.min(700, st.w + st.x - e.clientX)) + 'px'; } });
+  document.addEventListener('mouseup', () => { if (st){ st = null; store.set('lyrDockW', String(d.offsetWidth)); layoutFrame(); } });
+})();
+$('#lyrNew').onclick = e => { e.stopPropagation(); $('#lyrNewMenu').hidden = !$('#lyrNewMenu').hidden; };
+document.addEventListener('click', () => { $('#lyrNewMenu').hidden = true; });
+$$('#lyrNewMenu [data-nt]').forEach(b => b.onclick = () => {
+  const t = b.dataset.nt, nm = { polygon: '새 면 레이어', line: '새 선 레이어', point: '새 점 레이어' }[t];
+  $('#lyrNewMenu').hidden = true;
+  const o = addLayer(nm, { type: 'FeatureCollection', features: [] }, { type: t });
+  startSketch(o);
+});
+
+/* ================= 도구: ↖ 선택 / ✋ 이동 ================= */
+let tool = store.get('tool', 'select') === 'pan' ? 'pan' : 'select', spaceDown = false;
+function applyTool(){
+  $('#toolSel').classList.toggle('on', tool === 'select'); $('#toolPan').classList.toggle('on', tool === 'pan');
+  $('#map').classList.toggle('tool-select', tool === 'select');
+  if (mapLocked) return;
+  if (tool === 'pan' || spaceDown) map.dragging.enable(); else map.dragging.disable();
+}
+function setTool(t){ tool = t; store.set('tool', t); applyTool(); }
+$('#toolSel').onclick = () => setTool('select');
+$('#toolPan').onclick = () => setTool('pan');
+const typing = () => { const a = document.activeElement; return !!a && (/INPUT|TEXTAREA|SELECT/.test(a.tagName) || a.isContentEditable); };
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !typing()){ e.preventDefault(); if (!spaceDown){ spaceDown = true; applyTool(); } }
+  else if (!typing() && !e.ctrlKey && !e.metaKey && !e.altKey && !sketch && !drawing){
+    if (e.key === 'v' || e.key === 'V') setTool('select'); else if (e.key === 'h' || e.key === 'H') setTool('pan');
+  }
+});
+document.addEventListener('keyup', e => { if (e.code === 'Space' && spaceDown){ spaceDown = false; applyTool(); } });
+window.addEventListener('blur', () => { if (spaceDown){ spaceDown = false; applyTool(); } });
+/* 휠 버튼으로 끌면 어느 도구에서든 지도 이동 */
+(() => {
+  const el = $('#map'); let mp = null;
+  el.addEventListener('mousedown', e => { if (e.button === 1 && !mapLocked){ e.preventDefault(); mp = { x: e.clientX, y: e.clientY }; } });
+  document.addEventListener('mousemove', e => { if (mp){ map.panBy([mp.x - e.clientX, mp.y - e.clientY], { animate: false }); mp = { x: e.clientX, y: e.clientY }; } });
+  document.addEventListener('mouseup', e => { if (mp && e.button === 1) mp = null; });
+  el.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
+})();
+
+/* ===== 선택한 레이어를 지도에 파란 점선으로 표시 (도면 저장에는 안 나옴) ===== */
+const selHL = L.layerGroup().addTo(map);
+function updateSelHL(){
+  selHL.clearLayers();
+  layers.filter(o => o._sel && o.visible && isLyr(o) && o.gj && o.gj.features.length).forEach(o => {
+    const fc = { type: 'FeatureCollection', features: o.gj.features.slice(0, 4000) };
+    selHL.addLayer(L.geoJSON(fc, { renderer: drawRenderer, interactive: false, style: { color: '#0a64d0', weight: 2.5, dashArray: '6 4', fill: false, opacity: 0.9 },
+      pointToLayer: (f, ll) => L.circleMarker(ll, { renderer: drawRenderer, interactive: false, radius: 8, color: '#0a64d0', weight: 2.5, dashArray: '3 3', fill: false }) }));
+  });
+}
+/* 끌어서 사각형으로 여러 레이어 선택 (Shift·Ctrl: 기존 선택에 더하기) */
+function featHitsPoly(f, poly, pb){
+  const b = fbb(f); if (b[2] < pb[0] || b[0] > pb[2] || b[3] < pb[1] || b[1] > pb[3]) return false;
+  try { return turf.booleanIntersects(f, poly); } catch(e){ return true; }
+}
+function selectByBox(p1, p2, add){
+  const cs = [[p1.x, p1.y], [p2.x, p1.y], [p2.x, p2.y], [p1.x, p2.y]].map(c => { const ll = map.containerPointToLatLng(c); return [ll.lng, ll.lat]; });
+  const poly = { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[...cs, cs[0]]] }, properties: {} };
+  const pb = [Math.min(...cs.map(c => c[0])), Math.min(...cs.map(c => c[1])), Math.max(...cs.map(c => c[0])), Math.max(...cs.map(c => c[1]))];
+  if (!add) layers.forEach(o => o._sel = false);
+  let n = 0;
+  layers.filter(o => isLyr(o) && o.visible && o.gj && o.gj.features).forEach(o => {
+    let k = 0; for (const f of o.gj.features){ if (f.geometry && featHitsPoly(f, poly, pb)){ o._sel = true; n++; break; } if (++k > 20000) break; }
+  });
+  buildPanel();
+  showToast(n ? `레이어 ${layers.filter(o => o._sel).length}개를 선택했습니다. 레이어 창 위쪽 버튼으로 숨기기·삭제·스타일 붙여넣기를 할 수 있습니다.` : '선택한 범위에 레이어가 없습니다.');
+}
+(() => {
+  const el = $('#map'), box = $('#selBox'); let st = null;
+  const rel = e => { const r = el.getBoundingClientRect(); return L.point(e.clientX - r.left, e.clientY - r.top); };
+  el.addEventListener('mousedown', e => {
+    if (e.button !== 0 || tool !== 'select' || spaceDown || mapLocked || drawing || placing || sketch) return;
+    if (e.target.closest('.leaflet-marker-icon,.leaflet-popup,.leaflet-control,.leaflet-tooltip')) return;
+    st = { p: rel(e), add: e.shiftKey || e.ctrlKey || e.metaKey, moved: false }; e.preventDefault();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   });
   document.addEventListener('mousemove', e => {
     if (!st) return;
-    const x = Math.max(0, Math.min(st.pr.width - 80, e.clientX - st.pr.left - st.dx)), y = Math.max(0, Math.min(st.pr.height - 40, e.clientY - st.pr.top - st.dy));
-    Object.assign(w.style, { left: x + 'px', top: y + 'px', right: 'auto' });
+    const p = rel(e); if (!st.moved && p.distanceTo(st.p) < 5) return;
+    st.moved = true; st.q = p;
+    const er = el.getBoundingClientRect(), wr = $('#work').getBoundingClientRect();
+    Object.assign(box.style, { left: (er.left - wr.left + Math.min(st.p.x, p.x)) + 'px', top: (er.top - wr.top + Math.min(st.p.y, p.y)) + 'px',
+      width: Math.abs(p.x - st.p.x) + 'px', height: Math.abs(p.y - st.p.y) + 'px' });
+    box.hidden = false;
   });
-  const savePos = () => store.set('lyrWinPos', JSON.stringify({ l: w.style.left, t: w.style.top, w: w.offsetWidth + 'px', h: w.offsetHeight + 'px' }));
-  document.addEventListener('mouseup', () => { if (st){ st = null; savePos(); } });
-  new ResizeObserver(() => { if (!w.hidden && w.style.left) savePos(); }).observe(w);
-  ['mousedown', 'wheel', 'dblclick', 'contextmenu'].forEach(ev => w.addEventListener(ev, e => e.stopPropagation()));
+  document.addEventListener('mouseup', () => {
+    if (!st) return;
+    const s0 = st; st = null; box.hidden = true;
+    if (!s0.moved) return;
+    el.addEventListener('click', ev => ev.stopPropagation(), { capture: true, once: true });   // 끌기 뒤에 '클릭'으로 처리되지 않게
+    selectByBox(s0.p, s0.q, s0.add);
+  });
 })();
+/* 선택 도구로 지도를 클릭하면 그 자리 레이어 선택 */
+map.on('click', e => {
+  if (tool !== 'select' || drawing || placing || sketch || mapLocked) return;
+  const add = e.originalEvent && (e.originalEvent.shiftKey || e.originalEvent.ctrlKey || e.originalEvent.metaKey);
+  const hit = hitsAt(e).find(h => h.o && isLyr(h.o));
+  if (!add) layers.forEach(o => o._sel = false);
+  if (hit) hit.o._sel = add ? !hit.o._sel : true;
+  buildPanel();
+});
+
+/* ================= 직접 그리는 레이어 (면 · 선 · 점) ================= */
+let sketch = null;
+function startSketch(o){
+  if (mapLocked){ alert('③ 출력 시트에서는 그릴 수 없습니다. ① 작업 시트로 가 주세요.'); return; }
+  if (sketch) stopSketch();
+  if (drawing) setDrawing(false);
+  if (placing) setPlacing(false);
+  map.closePopup();
+  if (!o.visible){ o.visible = true; refreshOrder(); }
+  sketch = { o, pts: [], tmp: L.layerGroup().addTo(map) };
+  map.doubleClickZoom.disable(); $('#map').classList.add('drawmode');
+  $('#sketchName').textContent = `✏ '${o.name}'에 그리는 중`;
+  $('#sketchHelp').textContent = o.type === 'point' ? '· 클릭: 점 찍기 · Esc: 끝' : `· 클릭: 꼭짓점 · 더블클릭/Enter: ${o.type === 'polygon' ? '면' : '선'} 하나 완성 · Backspace: 점 취소 · Shift: 수평·수직·45° · Esc: 끝`;
+  $('#sketchBar').hidden = false;
+  buildPanel();
+}
+function stopSketch(){
+  if (!sketch) return;
+  finishSketchFeature();
+  sketch.tmp.remove(); sketch = null;
+  if (!mapLocked) map.doubleClickZoom.enable();
+  $('#map').classList.remove('drawmode'); $('#sketchBar').hidden = true;
+  buildPanel(); schedCheckpoint();
+}
+$('#sketchEnd').onclick = stopSketch;
+function sketchPoint(e){
+  const s0 = sketch; let ll = e.latlng;
+  if (s0.pts.length && e.originalEvent && e.originalEvent.shiftKey){
+    const a = map.latLngToContainerPoint(s0.pts[s0.pts.length - 1]), b = map.latLngToContainerPoint(ll);
+    const dx = b.x - a.x, dy = b.y - a.y, ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4), len = Math.hypot(dx, dy);
+    ll = map.containerPointToLatLng([a.x + Math.cos(ang) * len, a.y + Math.sin(ang) * len]);
+  }
+  return ll;
+}
+function sketchTmp(cur){
+  if (!sketch) return;
+  const s0 = sketch, pts = s0.pts.concat(cur ? [cur] : []), col = '#e67e00';
+  s0.tmp.clearLayers();
+  if (pts.length >= 2){
+    if (s0.o.type === 'polygon' && pts.length >= 3) s0.tmp.addLayer(L.polygon(pts, { renderer: drawRenderer, interactive: false, color: col, weight: 2, dashArray: '6 4', fillColor: col, fillOpacity: 0.15 }));
+    else s0.tmp.addLayer(L.polyline(pts, { renderer: drawRenderer, interactive: false, color: col, weight: 2, dashArray: '6 4' }));
+  }
+  s0.pts.forEach(p => s0.tmp.addLayer(L.circleMarker(p, { renderer: drawRenderer, interactive: false, radius: 4, color: '#fff', weight: 1.5, fillColor: col, fillOpacity: 1 })));
+}
+function pushFeature(o, g){
+  o.gj = { type: 'FeatureCollection', features: [...o.gj.features, { type: 'Feature', geometry: g, properties: {} }] };
+  o.gjv = (o.gjv || 0) + 1;
+  renderLayer(o); refreshOrder(); renderLegendAll();
+  const fc = $(`#layerList [data-lid="${o.id}"] .fcount`); if (fc) fc.textContent = o.gj.features.length + '개';
+  schedCheckpoint();
+}
+function finishSketchFeature(){
+  if (!sketch) return;
+  const s0 = sketch, o = s0.o;
+  const pts = s0.pts.filter((p, i, a) => i === 0 || map.latLngToContainerPoint(p).distanceTo(map.latLngToContainerPoint(a[i - 1])) > 3).map(p => [p.lng, p.lat]);
+  s0.pts = []; sketchTmp(null);
+  if (o.type === 'line' && pts.length >= 2) pushFeature(o, { type: 'LineString', coordinates: pts });
+  else if (o.type === 'polygon' && pts.length >= 3) pushFeature(o, { type: 'Polygon', coordinates: [[...pts, pts[0]]] });
+}
+map.on('click', e => {
+  if (!sketch) return;
+  if (sketch.o.type === 'point'){ pushFeature(sketch.o, { type: 'Point', coordinates: [e.latlng.lng, e.latlng.lat] }); return; }
+  sketch.pts.push(sketchPoint(e)); sketchTmp(null);
+});
+map.on('dblclick', e => { if (sketch){ L.DomEvent.stop(e); finishSketchFeature(); } });
+map.on('mousemove', e => { if (sketch && sketch.pts.length) sketchTmp(sketchPoint(e)); });
+document.addEventListener('keydown', e => {
+  if (!sketch || typing()) return;
+  if (e.key === 'Enter'){ e.preventDefault(); finishSketchFeature(); }
+  else if (e.key === 'Escape'){ e.preventDefault(); if (sketch.pts.length){ sketch.pts = []; sketchTmp(null); } else stopSketch(); }
+  else if (e.key === 'Backspace'){ e.preventDefault(); sketch.pts.pop(); sketchTmp(null); }
+}, true);
+
+/* ================= 되돌리기 · 다시 하기 (Ctrl+Z / Ctrl+Y) ================= */
+const UNDO_MAX = 80, hist = [], fut = [];
+let restoring = false, ckT = null;
+const skipPriv = (k, v) => (k && k[0] === '_') ? undefined : v;
+function snapState(){
+  return JSON.stringify({
+    L: layers.map(o => [o.id, o.name, o.type, o.visible, !!o.pinned, o.style, o.gjv || 0, o.buf || null]),
+    lg: legendItems, an: anns.map(({ marker, id, ...a }) => a), dr: draws.map(({ group, id, ...d }) => d),
+    cfg, adm: [admLineSyms, admTsLv, admPos, [...admHidden]], title: $('#titleIn').value
+  }, skipPriv);
+}
+function checkpoint(){
+  if (restoring || sketch && sketch.pts.length) return;
+  const st = snapState();
+  if (hist.length && hist[hist.length - 1].s === st) return;
+  hist.push({ s: st, objs: new Map(layers.map(o => [o.id, o])), gj: new Map(layers.map(o => [o.id, o.gj])) });
+  if (hist.length > UNDO_MAX) hist.shift();
+  fut.length = 0; updUndoBtns();
+}
+function schedCheckpoint(){ clearTimeout(ckT); ckT = setTimeout(checkpoint, 350); }
+function updUndoBtns(){ $('#btnUndo').disabled = hist.length < 2; $('#btnRedo').disabled = !fut.length; }
+function restoreState(en){
+  restoring = true;
+  try {
+    const d = JSON.parse(en.s);
+    if (sketch) { sketch.pts = []; stopSketch(); }
+    if (drawing) setDrawing(false);
+    map.closePopup();
+    const next = d.L.map(([id, name, type, visible, pinned, style, gjv, buf]) => {
+      const o = en.objs.get(id) || layerById(id); if (!o) return null;
+      const st = JSON.stringify(style), gj = en.gj.get(id) || o.gj;
+      const changed = !o.group || o.type !== type || JSON.stringify(o.style, skipPriv) !== st || o.gj !== gj;
+      Object.assign(o, { name, type, visible, pinned, style: JSON.parse(st), gjv, buf, gj });
+      if (changed) renderLayer(o);
+      return o;
+    }).filter(Boolean);
+    layers.forEach(o => { if (!next.includes(o) && o.group) map.removeLayer(o.group); });
+    layers.splice(0, layers.length, ...next);
+    legendItems = d.lg;
+    anns.slice().forEach(a => map.removeLayer(a.marker)); anns.length = 0; selAnn = null;
+    d.an.forEach(a => addAnn(a, true));
+    draws.slice().forEach(x => { if (x.group) drawGroup.removeLayer(x.group); }); draws.length = 0; selDraw = null;
+    d.dr.forEach(x => addDraw(x, true));
+    const paperBefore = JSON.stringify(cfg.paper);
+    Object.keys(cfg).forEach(k => { if (d.cfg[k]) Object.assign(cfg[k], d.cfg[k]); });
+    admLineSyms = d.adm[0]; admTsLv = d.adm[1]; admPos = d.adm[2]; admHidden = new Set(d.adm[3]);
+    $('#titleIn').value = d.title; $('#title').textContent = d.title;
+    labelSizeCache.clear(); updateHiddenRow(); buildAdmEd();
+    Object.keys(ADM).forEach(lv => { admDrawn[lv] = -1; renderAdmLines(lv, true); });
+    updateAdmin();
+    syncCfgUI(); if (JSON.stringify(cfg.paper) !== paperBefore) layoutFrame(); applyCfg();
+    refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists();
+    deselectAnn(); deselectDraw(); buildAnnList(); buildDrawList();
+  } finally { restoring = false; }
+}
+function undo(){
+  clearTimeout(ckT); checkpoint();
+  if (hist.length < 2){ showToast('더 되돌릴 작업이 없습니다.'); return; }
+  fut.push(hist.pop()); restoreState(hist[hist.length - 1]); updUndoBtns(); showToast('↶ 되돌렸습니다');
+}
+function redo(){
+  if (!fut.length){ showToast('다시 할 작업이 없습니다.'); return; }
+  const en = fut.pop(); hist.push(en); restoreState(en); updUndoBtns(); showToast('↷ 다시 했습니다');
+}
+$('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
+['change', 'input', 'mouseup', 'keyup', 'dragend', 'drop'].forEach(ev => document.addEventListener(ev, () => schedCheckpoint(), true));
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || typing()) return;
+  const k = e.key.toLowerCase();
+  if (k === 'z' && !e.shiftKey){ e.preventDefault(); undo(); }
+  else if (k === 'y' || (k === 'z' && e.shiftKey)){ e.preventDefault(); redo(); }
+}, true);
 
 /* ================= 시작 ================= */
 showSheet(store.get('sheet', '1'));
@@ -3519,7 +3806,9 @@ setBase();
 layoutFrame();
 applyCfg();
 buildAnnList();
-if (store.get('lyrWin', '0') === '1') setLyrWin(true);
+setLyrWin(store.get('lyrDock', '1') === '1');
+applyTool();
+setTimeout(checkpoint, 1500);
 </script>
 </body>
 </html>
