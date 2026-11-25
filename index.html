@@ -191,6 +191,27 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .idp td{border-top:1px solid #eef;padding:1px 6px 1px 0;vertical-align:top}
 .idp td:first-child{color:#678;white-space:nowrap}
 .idp button{font-size:11px;padding:1px 6px;margin-top:3px}
+.idp .acts{display:flex;flex-wrap:wrap;gap:3px}
+.idp .acts button.pin{background:#e3f3e8;border-color:#9cc9ab;color:#0a5a2e;font-weight:600}
+.idp .pt{background:#f3f6fa;border-radius:4px;padding:5px 6px;margin-bottom:4px}
+.idp .pt .k{color:#678;display:inline-block;width:58px}
+.idp .pt .v{font-family:Consolas,monospace;font-size:11.5px}
+.idp .pt button{margin:1px 0 1px 4px;padding:0 5px}
+.idp .addr{margin:2px 0;line-height:1.4}
+#workbar{position:absolute;top:8px;right:8px;z-index:1200;display:flex;gap:4px;align-items:center;background:rgba(255,255,255,.95);border:1px solid #ccd;border-radius:6px;padding:4px 6px;box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:12px}
+#workbar button{font-size:12px;padding:3px 8px}
+#workbar #curFile{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#456;padding:0 4px}
+#workbar button.on{background:#1d3b2a;color:#fff;border-color:#1d3b2a}
+#coordBar{position:absolute;left:8px;bottom:8px;z-index:1200;background:rgba(255,255,255,.9);border:1px solid #ccd;border-radius:4px;padding:2px 7px;font:11.5px Consolas,monospace;color:#234;pointer-events:none}
+#lyrWin{position:absolute;top:52px;right:8px;width:350px;height:60%;min-width:260px;min-height:160px;z-index:1150;background:#f6f7f9;border:1px solid #99a;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.35);display:flex;flex-direction:column;resize:both;overflow:hidden}
+#lyrWin[hidden]{display:none}
+#lyrWin .wh{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#1d3b2a;color:#fff;cursor:move;user-select:none;font-weight:600;font-size:13px}
+#lyrWin .wh button{margin-left:auto;background:transparent;color:#fff;border-color:rgba(255,255,255,.6);font-size:11px;padding:1px 6px;cursor:pointer}
+#lyrWin .wh button+button{margin-left:0}
+#lyrWin .wb{flex:1;overflow:auto;padding:4px 8px}
+#lyrWinNote{display:none}
+#saveDlg .grid input{flex:1}
+.modalx{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:5000}
 .exporting .leaflet-popup-pane{display:none}
 #map.drawmode,#map.drawmode .leaflet-interactive{cursor:crosshair}
 .vtx{background:#fff!important;border:2px solid #0a84ff!important;box-sizing:border-box}
@@ -242,7 +263,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.1</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.2</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="3">③ 레이어 <small id="tabLyrN"></small></button><button class="tab" data-sheet="4">④ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -300,7 +321,9 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
       <label>끝 모양 크기</label><span><input type="number" id="dCap" value="12" min="4" max="60">px</span>
       <label>흰 테두리</label><label><input type="checkbox" id="dHalo"> 선 둘레에 흰 테두리</label>
       <label>선 위 글자</label><input type="text" id="dTop" placeholder="예: 2공구(T/K)   (| 는 줄바꿈)">
-      <label>선 아래 글자</label><span><input type="text" id="dBot" placeholder="예: L=21.280km|10.170km(신설)" style="flex:1;min-width:120px"><button id="dLen" title="그린 선의 길이를 아래 글자에 넣기">길이 넣기</button></span>
+      <label>선 아래 글자</label><span><input type="text" id="dBot" placeholder="예: L={길이}|10.170km(신설)" style="flex:1;min-width:120px"><button id="dLen" title="아래 글자에 {길이} 넣기 — 선을 고치면 자동으로 바뀜">길이 넣기</button></span>
+      <label>길이 단위</label><span><select id="dLenU"><option value="auto">자동 (1km 미만은 m)</option><option value="km">km</option><option value="m">m</option><option value="cm">cm</option></select>
+        <select id="dLenD" title="소수점 자리"><option value="auto">소수점 자동</option><option value="0">정수</option><option value="1">소수 1자리</option><option value="2">소수 2자리</option><option value="3">소수 3자리</option></select></span>
       <label>글자</label><span><input type="number" id="dTSize" value="15" min="6" max="80" title="크기"><select id="dTWeight"></select><input type="color" id="dTColor" value="#e60012"></span>
       <label>글꼴</label><select id="dTFont"></select>
       <label>글자 꾸밈</label><span><label><input type="checkbox" id="dTHalo" checked>흰 외곽선</label><label><input type="checkbox" id="dTAlong" checked>선 방향 따라 기울이기</label></span>
@@ -337,12 +360,6 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
     <p class="hint" id="rotHint">사업지구 모양에 맞춰 지도를 돌릴 수 있습니다. 방위표는 자동으로 북쪽을 가리킵니다.</p>
   </div>
 
-  <div class="sec">
-    <h2>8. 작업 파일</h2>
-    <div class="row"><button id="btnSaveProj">작업 저장(.json)</button><button id="btnLoadProj">작업 열기</button>
-      <input type="file" id="projIn" accept=".json" hidden></div>
-    <p class="hint">새 버전으로 바꾸기 전에는 꼭 작업 저장을 해두세요. 공유폴더에 두면 다른 사람도 열어서 이어 작업할 수 있습니다.</p>
-  </div>
   </div>
 
   <div class="sheet" id="sheet2" hidden>
@@ -360,14 +377,15 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
     <div id="admEd"></div>
     <div class="row" id="admHiddenRow" style="display:none"><span class="hint" id="admHiddenTxt"></span><button id="admShowAll2">숨긴 이름 모두 다시 보이기</button></div>
     <div class="row"><button id="admResetPos">옮긴 이름 위치 되돌리기</button><button id="anToAnn">화면의 이름을 '글자'로 옮기기</button></div>
+    <div class="row"><button id="admToLyr">📌 켜진 경계를 레이어로 추가</button><span class="hint">화면 안의 구역을 레이어로 만듭니다. 지도에서 우클릭해 한 구역만 추가할 수도 있습니다.</span></div>
     <p class="hint">출처: 브이월드 2D데이터 API (행정구역 시도·시군구·읍면동, 실시간 조회)<br>이름은 자기 구역 안에서, 켜진 경계선에 닿지 않는 자리에만 표시됩니다. 끌어서 옮기고, 우클릭하면 숨깁니다.</p>
   </div>
 
   <div class="sec">
     <h2>2. 주제도 고르기</h2>
     <div class="row"><button id="thAllOff">미리보기 모두 끄기</button><span class="hint">체크하면 지도에 <b>미리보기</b>로 켜집니다.</span></div>
-    <div class="pinhelp">📌 이름을 <b>두 번 클릭</b>하면 도면에 쓸 <b>레이어로 잡혀</b> ③ 레이어 시트와 범례에 들어갑니다. 다시 두 번 클릭하면 미리보기로 돌아갑니다.</div>
-    <div class="row"><label><input type="checkbox" id="identOn" checked> 지도를 클릭하면 그 자리 자료의 이름·속성 보기</label></div>
+    <div class="pinhelp">📌 이름을 <b>두 번 클릭</b>하거나, 지도에서 그 자료를 <b>우클릭 → 레이어로 추가</b>하면 도면에 쓸 레이어로 잡혀 ③ 레이어와 범례에 들어갑니다. 다시 두 번 클릭하면 미리보기로 돌아갑니다.</div>
+    <div class="row"><label><input type="checkbox" id="identOn" checked> 지도를 클릭하면 그 자리 자료의 이름·속성 보기</label><span class="hint">우클릭은 항상: 이름·속성 + 좌표·주소 + 레이어로 추가</span></div>
     <div class="src">
       <div class="srch"><b>브이월드 (국토교통부)</b><span class="badge">실시간</span><div class="hint">브이월드 2D데이터 API</div></div>
       <div id="themeList"></div>
@@ -428,7 +446,8 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
     <div class="row"><button id="lyrUpload" class="pri">＋ 파일 올리기 (SHP·DXF·GeoJSON)</button></div>
     <p class="hint">직접 올린 파일, 버퍼, ② 주제도에서 두 번 클릭해 잡은 레이어가 모두 여기 모입니다.<br>
       <b>⠿ 손잡이를 끌어서</b> 순서를 바꿉니다. 위쪽 레이어가 지도에서 위에 그려집니다. 행정구역 경계는 항상 맨 아래에 그려집니다.</p>
-    <div id="layerList"></div>
+    <div id="lyrWinNote" class="pinhelp">🗂 레이어 목록이 지도 위 <b>레이어 창</b>에 열려 있습니다. <button id="lyrWinBack">여기로 가져오기</button></div>
+    <div id="lyrHome"><div id="layerList"></div></div>
   </div>
   <div class="sec">
     <button class="goSheet2">② 주제도 시트로</button> <button id="goSheet4">④ 출력 시트로</button>
@@ -514,6 +533,19 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 </div>
 
 <div id="work">
+  <div id="workbar">
+    <span id="curFile" title="지금 열린 작업 파일">새 작업</span>
+    <button id="btnLoadProj" title="작업 열기 (Ctrl+O)">📂 열기</button>
+    <button id="btnSaveProj" class="pri" title="작업 저장 (Ctrl+S) · 다른 이름으로 저장 (Ctrl+Shift+S)">💾 저장</button>
+    <button id="btnLyrWin" title="레이어 창 열기/닫기 (Ctrl+L)">🗂 레이어 창</button>
+    <input type="file" id="projIn" accept=".json" hidden>
+  </div>
+  <div id="lyrWin" hidden>
+    <div class="wh" id="lyrWinHead">🗂 레이어 <small id="lyrWinN" style="font-weight:400;opacity:.8"></small>
+      <button id="lyrWinUp" title="파일 올리기">＋ 파일</button><button id="lyrWinClose" title="닫기">✕</button></div>
+    <div class="wb" id="lyrWinBody"></div>
+  </div>
+  <div id="coordBar" hidden></div>
   <div id="frame"><div id="mapbox">
     <div id="map"></div>
     <div id="title" class="ovl" style="display:none">지역개황도</div>
@@ -862,7 +894,7 @@ const cfg = {
   title: { font: 'Malgun Gothic', size: 20, weight: 700, color: '#222222', frame: 'single', bgColor: '#ffffff', bgOp: 100 },
   inset: { frame: 'single' },
   doguk: { style: 'double', width: 5 },
-  paper: { w: 420, h: 297, margin: 10, dpi: 200 },
+  paper: { w: 297, h: 420, margin: 10, dpi: 200 },
   map: { bearing: 0 }
 };
 let legendItems = [], legSeq = 0;
@@ -958,7 +990,7 @@ const BASES = [
 const baseName = id => (BASES.find(b => b[0] === id) || [id, id])[1];
 function defaultBaseState(){
   const key = !!vwKey;
-  return BASES.map(([id]) => ({ id, on: key ? id === 'vBase' : id === 'osm', op: id === 'vSat' || id === 'esriSat' || id === 'vHyb' ? 100 : 70, gray: 0 }));
+  return BASES.map(([id]) => ({ id, on: key ? id === 'vBase' : id === 'osm', op: id === 'vSat' || id === 'esriSat' || id === 'vHyb' || id === 'vBase' ? 100 : 70, gray: 0 }));
 }
 let baseState;
 try { baseState = JSON.parse(store.get('baseState', 'null')); } catch(e){ baseState = null; }
@@ -1931,6 +1963,7 @@ function refreshOrder(){
     for (let i = layers.length - 1; i >= 0; i--){ const o = layers[i]; if (isLyr(o) === lyr && o.visible && o.group) map.addLayer(o.group); }
   });
   const n = layers.filter(isLyr).length, t = $('#tabLyrN'); if (t) t.textContent = n ? n : '';
+  const t2 = $('#lyrWinN'); if (t2) t2.textContent = n ? `(${n})` : '';
 }
 const SRC_NAME = { vworld: '브이월드', ecowfs: '에코뱅크', egis: '환경공간정보', kei: 'KEI 산줄기', rim: '하천정보' };
 function rebuildThemeLists(){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); }
@@ -2112,15 +2145,15 @@ function moveLayer(o, target, where){
   const rowAt = e => { const r = e.target.closest && e.target.closest('.lyr'); return r && box.contains(r) ? r : null; };
   const isFile = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
   box.addEventListener('dragover', e => {
-    if (dragLid == null){ if (isFile(e)) e.preventDefault(); return; }
-    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    if (dragLid == null){ if (isFile(e)){ e.preventDefault(); e.stopPropagation(); } return; }
+    e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'move';
     $$('#layerList .lyr').forEach(x => x.classList.remove('drop-before', 'drop-after'));
     const r = rowAt(e); if (!r || +r.dataset.lid === dragLid) return;
     const bb = r.getBoundingClientRect(); r.classList.add(e.clientY < bb.top + bb.height / 2 ? 'drop-before' : 'drop-after');
   });
   box.addEventListener('drop', e => {
-    if (dragLid == null){ if (isFile(e)){ e.preventDefault(); handleFiles(e.dataTransfer.files); } return; }
-    e.preventDefault();
+    if (dragLid == null){ if (isFile(e)){ e.preventDefault(); e.stopPropagation(); handleFiles(e.dataTransfer.files); } return; }
+    e.preventDefault(); e.stopPropagation();
     const r = rowAt(e), o = layerById(dragLid); dragLid = null;
     if (!r || !o) { buildPanel(); return; }
     const bb = r.getBoundingClientRect();
@@ -2576,16 +2609,24 @@ const DRAW_PRE = {
   line:   { color: '#e60012', w: 2.5, dash: 'solid', start: 'none', end: 'none', cap: 12, halo: false }
 };
 $('#dTWeight').innerHTML = opts(WEIGHTS, 700); $('#dTFont').innerHTML = fontOptions('Malgun Gothic');
-const DRAW_TXT = { top: '', bot: '', tSize: 15, tWeight: 700, tColor: '#e60012', tFont: 'Malgun Gothic', tHalo: true, tAlong: true };
+const DRAW_TXT = { lenU: 'auto', lenD: 'auto', top: '', bot: '', tSize: 15, tWeight: 700, tColor: '#e60012', tFont: 'Malgun Gothic', tHalo: true, tAlong: true };
 Object.keys(DRAW_PRE).forEach(k => { DRAW_PRE[k] = Object.assign({}, DRAW_TXT, DRAW_PRE[k], { tColor: DRAW_PRE[k].color }); });
 const draws = []; let drawSeq = 0, selDraw = null, drawing = null;
 let drawDraft = Object.assign({}, DRAW_PRE.dim);
 const drawGroup = L.layerGroup().addTo(map), vtxGroup = L.layerGroup().addTo(map);
 function drawFromForm(){ return { color: $('#dColor').value, w: +$('#dW').value || 2, dash: $('#dDash').value, start: $('#dStart').value, end: $('#dEnd').value, cap: +$('#dCap').value || 12, halo: $('#dHalo').checked,
-  top: $('#dTop').value, bot: $('#dBot').value, tSize: +$('#dTSize').value || 15, tWeight: +$('#dTWeight').value, tColor: $('#dTColor').value, tFont: $('#dTFont').value, tHalo: $('#dTHalo').checked, tAlong: $('#dTAlong').checked }; }
+  top: $('#dTop').value, bot: $('#dBot').value, tSize: +$('#dTSize').value || 15, tWeight: +$('#dTWeight').value, tColor: $('#dTColor').value, tFont: $('#dTFont').value, tHalo: $('#dTHalo').checked, tAlong: $('#dTAlong').checked, lenU: $('#dLenU').value, lenD: $('#dLenD').value }; }
 function formFromDraw(d){ d = Object.assign({}, DRAW_TXT, d);
   $('#dColor').value = d.color; $('#dW').value = d.w; $('#dDash').value = d.dash; $('#dStart').value = d.start; $('#dEnd').value = d.end; $('#dCap').value = d.cap; $('#dHalo').checked = !!d.halo;
-  $('#dTop').value = d.top || ''; $('#dBot').value = d.bot || ''; $('#dTSize').value = d.tSize; $('#dTWeight').value = d.tWeight; $('#dTColor').value = d.tColor; $('#dTFont').value = d.tFont; $('#dTHalo').checked = !!d.tHalo; $('#dTAlong').checked = !!d.tAlong; }
+  $('#dTop').value = d.top || ''; $('#dBot').value = d.bot || ''; $('#dTSize').value = d.tSize; $('#dTWeight').value = d.tWeight; $('#dTColor').value = d.tColor; $('#dTFont').value = d.tFont; $('#dTHalo').checked = !!d.tHalo; $('#dTAlong').checked = !!d.tAlong; $('#dLenU').value = d.lenU || 'auto'; $('#dLenD').value = d.lenD || 'auto'; }
+const drawLen = d => { let m = 0; for (let i = 1; i < d.pts.length; i++) m += map.distance(d.pts[i - 1], d.pts[i]); return m; };
+function fmtLen(m, unit, dec){
+  unit = unit || 'auto'; if (unit === 'auto') unit = m >= 1000 ? 'km' : 'm';
+  const v = unit === 'km' ? m / 1000 : unit === 'cm' ? m * 100 : m;
+  const n = dec == null || dec === 'auto' ? (unit === 'km' ? 3 : 0) : +dec;
+  return v.toLocaleString('ko-KR', { minimumFractionDigits: n, maximumFractionDigits: n }) + unit;
+}
+const lenText = (t, d) => String(t || '').replace(/\{길이\}/g, () => fmtLen(drawLen(d), d.lenU, d.lenD));
 /* 선 가운데(길이 기준)에 위·아래 글자 배치 */
 function lineTextMarkers(d){
   const out = []; if (!d.top && !d.bot) return out;
@@ -2600,7 +2641,7 @@ function lineTextMarkers(d){
   if (!d.tAlong) ang = 0;
   const r = ang * Math.PI / 180, nx = Math.sin(r), ny = -Math.cos(r);   // 글자 기준 '위쪽' 방향
   [['top', 1], ['bot', -1]].forEach(([key, sgn]) => {
-    const text = String(d[key] || '').trim(); if (!text) return;
+    const text = lenText(d[key], d).trim(); if (!text) return;
     const st = Object.assign(tsDefaults('text'), { text, size: d.tSize, weight: d.tWeight, font: d.tFont, textColor: d.tColor, haloColor: '#ffffff', haloW: d.tHalo ? 2 : 0, rotate: ang });
     const sz = measureLabel(Object.assign({}, st, { rotate: 0 })), dist = d.w / 2 + 4 + sz[1] / 2;
     const c = map.containerPointToLatLng([mid.x + nx * dist * sgn, mid.y + ny * dist * sgn]);
@@ -2699,7 +2740,7 @@ function buildDrawList(){
     const el = document.createElement('div'); el.className = 'ai' + (d === selDraw ? ' sel' : '');
     const sym = (CAP_ICON[d.start] || '').split('').reverse().join('').replace('▶', '◀') + '──' + (CAP_ICON[d.end] || '');
     el.innerHTML = `<input type="checkbox" ${d.visible ? 'checked' : ''} title="보이기"><span class="tp" style="color:${d.color}">${esc(sym)}</span>
-      <span class="at">${d.top ? esc(String(d.top).replace(/\|/g, ' ')) : '선 ' + (draws.length - k)} · 점 ${d.pts.length}개</span><button data-a="zoom" title="이 선으로 이동">◎</button><button data-a="del" title="삭제">✕</button>`;
+      <span class="at">${d.top || d.bot ? esc(lenText(d.top || d.bot, d).replace(/\|/g, ' ')) : '선 ' + (draws.length - k)} · 점 ${d.pts.length}개</span><button data-a="zoom" title="이 선으로 이동">◎</button><button data-a="del" title="삭제">✕</button>`;
     el.querySelector('input').onclick = e => { e.stopPropagation(); d.visible = e.target.checked; renderDraw(d); };
     el.querySelector('[data-a="zoom"]').onclick = e => { e.stopPropagation(); map.fitBounds(L.latLngBounds(d.pts), { padding: [60, 60], maxZoom: map.getZoom() }); selectDraw(d); };
     el.querySelector('[data-a="del"]').onclick = e => { e.stopPropagation(); if (confirm('이 선을 지울까요?')) delDraw(d); };
@@ -2707,13 +2748,14 @@ function buildDrawList(){
     box.appendChild(el);
   });
 }
-['#dColor', '#dDash', '#dStart', '#dEnd', '#dHalo', '#dTWeight', '#dTColor', '#dTFont', '#dTHalo', '#dTAlong'].forEach(s => $(s).addEventListener('change', onDrawForm));
+['#dColor', '#dDash', '#dStart', '#dEnd', '#dHalo', '#dTWeight', '#dTColor', '#dTFont', '#dTHalo', '#dTAlong', '#dLenU', '#dLenD'].forEach(s => $(s).addEventListener('change', onDrawForm));
 ['#dW', '#dCap', '#dTop', '#dBot', '#dTSize'].forEach(s => $(s).addEventListener('input', onDrawForm));
 $('#dLen').onclick = () => {
   if (!selDraw){ alert('먼저 길이를 넣을 선을 눌러 선택해 주세요.'); return; }
-  let m = 0; for (let i = 1; i < selDraw.pts.length; i++) m += map.distance(selDraw.pts[i - 1], selDraw.pts[i]);
-  const txt = m >= 1000 ? `L=${(m / 1000).toFixed(3)}km` : `L=${Math.round(m)}m`;
+  if (/\{길이\}/.test($('#dBot').value + $('#dTop').value)){ showToast('이미 {길이}가 들어 있습니다. 단위는 \'길이 단위\'에서 바꿉니다.'); return; }
+  const txt = 'L={길이}';
   $('#dBot').value = $('#dBot').value.trim() ? $('#dBot').value.trim() + '|' + txt : txt; onDrawForm();
+  showToast(`지금 길이 ${fmtLen(drawLen(selDraw), $('#dLenU').value, $('#dLenD').value)} · 꼭짓점을 옮기면 자동으로 바뀝니다.`);
 };
 function onDrawForm(){ const f = drawFromForm(); if (selDraw){ Object.assign(selDraw, f); renderDraw(selDraw); buildDrawList(); } else drawDraft = f; }
 $$('.dpre').forEach(b => b.onclick = () => { const keep = { top: $('#dTop').value, bot: $('#dBot').value }; formFromDraw(Object.assign({}, DRAW_PRE[b.dataset.pre], keep)); onDrawForm(); });
@@ -2813,39 +2855,124 @@ function hitFeature(f, ll, cp, tolPx, tolDeg){
   }
   return false;
 }
-function identify(e){
+/* 행정구역 → 레이어 */
+function admFeature(lv, en){ return { type: 'Feature', geometry: en.geom, properties: { 이름: en.name, 구분: ADM[lv].short, 전체이름: en.id } }; }
+function admToLayer(lv, list, name){
+  if (!list.length){ showToast('화면 안에 받아온 구역이 없습니다. 경계선을 켜고 조금 기다린 뒤 다시 해 주세요.'); return null; }
+  const o = addLayer(name, { type: 'FeatureCollection', features: list.map(en => admFeature(lv, en)) },
+    { type: 'polygon', style: { symbols: JSON.parse(JSON.stringify(admLineSyms[lv])), label: labelDefaults() } });
+  showToast(`📌 '${name}'을(를) 레이어로 추가했습니다. ③ 레이어에서 색·선을 바꿀 수 있습니다.`);
+  return o;
+}
+$('#admToLyr').onclick = () => {
+  const vb = map.getBounds(); let n = 0;
+  Object.keys(ADM).forEach(lv => {
+    if (!admLineOn(lv) || !admCache[lv]) return;
+    const list = [...admCache[lv].values()].filter(en => { if (!en.geom) return false; const b = en._bb2 || (en._bb2 = fbb({ geometry: en.geom })); return b[2] >= vb.getWest() && b[0] <= vb.getEast() && b[3] >= vb.getSouth() && b[1] <= vb.getNorth(); });
+    if (list.length && admToLayer(lv, list, `${ADM[lv].short} 경계`)) n++;
+  });
+  if (!n && !Object.keys(ADM).some(admLineOn)) alert('먼저 위 표에서 경계선을 켜 주세요.');
+};
+/* 좌표 · 주소 */
+const fmtN = (v, d) => v.toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const toTM = ll => proj4('EPSG:4326', 'EPSG:5186', [ll.lng, ll.lat]);
+function copyTxt(t){
+  const done = () => showToast('복사했습니다: ' + t);
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => prompt('복사하세요', t)); else prompt('복사하세요', t);
+}
+async function getAddress(ll){
+  if (!getKey()) throw new Error('브이월드 키가 없습니다');
+  const url = 'https://api.vworld.kr/req/address?service=address&request=getAddress&version=2.0&crs=epsg:4326&format=json&errorformat=json'
+    + `&point=${ll.lng.toFixed(7)},${ll.lat.toFixed(7)}&type=both&zipcode=true&simple=false&key=${encodeURIComponent(getKey())}&domain=${encodeURIComponent(location.origin)}`;
+  const d = await jsonp(url), r = d && d.response;
+  if (!r) throw new Error('응답 없음');
+  if (r.status === 'NOT_FOUND') return [];
+  if (r.status !== 'OK') throw new Error((r.error && (r.error.text || r.error.code)) || r.status);
+  return (r.result || []).map(x => ({ type: x.type, text: x.text, zip: x.zipcode }));
+}
+function pointBox(ll){
+  const tm = toTM(ll), d = document.createElement('div'); d.className = 'pt';
+  const ws = `${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}`, ts = `${tm[0].toFixed(1)}, ${tm[1].toFixed(1)}`;
+  d.innerHTML = `<div class="ly">📍 이 지점</div>
+    <div><span class="k">위도·경도</span><span class="v">${ws}</span><button data-c="w">복사</button></div>
+    <div><span class="k">TM 5186</span><span class="v">E ${fmtN(tm[0], 1)} · N ${fmtN(tm[1], 1)}</span><button data-c="t">복사</button></div>
+    <div class="addr hint">주소 찾는 중…</div>`;
+  d.querySelector('[data-c="w"]').onclick = () => copyTxt(ws);
+  d.querySelector('[data-c="t"]').onclick = () => copyTxt(ts);
+  const ad = d.querySelector('.addr');
+  getAddress(ll).then(list => {
+    if (!list.length){ ad.textContent = '주소 없음 (산지·바다 등)'; return; }
+    ad.classList.remove('hint'); ad.innerHTML = '';
+    list.sort((a, b) => (a.type === 'parcel' ? 0 : 1) - (b.type === 'parcel' ? 0 : 1)).forEach(a => {
+      const row = document.createElement('div');
+      row.innerHTML = `<span class="k">${a.type === 'road' ? '도로명' : '지번'}</span>${esc(a.text)}${a.zip ? ` <small class="hint">(${esc(a.zip)})</small>` : ''}<button data-c>복사</button><button data-g>글자로</button>`;
+      row.querySelector('[data-c]').onclick = () => copyTxt(a.text);
+      row.querySelector('[data-g]').onclick = () => { addAnn(Object.assign({}, annDraft, { text: a.text, lat: ll.lat, lng: ll.lng })); map.closePopup(); showToast('주소를 글자로 넣었습니다.'); };
+      ad.appendChild(row);
+    });
+  }).catch(err => { ad.textContent = '주소를 찾지 못했습니다: ' + err.message; });
+  return d;
+}
+function hitsAt(e){
   const ll = e.latlng, cp = e.containerPoint || map.latLngToContainerPoint(ll), tolPx = 6;
   const tolDeg = Math.abs(map.containerPointToLatLng([cp.x + tolPx, cp.y]).lng - ll.lng) * 1.5 + 1e-9;
   const found = [];
-  layers.filter(o => o.visible && o.gj && o.gj.features).forEach(o => {
+  layers.filter(o => o.visible && o.gj && o.gj.features && o.group && map.hasLayer(o.group)).forEach(o => {
     for (const f of o.gj.features){ if (hitFeature(f, ll, cp, tolPx, tolDeg)){ found.push({ o, f }); if (found.length > 12) break; } }
   });
   Object.keys(ADM).forEach(lv => {
     if (!(admLineOn(lv) || admNameOn(lv)) || !admCache[lv]) return;
-    admCache[lv].forEach(en => { if (en.geom && hitFeature({ geometry: en.geom, get _bb(){ return en._bb2 || (en._bb2 = fbb({ geometry: en.geom })); } }, ll, cp, tolPx, tolDeg)) found.push({ adm: lv, name: en.name }); });
+    admCache[lv].forEach(en => { if (en.geom && hitFeature({ geometry: en.geom, get _bb(){ return en._bb2 || (en._bb2 = fbb({ geometry: en.geom })); } }, ll, cp, tolPx, tolDeg)) found.push({ adm: lv, en, name: en.name }); });
   });
-  if (!found.length) return false;
+  return found;
+}
+function identify(e, withPoint){
+  const ll = e.latlng, found = hitsAt(e);
+  if (!found.length && !withPoint) return false;
   const box = document.createElement('div'); box.className = 'idp';
+  if (withPoint) box.appendChild(pointBox(ll));
+  const done = m => { map.closePopup(); showToast(m); };
   found.slice(0, 12).forEach(h => {
     const it = document.createElement('div'); it.className = 'it';
+    const acts = [];
     if (h.adm){
-      it.innerHTML = `<div class="ly">행정구역 · ${ADM[h.adm].short}</div><div class="nm">${esc(h.name)}</div><button>이 이름을 글자로 넣기</button>`;
+      it.innerHTML = `<div class="ly">행정구역 · ${ADM[h.adm].short}</div><div class="nm">${esc(h.name)}</div><div class="acts"></div>`;
+      acts.push(['📌 이 구역을 레이어로 추가', 'pin', () => { admToLayer(h.adm, [h.en], `${h.name} 경계`); map.closePopup(); }]);
     } else {
       const p = h.f.properties || {}, name = guessName(h.o, p);
       const rows = Object.entries(p).filter(([k, v]) => v != null && String(v).trim() !== '' && !/^(_|geom|the_geom|shape)/i.test(k)).slice(0, 15)
         .map(([k, v]) => `<tr><td>${esc(FIELD_KO[k] ? FIELD_KO[k] + ' (' + k + ')' : k)}</td><td>${esc(String(v)).slice(0, 80)}</td></tr>`).join('');
-      it.innerHTML = `<div class="ly">${esc(h.o.name)}</div><div class="nm">${esc(name || '(이름 정보 없음)')}</div>
-        ${name ? '<button>이 이름을 글자로 넣기</button>' : ''}${rows ? `<details><summary>속성 전체</summary><table>${rows}</table></details>` : ''}`;
+      const tag = h.o.src ? (h.o.pinned ? ' · 📌 레이어' : ' · 미리보기') : '';
+      it.innerHTML = `<div class="ly">${esc(h.o.name)}${tag}</div><div class="nm">${esc(name || '(이름 정보 없음)')}</div>
+        <div class="acts"></div>${rows ? `<details><summary>속성 전체</summary><table>${rows}</table></details>` : ''}`;
       h.name = name;
+      if (h.o.src && !h.o.pinned) acts.push([`📌 '${h.o.name}' 레이어로 추가`, 'pin', () => { map.closePopup(); pinLayer(h.o); }]);
+      acts.push([name ? `'${name}'만 새 레이어로` : '이 도형만 새 레이어로', '', () => {
+        const nm = name || h.o.name + ' (일부)';
+        addLayer(nm, { type: 'FeatureCollection', features: [JSON.parse(JSON.stringify({ type: 'Feature', geometry: h.f.geometry, properties: h.f.properties || {} }))] },
+          { type: h.o.type, style: JSON.parse(JSON.stringify(h.o.style)) });
+        done(`📌 '${nm}'을(를) 새 레이어로 추가했습니다.`);
+      }]);
     }
-    const b = it.querySelector('button');
-    if (b) b.onclick = () => { addAnn(Object.assign({}, annDraft, { text: h.name, lat: ll.lat, lng: ll.lng })); map.closePopup(); showToast(`'${h.name}' 글자를 넣었습니다. ① 작업 → 5. 글자 넣기에서 모양을 바꿀 수 있습니다.`); };
+    if (h.name) acts.push(['이 이름을 글자로 넣기', '', () => { addAnn(Object.assign({}, annDraft, { text: h.name, lat: ll.lat, lng: ll.lng })); done(`'${h.name}' 글자를 넣었습니다. ① 작업 → 4. 글자 넣기에서 모양을 바꿀 수 있습니다.`); }]);
+    const ab = it.querySelector('.acts');
+    acts.forEach(([t, c, fn]) => { const b = document.createElement('button'); b.textContent = t; if (c) b.className = c; b.onclick = fn; ab.appendChild(b); });
     box.appendChild(it);
   });
   if (found.length > 12) box.insertAdjacentHTML('beforeend', '<div class="hint">겹친 자료가 많아 12개까지만 보입니다.</div>');
-  L.popup({ maxWidth: 360, autoPan: true }).setLatLng(ll).setContent(box).openOn(map);
+  L.popup({ maxWidth: 380, autoPan: true }).setLatLng(ll).setContent(box).openOn(map);
   return true;
 }
+map.on('contextmenu', e => {
+  if (placing || drawing || (e.originalEvent && e.originalEvent.defaultPrevented)) return;
+  identify(e, true);
+});
+/* 마우스 위치 좌표 (도면에는 안 나옴) */
+map.on('mousemove', e => {
+  const c = $('#coordBar'), tm = toTM(e.latlng); c.hidden = false;
+  c.textContent = `위도 ${e.latlng.lat.toFixed(5)}  경도 ${e.latlng.lng.toFixed(5)}  ·  TM E ${fmtN(tm[0], 0)}  N ${fmtN(tm[1], 0)}  ·  우클릭: 좌표·주소`;
+});
+map.on('mouseout', () => { $('#coordBar').hidden = true; });
 $('#identOn').checked = store.get('identOn', '1') === '1';
 $('#identOn').onchange = e => store.set('identOn', e.target.checked ? '1' : '0');
 map.on('click', e => {
@@ -3116,7 +3243,7 @@ async function handleFiles(fileList){
   if (ok.length){
     let b = null; ok.forEach(o => { const lb = layerBounds(o); if (lb) b = b ? b.extend(lb) : L.latLngBounds(lb.getSouthWest(), lb.getNorthEast()); });
     if (b) map.fitBounds(b, { padding: [30, 30] });
-    if (store.get('sheet', '1') !== '3') showToast(`레이어 ${ok.length}개를 올렸습니다. 순서·스타일은 ③ 레이어 시트에서 바꿉니다.`);
+    if (store.get('sheet', '1') !== '3' && $('#lyrWin').hidden) showToast(`레이어 ${ok.length}개를 올렸습니다. 순서·스타일은 ③ 레이어 시트에서 바꿉니다.`);
   }
 }
 const drop = $('#drop');
@@ -3155,8 +3282,8 @@ $('#btnPdf').onclick = async () => {
     pdf.save(fileBase() + '.pdf');
   } catch(e){ alert('저장 실패: ' + e.message); } finally { busy(false); }
 };
-$('#btnSaveProj').onclick = () => {
-  const data = {
+function projData(){
+  return {
     app: 'eia-map', v: 6,
     view: { c: map.getCenter(), z: map.getZoom() },
     baseState,
@@ -3171,14 +3298,86 @@ $('#btnSaveProj').onclick = () => {
     anns: anns.map(({ marker, id, ...a }) => a),
     draws: draws.map(({ group, id, ...d }) => d)
   };
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
-  download(fileBase() + '_작업.json', url); setTimeout(() => URL.revokeObjectURL(url), 5000);
-};
-$('#btnLoadProj').onclick = () => $('#projIn').click();
+}
+/* ===== 작업 파일 저장 · 열기 (Ctrl+S / Ctrl+Shift+S / Ctrl+O) ===== */
+const FS_OK = 'showSaveFilePicker' in window;   // 크롬·엣지: 같은 파일에 덮어쓰기 가능
+const JSON_TYPES = [{ description: '도면 작성기 작업 파일', accept: { 'application/json': ['.json'] } }];
+let curFile = { name: '', handle: null };
+const stem = n => String(n || '').replace(/\.json$/i, '');
+const cleanName = n => (stem(n).trim() || (fileBase() + '_작업')).replace(/[\\/:*?"<>|]/g, '_');
+function setCurFile(name, handle){
+  curFile = { name: stem(name), handle: handle || null };
+  $('#curFile').textContent = curFile.name ? '📄 ' + curFile.name : '새 작업';
+  $('#curFile').title = curFile.name ? curFile.name + '.json' + (curFile.handle ? ' (Ctrl+S로 이 파일에 바로 저장)' : '') : '아직 저장하지 않은 작업';
+  document.title = (curFile.name ? curFile.name + ' – ' : '') + '환경영향평가 도면 작성기';
+}
+const projBlob = () => new Blob([JSON.stringify(projData())], { type: 'application/json' });
+async function writeHandle(h){
+  if (h.queryPermission && (await h.queryPermission({ mode: 'readwrite' })) !== 'granted'){
+    if ((await h.requestPermission({ mode: 'readwrite' })) !== 'granted') throw new Error('파일에 저장할 권한이 없습니다');
+  }
+  const w = await h.createWritable(); await w.write(projBlob()); await w.close();
+}
+async function saveProj(name, asNew){
+  name = cleanName(name);
+  try {
+    if (FS_OK){
+      let h = !asNew && curFile.handle && stem(curFile.handle.name) === name ? curFile.handle : null;
+      if (!h) h = await window.showSaveFilePicker({ suggestedName: name + '.json', types: JSON_TYPES });
+      await writeHandle(h); setCurFile(h.name, h);
+    } else {
+      const url = URL.createObjectURL(projBlob());
+      download(name + '.json', url); setTimeout(() => URL.revokeObjectURL(url), 5000); setCurFile(name, null);
+    }
+    showToast(`💾 저장했습니다: ${curFile.name}.json`);
+    return true;
+  } catch(e){ if (e.name !== 'AbortError') alert('저장하지 못했습니다.\n' + e.message); return false; }
+}
+function openSaveDlg(asNew){
+  const box = document.createElement('div'); box.id = 'saveDlg'; box.className = 'modalx';
+  const nm = curFile.name || cleanName('');
+  box.innerHTML = `<div class="mbox"><h3>${asNew ? '다른 이름으로 저장' : '작업 저장'}</h3>
+    <div class="grid"><label>파일 이름</label><span><input type="text" id="sdName" value="${esc(nm)}">.json</span></div>
+    <p class="hint">${curFile.handle ? `지금 파일: <b>${esc(curFile.name)}.json</b> · 이름을 그대로 두고 [저장]하면 이 파일에 덮어씁니다.`
+      : FS_OK ? '[저장]을 누르면 저장할 폴더를 고르는 창이 뜹니다. 한 번 저장한 뒤로는 Ctrl+S만 누르면 같은 파일에 바로 저장됩니다.'
+      : '이 브라우저는 다운로드 폴더에 저장됩니다. (크롬·엣지에서는 저장 폴더를 고르고 같은 파일에 덮어쓸 수 있습니다)'}</p>
+    <div class="mbtn"><button id="sdSave" class="pri">저장</button> <button id="sdAs">다른 이름으로 저장…</button> <button id="sdNo">취소</button></div></div>`;
+  document.body.appendChild(box);
+  const inp = box.querySelector('#sdName'); inp.focus(); inp.select();
+  const close = () => box.remove();
+  box.querySelector('#sdNo').onclick = close;
+  box.querySelector('#sdSave').onclick = async () => { const v = inp.value; close(); await saveProj(v, asNew); };
+  box.querySelector('#sdAs').onclick = async () => { const v = inp.value; close(); await saveProj(v, true); };
+  inp.onkeydown = e => { if (e.key === 'Enter'){ e.preventDefault(); box.querySelector('#sdSave').click(); } else if (e.key === 'Escape') close(); };
+  if (asNew) box.querySelector('#sdSave').style.display = 'none';
+}
+async function openProj(){
+  if ('showOpenFilePicker' in window){
+    try {
+      const [h] = await window.showOpenFilePicker({ types: JSON_TYPES });
+      const f = await h.getFile();
+      await loadProject(JSON.parse(await f.text())); setCurFile(f.name, h); showToast(`📂 열었습니다: ${stem(f.name)}`);
+    } catch(e){ if (e.name !== 'AbortError'){ console.error(e); alert('작업 파일을 열지 못했습니다.\n' + e.message); } }
+  } else $('#projIn').click();
+}
+$('#btnSaveProj').onclick = () => openSaveDlg(false);
+$('#btnLoadProj').onclick = openProj;
 $('#projIn').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { await loadProject(JSON.parse(await f.text())); } catch(err){ console.error(err); alert('작업 파일을 열지 못했습니다.\n' + err.message); }
+  try { await loadProject(JSON.parse(await f.text())); setCurFile(f.name, null); } catch(err){ console.error(err); alert('작업 파일을 열지 못했습니다.\n' + err.message); }
 };
+document.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 's'){
+    e.preventDefault(); if ($('#saveDlg')) return;
+    if (e.shiftKey) openSaveDlg(true);
+    else if (curFile.handle) saveProj(curFile.name, false);
+    else openSaveDlg(false);
+  } else if (k === 'o' && !e.shiftKey){ e.preventDefault(); openProj(); }
+  else if (k === 'l' && !e.shiftKey){ e.preventDefault(); setLyrWin($('#lyrWin').hidden); }
+}, true);
+setCurFile('', null);
 function migrateCfg(dc){
   if (!dc) return;
   ['legend', 'scale', 'title'].forEach(k => {
@@ -3270,6 +3469,36 @@ $$('.goLyr').forEach(b => b.onclick = () => showSheet(3));
 $$('.goSheet2').forEach(b => b.onclick = () => showSheet(2));
 $('#goSheet4').onclick = () => showSheet(4);
 $('#lyrUpload').onclick = () => $('#fileIn').click();
+/* 레이어 창 (지도 위에 떠 있는 레이어 목록) */
+function setLyrWin(on){
+  const w = $('#lyrWin'), list = $('#layerList');
+  w.hidden = !on; $('#btnLyrWin').classList.toggle('on', on);
+  (on ? $('#lyrWinBody') : $('#lyrHome')).appendChild(list);
+  $('#lyrWinNote').style.display = on ? 'block' : 'none';
+  store.set('lyrWin', on ? '1' : '0');
+}
+$('#btnLyrWin').onclick = () => setLyrWin($('#lyrWin').hidden);
+$('#lyrWinClose').onclick = () => setLyrWin(false);
+$('#lyrWinBack').onclick = () => setLyrWin(false);
+$('#lyrWinUp').onclick = () => $('#fileIn').click();
+(() => {
+  const w = $('#lyrWin'), h = $('#lyrWinHead'); let st = null;
+  try { const p = JSON.parse(store.get('lyrWinPos', 'null')); if (p){ Object.assign(w.style, { left: p.l, top: p.t, right: 'auto', width: p.w, height: p.h }); } } catch(e){}
+  h.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    const r = w.getBoundingClientRect(), pr = $('#work').getBoundingClientRect();
+    st = { dx: e.clientX - r.left, dy: e.clientY - r.top, pr }; e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!st) return;
+    const x = Math.max(0, Math.min(st.pr.width - 80, e.clientX - st.pr.left - st.dx)), y = Math.max(0, Math.min(st.pr.height - 40, e.clientY - st.pr.top - st.dy));
+    Object.assign(w.style, { left: x + 'px', top: y + 'px', right: 'auto' });
+  });
+  const savePos = () => store.set('lyrWinPos', JSON.stringify({ l: w.style.left, t: w.style.top, w: w.offsetWidth + 'px', h: w.offsetHeight + 'px' }));
+  document.addEventListener('mouseup', () => { if (st){ st = null; savePos(); } });
+  new ResizeObserver(() => { if (!w.hidden && w.style.left) savePos(); }).observe(w);
+  ['mousedown', 'wheel', 'dblclick', 'contextmenu'].forEach(ev => w.addEventListener(ev, e => e.stopPropagation()));
+})();
 
 /* ================= 시작 ================= */
 showSheet(store.get('sheet', '1'));
@@ -3290,6 +3519,7 @@ setBase();
 layoutFrame();
 applyCfg();
 buildAnnList();
+if (store.get('lyrWin', '0') === '1') setLyrWin(true);
 </script>
 </body>
 </html>
