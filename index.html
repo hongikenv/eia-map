@@ -198,6 +198,12 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .idp .pt .v{font-family:Consolas,monospace;font-size:11.5px}
 .idp .pt button{margin:1px 0 1px 4px;padding:0 5px}
 .idp .addr{margin:2px 0;line-height:1.4}
+.idp .ar{background:#f1f7f2;border-radius:4px;padding:3px 6px;margin:2px 0 4px;line-height:1.55}
+.idp .ar b{font-size:13px;color:#0a5a2e}
+.idp .ar button{margin:0 0 0 4px}
+.idw .pdrag{cursor:move;user-select:none;-webkit-user-select:none;touch-action:none;background:#e9eef5;color:#567;font-size:11px;text-align:center;padding:2px 6px;border-radius:4px;margin:0 0 5px}
+.idw .pdrag:hover,.idw .pdrag.dragging{background:#d6e4f5;color:#0a64d0}
+#inset img{display:block;width:100%;height:auto;pointer-events:none}
 #workbar{position:absolute;top:8px;right:8px;z-index:1200;display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:rgba(255,255,255,.95);border:1px solid #ccd;border-radius:6px;padding:4px 6px;box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:12px}
 #lyrDock #workbar{position:static;border:none;border-bottom:1px solid #ccd;border-radius:0;box-shadow:none;background:#fff;padding:6px 8px}
 #lyrDock #workbar #curFile{flex:1 1 100%;max-width:none;font-weight:600}
@@ -302,7 +308,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.4.1</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.5.0</small><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -527,13 +533,25 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
         <label>글꼴</label><select data-cfg="scale.font" class="fontSel"></select>
         <label>글자</label><span><input type="number" data-cfg="scale.size" min="7" max="30"><select data-cfg="scale.weight" class="wSel" data-num></select></span>
         <label>막대 길이</label><input type="range" data-cfg="scale.len" min="100" max="420">
+        <label>칸 나누기</label><select data-cfg="scale.divs" data-num><option value="1">1칸 (0 · 끝값)</option><option value="2">2칸 (0 · 중간 · 끝값)</option><option value="3">3칸</option><option value="4">4칸 (기본)</option><option value="5">5칸</option></select>
+        <label>막대 거리</label><span><input type="number" data-cfg="scale.custom" min="0" step="any" style="width:80px"> m <small>(0 = 자동)</small></span>
       </div>
+      <p class="hint">'막대 거리'에 500 처럼 미터(m) 값을 넣으면 막대가 딱 그 거리만 나타냅니다. 막대가 너무 길면 값을 줄이세요. 칸 나누기에서 2칸을 고르면 0 · 중간 · 끝값만 표시됩니다.</p>
     </details>
     <details><summary>방위표</summary>
       <div class="grid">
         <label>모양</label><select data-cfg="north.style"><option value="compass">나침반</option><option value="half">반쪽 화살표</option><option value="arrow">화살표</option><option value="circle">원형</option></select>
         <label>크기</label><input type="range" data-cfg="north.size" min="30" max="160">
+        <label>선 색</label><input type="color" data-cfg="north.stroke">
+        <label>칠 색</label><span><input type="color" data-cfg="north.fill"> <input type="color" data-cfg="north.light"> <small>어두운 쪽 · 밝은 쪽</small></span>
+        <label>선 굵기</label><input type="range" data-cfg="north.sw" min="0.5" max="4" step="0.5">
+        <label>바깥 테두리</label><span><input type="range" data-cfg="north.halo" min="0" max="6" step="0.5" style="width:90px"><input type="color" data-cfg="north.haloColor"></span>
+        <label>N 글자</label><span><label><input type="checkbox" data-cfg="north.nShow"> 표시</label> <input type="number" data-cfg="north.nSize" min="8" max="40" style="width:52px"> <input type="color" data-cfg="north.nColor"></span>
+        <label>N 글꼴</label><select data-cfg="north.nFont" class="fontSel"></select>
+        <label>상자 테두리</label><select data-cfg="north.frame" class="frameSel"></select>
+        <label>상자 배경</label><span><input type="color" data-cfg="north.bgColor"><input type="range" data-cfg="north.bgOp" min="0" max="100" style="width:90px"><span class="pv" data-cfgpv="north.bgOp"></span></span>
       </div>
+      <p class="hint">'바깥 테두리'는 방위표 모양을 따라 둘레에 색 테두리(기본 흰색)를 둘러 지도 위에서 잘 보이게 합니다.</p>
     </details>
     <details><summary>제목</summary>
       <div class="grid">
@@ -544,8 +562,14 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
         <label>배경</label><span><input type="color" data-cfg="title.bgColor"><input type="range" data-cfg="title.bgOp" min="0" max="100" style="width:90px"><span class="pv" data-cfgpv="title.bgOp"></span></span>
       </div>
     </details>
-    <details><summary>위치도</summary>
-      <div class="grid"><label>테두리</label><select data-cfg="inset.frame" class="frameSel"></select></div>
+    <details><summary>위치도 (키맵)</summary>
+      <div class="grid">
+        <label>방식</label><select data-cfg="inset.mode"><option value="auto">자동 (우리나라 지도 + 현재 범위)</option><option value="image">내가 만든 키맵 이미지</option></select>
+        <label>이미지</label><span><button id="insetImgBtn">이미지 올리기…</button> <button id="insetImgClr">지우기</button><input type="file" id="insetImgIn" accept="image/*" hidden></span>
+        <label>가로 크기</label><input type="range" data-cfg="inset.size" min="80" max="700" step="5">
+        <label>테두리</label><select data-cfg="inset.frame" class="frameSel"></select>
+      </div>
+      <p class="hint">키맵을 따로 만들어(PNG·JPG·SVG) 올리면 도면의 위치도 자리에 그대로 들어갑니다. 위의 '위치도' 체크가 켜지며, 지도 위에서 끌어 옮길 수 있습니다. 이미지는 작업 파일(.json)에 함께 저장됩니다.</p>
     </details>
   </div>
 
@@ -578,7 +602,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
   <div id="frame"><div id="mapbox">
     <div id="map"></div>
     <div id="title" class="ovl" style="display:none">지역개황도</div>
-    <div id="inset" class="ovl" style="display:none"><div id="insetMap"></div></div>
+    <div id="inset" class="ovl" style="display:none"><div id="insetMap"></div><img id="insetImg" alt="위치도" draggable="false" style="display:none"></div>
     <div id="north" class="ovl"></div>
     <div id="scale" class="ovl"></div>
     <div id="legend" class="ovl"></div>
@@ -939,10 +963,11 @@ function bindSymEditor(root, type, getSyms, setSyms, onChange, onRebuild, onlySt
 /* ================= 상태 ================= */
 const cfg = {
   legend: { title: '범 례', showTitle: true, font: 'Malgun Gothic', size: 13, weight: 400, color: '#222222', frame: 'table', bgColor: '#ffffff', bgOp: 100, cols: 1, sym: 1, align: 'center' },
-  scale: { style: 'alt', unit: 'auto', ratio: false, frame: 'single', bgColor: '#ffffff', bgOp: 100, font: 'Malgun Gothic', size: 12, weight: 400, len: 230 },
-  north: { style: 'compass', size: 64 },
+  scale: { style: 'alt', unit: 'auto', ratio: false, frame: 'single', bgColor: '#ffffff', bgOp: 100, font: 'Malgun Gothic', size: 12, weight: 400, len: 230, divs: 4, custom: 0 },
+  north: { style: 'compass', size: 64, stroke: '#000000', fill: '#000000', light: '#ffffff', sw: 1, halo: 0, haloColor: '#ffffff',
+    nShow: true, nSize: 15, nFont: 'Arial', nColor: '#000000', frame: 'none', bgColor: '#ffffff', bgOp: 0 },
   title: { font: 'Malgun Gothic', size: 20, weight: 700, color: '#222222', frame: 'single', bgColor: '#ffffff', bgOp: 100 },
-  inset: { frame: 'single' },
+  inset: { frame: 'single', mode: 'auto', img: '', size: 150 },
   doguk: { style: 'double', width: 5 },
   paper: { w: 297, h: 420, margin: 10, dpi: 200 },
   map: { bearing: 0 }
@@ -2444,8 +2469,10 @@ function renderScale(){
   const c = cfg.scale, el = $('#scale'), sz = map.getSize();
   if (!sz.x) return;
   const mpp = curMpp(), maxM = mpp * c.len, p = Math.pow(10, Math.floor(Math.log10(maxM)));
-  const T = [5, 2, 1].map(d => d * p).find(v => v <= maxM) || p;
+  const custom = +c.custom > 0 ? +c.custom : 0;                       // 직접 정한 막대 거리(m), 0이면 자동
+  const T = custom || ([5, 2, 1].map(d => d * p).find(v => v <= maxM) || p);
   const px = T / mpp, km = c.unit === 'km' || (c.unit === 'auto' && T >= 1000), fs = c.size;
+  const n = [1, 2, 3, 4, 5].includes(+c.divs) ? +c.divs : 4;          // 칸 수
   const fmt = v => (+(km ? v / 1000 : v).toFixed(3)).toLocaleString('ko-KR');
   const X = fs * 1.8, ff = fontStack(c.font).replace(/'/g, '');
   const ratioTxt = '1 : ' + niceRatio(ratioN()).toLocaleString('ko-KR');
@@ -2455,24 +2482,30 @@ function renderScale(){
     W = fs * (ratioTxt.length * 0.62 + 3); H = fs * 1.6;
     body = txt(W / 2, fs * 1.15, '축척 ' + ratioTxt);
   } else {
-    const ticks = c.style === 'alt' ? [0, px / 4, px / 2, px] : [0, px / 4, px / 2, px * 3 / 4, px];
-    const vals = c.style === 'alt' ? [0, T / 4, T / 2, T] : [0, T / 4, T / 2, T * 3 / 4, T];
+    const idx = Array.from({ length: n + 1 }, (_, k) => k);
+    const legacyAlt = c.style === 'alt' && n === 4;                  // 예전 '교대 막대' 모양(0 · 1/4 · 1/2 · 끝)
+    const ticks = legacyAlt ? [0, px / 4, px / 2, px] : idx.map(k => px * k / n);
+    const vals = legacyAlt ? [0, T / 4, T / 2, T] : idx.map(k => T * k / n);
     const top = 6;
     if (c.style === 'alt'){
-      body = `<rect x="${X}" y="${top}" width="${px / 4}" height="8" fill="#000"/><rect x="${X + px / 2}" y="${top}" width="${px / 2}" height="8" fill="#000"/>
-        <rect x="${X}" y="${top}" width="${px}" height="8" fill="none" stroke="#000" stroke-width="1.5"/>`
+      if (legacyAlt){
+        body = `<rect x="${X}" y="${top}" width="${px / 4}" height="8" fill="#000"/><rect x="${X + px / 2}" y="${top}" width="${px / 2}" height="8" fill="#000"/>`;
+      } else {
+        body = idx.slice(0, n).filter(k => k % 2 === 0).map(k => `<rect x="${X + px * k / n}" y="${top}" width="${px / n}" height="8" fill="#000"/>`).join('');
+      }
+      body += `<rect x="${X}" y="${top}" width="${px}" height="8" fill="none" stroke="#000" stroke-width="1.5"/>`
         + ticks.map(t => `<line x1="${X + t}" y1="${top - 3}" x2="${X + t}" y2="${top + 11}" stroke="#000" stroke-width="1.2"/>`).join('');
       H = top + 11;
     } else if (c.style === 'double'){
-      for (let k = 0; k < 4; k++){
-        const x = X + px * k / 4, w = px / 4;
+      for (let k = 0; k < n; k++){
+        const x = X + px * k / n, w = px / n;
         body += `<rect x="${x}" y="${top}" width="${w}" height="5" fill="${k % 2 ? '#fff' : '#000'}"/><rect x="${x}" y="${top + 5}" width="${w}" height="5" fill="${k % 2 ? '#000' : '#fff'}"/>`;
       }
       body += `<rect x="${X}" y="${top}" width="${px}" height="10" fill="none" stroke="#000" stroke-width="1.2"/>`;
       H = top + 12;
     } else {
       body = `<line x1="${X}" y1="${top + 10}" x2="${X + px}" y2="${top + 10}" stroke="#000" stroke-width="1.5"/>`
-        + ticks.map((t, k) => `<line x1="${X + t}" y1="${(k % 2 && k !== 4) ? top + 4 : top}" x2="${X + t}" y2="${top + 10}" stroke="#000" stroke-width="1.3"/>`).join('');
+        + ticks.map((t, k) => `<line x1="${X + t}" y1="${(k % 2 && k !== n) ? top + 4 : top}" x2="${X + t}" y2="${top + 10}" stroke="#000" stroke-width="1.3"/>`).join('');
       H = top + 11;
     }
     const ly = H + fs + 2;
@@ -2527,23 +2560,37 @@ function northAngle(){
 }
 function renderNorth(){
   const c = cfg.north, ang = northAngle().toFixed(2);
-  const N = '<text x="0" y="-41" font-size="15" font-weight="700" text-anchor="middle" font-family="Arial">N</text>';
-  let g;
-  if (c.style === 'compass'){
-    const arm = (a, b) => `<polygon points="${a}" fill="#000"/><polygon points="${b}" fill="#fff"/>`;
-    g = `${N}<circle r="17" fill="none" stroke="#000" stroke-width="1.2"/><g stroke="#000" stroke-width="0.8" stroke-linejoin="round">
-      ${arm('0,-36 6,-6 0,0', '0,-36 -6,-6 0,0')}${arm('0,36 -6,6 0,0', '0,36 6,6 0,0')}
-      ${arm('36,0 6,6 0,0', '36,0 6,-6 0,0')}${arm('-36,0 -6,-6 0,0', '-36,0 -6,6 0,0')}
-      ${arm('16,-16 3,-6 0,0', '16,-16 6,-3 0,0')}${arm('-16,16 -3,6 0,0', '-16,16 -6,3 0,0')}
-      ${arm('16,16 6,3 0,0', '16,16 3,6 0,0')}${arm('-16,-16 -6,-3 0,0', '-16,-16 -3,-6 0,0')}</g>`;
-  } else if (c.style === 'half'){
-    g = `${N}<g stroke="#000" stroke-width="1.2" stroke-linejoin="round"><polygon points="0,-34 -14,30 0,20" fill="#fff"/><polygon points="0,-34 14,30 0,20" fill="#000"/></g>`;
-  } else if (c.style === 'arrow'){
-    g = `${N}<polygon points="0,-34 16,0 5,0 5,32 -5,32 -5,0 -16,0" fill="#000"/>`;
-  } else {
-    g = `${N}<circle r="30" fill="#fff" stroke="#000" stroke-width="2"/><g stroke="#000" stroke-width="1" stroke-linejoin="round"><polygon points="0,-26 -10,16 0,8" fill="#fff"/><polygon points="0,-26 10,16 0,8" fill="#000"/></g>`;
-  }
-  $('#north').innerHTML = `<svg width="${c.size}" height="${c.size}" viewBox="-50 -50 100 100" xmlns="http://www.w3.org/2000/svg"><g transform="rotate(${ang})">${g}</g></svg>`;
+  const sw = +c.sw || 1, halo = +c.halo || 0;
+  const ff = fontStack(c.nFont || 'Arial').replace(/'/g, '');
+  /* 모양 한 벌: stk 선 색, dark/light 어두운 쪽·밝은 쪽 칠, add 선 굵기에 더할 값 (바깥 테두리를 그릴 때 사용) */
+  const shapes = (stk, dark, light, add) => {
+    const w = v => (v * sw + add).toFixed(2);
+    if (c.style === 'compass'){
+      const arm = (a1, b1) => `<polygon points="${a1}" fill="${dark}"/><polygon points="${b1}" fill="${light}"/>`;
+      return `<g stroke="${stk}" stroke-linejoin="round"><circle r="17" fill="none" stroke-width="${w(1.2)}"/><g stroke-width="${w(0.8)}">
+        ${arm('0,-36 6,-6 0,0', '0,-36 -6,-6 0,0')}${arm('0,36 -6,6 0,0', '0,36 6,6 0,0')}
+        ${arm('36,0 6,6 0,0', '36,0 6,-6 0,0')}${arm('-36,0 -6,-6 0,0', '-36,0 -6,6 0,0')}
+        ${arm('16,-16 3,-6 0,0', '16,-16 6,-3 0,0')}${arm('-16,16 -3,6 0,0', '-16,16 -6,3 0,0')}
+        ${arm('16,16 6,3 0,0', '16,16 3,6 0,0')}${arm('-16,-16 -6,-3 0,0', '-16,-16 -3,-6 0,0')}</g></g>`;
+    }
+    if (c.style === 'half'){
+      return `<g stroke="${stk}" stroke-width="${w(1.2)}" stroke-linejoin="round"><polygon points="0,-34 -14,30 0,20" fill="${light}"/><polygon points="0,-34 14,30 0,20" fill="${dark}"/></g>`;
+    }
+    if (c.style === 'arrow'){
+      return `<polygon points="0,-34 16,0 5,0 5,32 -5,32 -5,0 -16,0" fill="${dark}" stroke="${stk}" stroke-width="${w(1)}" stroke-linejoin="round"/>`;
+    }
+    return `<circle r="30" fill="${light}" stroke="${stk}" stroke-width="${w(2)}"/><g stroke="${stk}" stroke-width="${w(1)}" stroke-linejoin="round"><polygon points="0,-26 -10,16 0,8" fill="${light}"/><polygon points="0,-26 10,16 0,8" fill="${dark}"/></g>`;
+  };
+  const nSize = +c.nSize || 15;
+  const N = c.nShow === false ? '' : `<text x="0" y="-41" font-size="${nSize}" font-weight="700" text-anchor="middle" font-family="${ff}" fill="${c.nColor}"${halo > 0 ? ` stroke="${c.haloColor}" stroke-width="${halo * 2}" stroke-linejoin="round" paint-order="stroke"` : ''}>N</text>`;
+  const haloLayer = halo > 0 ? shapes(c.haloColor, c.haloColor, c.haloColor, halo * 2) : '';
+  const g = haloLayer + shapes(c.stroke, c.fill, c.light, 0) + N;
+  const pad = halo + Math.max(0, sw - 1) * 1.5, vb = 50 + pad, W = c.size * vb / 50;
+  const el = $('#north');
+  el.innerHTML = `<svg width="${W}" height="${W}" viewBox="${-vb} ${-vb} ${vb * 2} ${vb * 2}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible"><g transform="rotate(${ang})">${g}</g></svg>`;
+  el.style.border = frameCss(c.frame || 'none');
+  el.style.background = rgba(c.bgColor, c.bgOp);
+  el.style.padding = ((c.frame && c.frame !== 'none') || c.bgOp > 0) ? '8px' : '0';
 }
 
 /* ================= 지도 회전 ================= */
@@ -2570,7 +2617,19 @@ function renderTitle(){
   Object.assign($('#title').style, { fontFamily: fontStack(c.font), fontSize: c.size + 'px', fontWeight: c.weight, color: c.color,
     border: frameCss(c.frame), background: rgba(c.bgColor, c.bgOp) });
 }
-function renderInsetFrame(){ $('#inset').style.border = frameCss(cfg.inset.frame); }
+let insetSig = '';
+function renderInsetFrame(){
+  const el = $('#inset'), c = cfg.inset, imgMode = c.mode === 'image' && !!c.img;
+  el.style.border = frameCss(c.frame);
+  const w = Math.max(60, +c.size || 150);
+  el.style.width = w + 'px';
+  el.style.height = imgMode ? 'auto' : Math.round(w * 190 / 150) + 'px';
+  const im = $('#insetImg'), mp = $('#insetMap');
+  if (imgMode){ if (im.getAttribute('src') !== c.img) im.src = c.img; im.style.display = 'block'; mp.style.display = 'none'; }
+  else { im.style.display = 'none'; mp.style.display = ''; }
+  const sig = (imgMode ? 'i' : 'm') + w;
+  if (sig !== insetSig){ insetSig = sig; if (!imgMode) setTimeout(() => updateInset(false), 30); }
+}
 function renderDoguk(){
   const c = cfg.doguk, el = $('#doguk'), inner = el.firstElementChild;
   el.style.border = 'none';
@@ -2581,6 +2640,7 @@ function renderDoguk(){
 let insetMap = null, insetRect = null, insetBase = null;
 function updateInset(rebuildBase){
   if ($('#inset').style.display === 'none') return;
+  if (cfg.inset.mode === 'image' && cfg.inset.img) return;   // 내 키맵 이미지를 쓰는 중
   if (!insetMap){
     insetMap = L.map('insetMap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false,
       doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false });
@@ -2599,6 +2659,35 @@ function updateInset(rebuildBase){
   if (insetRect) insetRect.setBounds(b);
   else insetRect = L.rectangle(b, { color: '#e60012', weight: 2, fill: true, fillOpacity: 0.25 }).addTo(insetMap);
 }
+/* 키맵 이미지 올리기 */
+function setInsetImg(src){
+  cfg.inset.img = src; cfg.inset.mode = 'image';
+  const cb = $('.tg[data-t="inset"]'); if (cb && !cb.checked){ cb.checked = true; cb.dispatchEvent(new Event('change')); }
+  syncCfgUI(); applyCfg(); schedCheckpoint();
+}
+function loadInsetImage(file){
+  if (!file) return;
+  if (!/^image\//.test(file.type)){ alert('이미지 파일(PNG, JPG, SVG 등)을 골라주세요.'); return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    const src = rd.result;
+    if (/svg/.test(file.type)){ setInsetImg(src); return; }
+    const im = new Image();
+    im.onload = () => {
+      const MAX = 1400, k = Math.min(1, MAX / Math.max(im.naturalWidth, im.naturalHeight));
+      if (k === 1){ setInsetImg(src); return; }   // 너무 큰 이미지는 줄여서 작업 파일이 커지지 않게
+      const cv = document.createElement('canvas'); cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
+      cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+      setInsetImg(cv.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.92));
+    };
+    im.onerror = () => alert('이미지를 읽지 못했습니다.');
+    im.src = src;
+  };
+  rd.readAsDataURL(file);
+}
+$('#insetImgBtn').onclick = () => $('#insetImgIn').click();
+$('#insetImgIn').onchange = e => { loadInsetImage(e.target.files[0]); e.target.value = ''; };
+$('#insetImgClr').onclick = () => { cfg.inset.img = ''; cfg.inset.mode = 'auto'; syncCfgUI(); applyCfg(); schedCheckpoint(); };
 let themeTimer = null;
 map.on('moveend zoomend resize', () => { renderScale(); renderNorth(); updateInset(false); admSchedule(); placeDefaults();
   clearTimeout(themeTimer); themeTimer = setTimeout(() => { updateThemes(); updateEco(); updateEgis(); }, 450); });
@@ -3134,6 +3223,64 @@ function hitsAt(e){
   });
   return found;
 }
+/* 면적: TM(EPSG:5186 중부원점) 평면 기준으로 계산 (CAD·GIS 면적과 같은 방식) */
+function ringM2(r){
+  if (!r || r.length < 3) return 0;
+  const o = proj4('EPSG:4326', 'EPSG:5186', [r[0][0], r[0][1]]);
+  const q = r.map(c => { const t = proj4('EPSG:4326', 'EPSG:5186', [c[0], c[1]]); return [t[0] - o[0], t[1] - o[1]]; });
+  let a = 0;
+  for (let i = 0, n = q.length; i < n; i++){ const u = q[i], v = q[(i + 1) % n]; a += u[0] * v[1] - v[0] * u[1]; }
+  return Math.abs(a) / 2;
+}
+const polyM2 = rings => rings.reduce((t, r, i) => t + (i === 0 ? ringM2(r) : -ringM2(r)), 0);
+function geomM2(f){
+  const g = f && f.geometry; if (!g) return 0;
+  try {
+    if (g.type === 'Polygon') return polyM2(g.coordinates);
+    if (g.type === 'MultiPolygon') return g.coordinates.reduce((t, pl) => t + polyM2(pl), 0);
+  } catch(err){ try { return turf.area(f); } catch(e2){} }
+  return 0;
+}
+function fmtArea(m2){
+  const n = (v, d) => v.toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  return { m2: n(m2, 1) + ' ㎡', ha: n(m2 / 1e4, m2 < 1e4 ? 4 : 2) + ' ha', km2: n(m2 / 1e6, 4) + ' ㎢' };
+}
+function areaBox(h){
+  const a = geomM2(h.f); if (!(a > 0)) return '';
+  const s = fmtArea(a), feats = (h.o.gj && h.o.gj.features) || [];
+  const polys = feats.filter(x => x.geometry && /Polygon/.test(x.geometry.type));
+  let tot = '';
+  if (polys.length > 1 && polys.length <= 3000){
+    const t = fmtArea(polys.reduce((sum, x) => sum + geomM2(x), 0));
+    tot = `<div class="hint">이 레이어 면 ${polys.length}개 합계: ${t.m2} (${t.ha})</div>`;
+  }
+  return `<div class="ar">📐 면적 <b>${s.m2}</b> <span class="hint">${s.ha} · ${s.km2}</span><button data-ac="${a.toFixed(1)}">㎡ 값 복사</button><div class="hint">TM(중부원점) 평면 기준</div>${tot}</div>`;
+}
+/* 정보창을 위쪽 손잡이로 끌어 옮기기 */
+function makePopupDraggable(pop, grip){
+  grip.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation();
+    const st = map.latLngToContainerPoint(pop.getLatLng()), sx = e.clientX, sy = e.clientY, auto = pop.options.autoPan;
+    let moved = false;
+    pop.options.autoPan = false;   // 끄는 동안 지도가 따라 움직이지 않게
+    grip.classList.add('dragging');
+    const mv = ev => {
+      moved = true;
+      pop.setLatLng(map.containerPointToLatLng(L.point(st.x + ev.clientX - sx, st.y + ev.clientY - sy)));
+      const tip = pop.getElement() && pop.getElement().querySelector('.leaflet-popup-tip-container'); if (tip) tip.style.display = 'none';
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up);
+      pop.options.autoPan = auto; grip.classList.remove('dragging');
+      if (moved){   // 손을 뗄 때 생기는 클릭이 지도에 전달돼 창이 닫히지 않도록 한 번 걸러냄
+        const eat = ev => { ev.stopPropagation(); ev.preventDefault(); };
+        window.addEventListener('click', eat, true); setTimeout(() => window.removeEventListener('click', eat, true), 120);
+      }
+    };
+    window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+  });
+}
 function identify(e, withPoint){
   const ll = e.latlng, found = hitsAt(e);
   if (!found.length && !withPoint) return false;
@@ -3151,9 +3298,10 @@ function identify(e, withPoint){
       const rows = Object.entries(p).filter(([k, v]) => v != null && String(v).trim() !== '' && !/^(_|geom|the_geom|shape)/i.test(k)).slice(0, 15)
         .map(([k, v]) => `<tr><td>${esc(FIELD_KO[k] ? FIELD_KO[k] + ' (' + k + ')' : k)}</td><td>${esc(String(v)).slice(0, 80)}</td></tr>`).join('');
       const tag = h.o.src ? (h.o.pinned ? ' · 📌 레이어' : ' · 미리보기') : '';
-      it.innerHTML = `<div class="ly">${esc(h.o.name)}${tag}</div><div class="nm">${esc(name || '(이름 정보 없음)')}</div>
+      it.innerHTML = `<div class="ly">${esc(h.o.name)}${tag}</div><div class="nm">${esc(name || '(이름 정보 없음)')}</div>${areaBox(h)}
         <div class="acts"></div>${rows ? `<details><summary>속성 전체</summary><table>${rows}</table></details>` : ''}`;
       h.name = name;
+      const acb = it.querySelector('[data-ac]'); if (acb) acb.onclick = () => copyTxt(acb.dataset.ac);
       if (h.o.src && !h.o.pinned) acts.push([`📌 '${h.o.name}' 레이어로 추가`, 'pin', () => { map.closePopup(); pinLayer(h.o); }]);
       if (!h.o.src) acts.push(['🗑 이 도형 지우기', '', () => {
         h.o.gj = { type: 'FeatureCollection', features: h.o.gj.features.filter(x => x !== h.f) }; h.o.gjv = (h.o.gjv || 0) + 1;
@@ -3174,7 +3322,11 @@ function identify(e, withPoint){
     box.appendChild(it);
   });
   if (found.length > 12) box.insertAdjacentHTML('beforeend', '<div class="hint">겹친 자료가 많아 12개까지만 보입니다.</div>');
-  L.popup({ maxWidth: 380, autoPan: true }).setLatLng(ll).setContent(box).openOn(map);
+  const wrap = document.createElement('div'); wrap.className = 'idw';
+  const grip = document.createElement('div'); grip.className = 'pdrag'; grip.textContent = '✥ 여기를 끌어서 창 옮기기'; grip.title = '끌어서 정보창 위치를 옮깁니다';
+  wrap.appendChild(grip); wrap.appendChild(box);
+  const pop = L.popup({ maxWidth: 380, autoPan: true }).setLatLng(ll).setContent(wrap).openOn(map);
+  makePopupDraggable(pop, grip);
   return true;
 }
 map.on('contextmenu', e => {
@@ -3999,7 +4151,7 @@ function snapState(){
     L: layers.map(o => [o.id, o.name, o.type, o.visible, !!o.pinned, o.style, o.gjv || 0, o.buf || null, o.grp == null ? null : o.grp]),
     G: groups,
     lg: legendItems, an: anns.map(({ marker, id, ...a }) => a), dr: draws.map(({ group, id, ...d }) => d),
-    cfg, adm: [admLineSyms, admTsLv, admPos, [...admHidden]], title: $('#titleIn').value
+    cfg: JSON.parse(JSON.stringify(cfg, (k, v) => k === 'img' ? undefined : v)), adm: [admLineSyms, admTsLv, admPos, [...admHidden]], title: $('#titleIn').value
   }, skipPriv);
 }
 function checkpoint(){
