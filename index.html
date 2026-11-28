@@ -351,7 +351,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.11.0</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.11.1</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -4812,12 +4812,12 @@ function scanTargets(){
 }
 var scanItems = function(){
   const out = [];
-  THEMES.forEach(([grp, list]) => list.forEach(t => { if (!themeUnavail.has(t[0])) out.push({ kind: 'vw', grp, code: t[0], name: t[1], type: t[2], color: t[3] }); }));
-  EGIS.forEach(d => { if (!/^eg_c_/.test(d[0])) out.push({ kind: 'eg', grp: '환경공간정보서비스', id: d[0], name: d[1] }); });
+  THEMES.forEach(([grp, list]) => { if (grp === '보호구역 · 별도관리지역') list.forEach(t => { if (!themeUnavail.has(t[0])) out.push({ kind: 'vw', grp: '브이월드 ' + grp, code: t[0], name: t[1], type: t[2], color: t[3] }); }); });
+  ECO_GRADES.forEach(d => out.push({ kind: 'eco', grp: '에코뱅크 생태자연도', g: d[0], name: d[1] }));
+  EGIS.forEach(d => { if (!/^eg_c_/.test(d[0])) out.push({ kind: 'eg', grp: '환경공간정보서비스 환경주제도', id: d[0], name: d[1] }); });
   RIVER.forEach(d => { if (!d[4].byList) out.push({ kind: 'riv', grp: '하천', id: d[0], name: d[1] }); });
-  KEI.forEach(d => out.push({ kind: 'kei', grp: 'KEI 산줄기', id: d[0], name: d[1] }));
-  ECO_GRADES.forEach(d => out.push({ kind: 'eco', grp: '에코뱅크 (국립생태원)', g: d[0], name: d[1] }));
-  GSV_GROUPS.forEach(([grp, , list]) => list.forEach(d => out.push({ kind: 'gsv', grp: '수질오염총량 · ' + grp, code: d[0], name: d[1], color: d[2], gk: d[3] })));
+  KEI.forEach(d => { if (d[0] === 'kei_l1') out.push({ kind: 'kei', grp: '백두대간', id: d[0], name: d[1] }); });
+  GSV_GROUPS.forEach(([grp, , list]) => { if (grp === '수계') list.forEach(d => out.push({ kind: 'gsv', grp: '수계 (물환경정보시스템)', code: d[0], name: d[1], color: d[2], gk: d[3] })); });
   return out;
 };
 function scanNames(feats){
@@ -4869,6 +4869,7 @@ function scanApply(list){
     else if (it.kind === 'kei') toggleKei(it.id, true, true);
     else if (it.kind === 'eco') toggleEco(it.g, true, true);
     else if (it.kind === 'gsv') gsvToggle(it.code, it.name, true, it.color, it.gk, true);
+    else if (it.kind === 'img'){ const c = document.querySelector(it.sel + ' input'); if (c && !c.checked) c.click(); }
   });
   refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists(); buildEcoList();
   setTimeout(() => { updateThemes(); updateEgis(); updateEco(); updateGsv(); }, 700);
@@ -4904,6 +4905,7 @@ async function scanRun(){
   let h = '<div class="row"><button id="scanOn" class="pri">체크한 주제도 켜기</button><button id="scanAll">전체 체크</button><button id="scanNone">전체 해제</button></div><table><tr><th></th><th>주제도</th><th>범위 안</th></tr>';
   let lastG = '';
   const show = rows.filter(x => x.r && x.r.hit);
+  const imgs = [{ kind: 'img', sel: '#asbList', name: ASB.name }, { kind: 'img', sel: '#cenList', name: CEN.name }];
   const why = {}; bad.forEach(x => { why[x.err] = (why[x.err] || 0) + 1; });
   const whyTxt = Object.keys(why).map(k => `${k} ${why[k]}개`).join(', ');
   show.forEach((x, i) => {
@@ -4911,7 +4913,9 @@ async function scanRun(){
     h += x.r ? `<tr><td><input type="checkbox" class="scanCk" data-i="${i}" checked></td><td>${esc(x.it.name)}<br><small>${esc(x.r.names.join(', '))}</small></td><td>${x.r.hit}개${x.r.partial ? '<br><small>일부만 조회됨</small>' : ''}</td></tr>`
       : `<tr class="none"><td></td><td>${esc(x.it.name)}</td><td title="${esc(x.err)}">⚠ ${esc(x.err).slice(0, 24)}</td></tr>`;
   });
-  if (!show.length) h += '<tr><td colspan="3">범위 안에 겹치는 주제도가 없습니다.</td></tr>';
+  if (!show.length) h += '<tr><td colspan="3">범위 안에 겹치는 도형 주제도가 없습니다.</td></tr>';
+  h += '<tr><td colspan="3"><b>그림 주제도 (범위 안 여부는 확인 불가)</b></td></tr>';
+  imgs.forEach(it => { show.push({ it, r: null }); h += `<tr><td><input type="checkbox" class="scanCk" data-i="${show.length - 1}" checked></td><td>${esc(it.name)}</td><td><small>켜서 눈으로 확인</small></td></tr>`; });
   res.innerHTML = h + '</table><p class="hint">겹치지 않는 주제도는 표에 넣지 않았습니다. 이름은 범위 안 자료의 일부 예시입니다.</p>' + (bad.length ? `<p class="hint" style="color:#b33">⚠ 받지 못함: ${esc(whyTxt)}</p>` : '');
   $('#scanAll').onclick = () => $$('.scanCk').forEach(c => c.checked = true);
   $('#scanNone').onclick = () => $$('.scanCk').forEach(c => c.checked = false);
