@@ -346,7 +346,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.7</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.8</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -536,8 +536,8 @@ body .hlp{display:none!important}
       <p class="hint" id="lc_msg"></p>
     </div>
     <div class="src" id="asbBox">
-      <div class="srch"><b>석면관리 종합정보망</b><span class="badge gray">환경공간정보서비스</span></div>
-      <div id="asbList"></div>
+      <div class="srch"><b>자연발생석면 (석면관리 종합정보망)</b><span class="badge gray">파일</span><div class="hint hlp">환경부 석면관리 종합정보망의 자연발생석면지질도 자료(SHP)를 data/asbestos 폴더에 변환해 올려 두고 쓰는 방식입니다.</div></div>
+      <details class="thgrp" open><summary>석면 관련 지역 · 지질 <small class="hint" id="asb_cnt"></small></summary><div id="asbFileList"></div></details>
     </div>
     <div class="src" id="fileBox">
       <div class="srch"><b>사이트에 올려 둔 자료 (data 폴더)</b><span class="badge gray">파일</span><div class="hint">국립생물자원관·물환경정보시스템 등에서 받은 지도파일을 data 폴더에 넣어 쓰는 방식</div></div>
@@ -4445,7 +4445,15 @@ $('#egAdd').onclick = () => {
 /* ================= v2.6: 사이트 data 폴더 자료 (동시센서스 · 수질오염총량 단위유역) ================= */
 const FILES = [
   ['fl_census', '겨울철 조류 동시센서스 조사지역', 'polygon', '#8E24AA', 'data/winter_census.geojson'],
-  ['fl_tmdl', '수질오염총량 관리지역 (단위유역)', 'polygon', '#0288D1', 'data/tmdl_unit_basin.geojson']
+  ['fl_tmdl', '수질오염총량 관리지역 (단위유역)', 'polygon', '#0288D1', 'data/tmdl_unit_basin.geojson'],
+  ['asb_ore', '석면광체', 'point', '#E53935', 'data/asbestos/ore.geojson', 'asb'],
+  ['asb_rec', '석면산출 기록된 지역', 'point', '#FB8C00', 'data/asbestos/rec.geojson', 'asb'],
+  ['asb_past', '과거 개발된 지역', 'point', '#8E24AA', 'data/asbestos/past.geojson', 'asb'],
+  ['asb_plant', '기존 석면공장', 'point', '#212121', 'data/asbestos/plant.geojson', 'asb'],
+  ['asb_mafic', '염기성암', 'polygon', '#43A047', 'data/asbestos/mafic.geojson', 'asb'],
+  ['asb_ultra', '초염기성암', 'polygon', '#7B1FA2', 'data/asbestos/ultra.geojson', 'asb'],
+  ['asb_fault', '단층선', 'line', '#1E88E5', 'data/asbestos/fault.geojson', 'asb'],
+  ['asb_faultx', '기타암석 단층선', 'line', '#78909C', 'data/asbestos/faultx.geojson', 'asb']
 ];
 const fileLayerOf = id => layers.find(o => o.src && o.src.kind === 'file' && o.src.id === id);
 function toWgs(gj){
@@ -4462,15 +4470,19 @@ function toWgs(gj){
   return gj;
 }
 function buildFileList(){
-  const box = $('#fileList'); if (!box) return; box.innerHTML = ''; let onCnt = 0;
-  FILES.forEach(([id, name, type, color]) => {
-    const o = fileLayerOf(id), on = !!(o && o.visible); if (on) onCnt++;
+  const cnt = { '': [0, 0], asb: [0, 0] };
+  ['#fileList', '#asbFileList'].forEach(q => { const b = $(q); if (b) b.innerHTML = ''; });
+  FILES.forEach(([id, name, type, color, path, grp]) => {
+    const box = $(grp === 'asb' ? '#asbFileList' : '#fileList'); if (!box) return;
+    const o = fileLayerOf(id), on = !!(o && o.visible), c = cnt[grp || '']; c[1]++; if (on) c[0]++;
     const d = document.createElement('div'); d.className = 'thi';
     d.innerHTML = `<input type="checkbox" id="fl_${id}" ${on ? 'checked' : ''}><span class="sw" style="background:${rgba(color, 40)};border-color:${color}"></span><label class="tn">${esc(name)}</label>${o ? `<small>${o.gj.features.length}개</small>` : ''}`;
+    d.querySelector('label').onclick = () => d.querySelector('input').click();
     d.querySelector('input').onchange = e => toggleFile(id, e.target.checked);
     box.appendChild(d);
   });
-  $('#fl_cnt').textContent = `(${onCnt}/${FILES.length})`;
+  $('#fl_cnt').textContent = `(${cnt[''][0]}/${cnt[''][1]})`;
+  const ac = $('#asb_cnt'); if (ac) ac.textContent = `(${cnt.asb[0]}/${cnt.asb[1]})`;
 }
 async function toggleFile(id, on){
   const def = FILES.find(x => x[0] === id), msg = $('#fl_msg'); let o = fileLayerOf(id);
@@ -4537,30 +4549,6 @@ function lcLegAdd(o){
   });
 }
 const lcLegDrop = id => { legendItems = legendItems.filter(it => it.lcFor !== id); };
-
-/* 자연발생석면지질도 (me:na_stone_info) */
-var ASB = { id: 'asb', name: '자연발생석면 (석면관리 종합정보망)', layer: 'me:na_stone_info' };
-function asbLayer(){ return layers.find(o => o.src && o.src.kind === 'lc' && o.src.layer === ASB.layer); }
-function buildAsbList(){
-  if (typeof ASB === 'undefined' || !ASB) return;
-  const box = $('#asbList'); if (!box) return; box.innerHTML = '';
-  const o = asbLayer(), on = !!(o && o.visible);
-  const d = document.createElement('div'); d.className = 'thi';
-  d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="sw" style="background:rgba(255,152,0,.5);border-color:#f90"></span><label class="tn">${ASB.name}</label><small>전국</small>`;
-  d.querySelector('label').onclick = () => d.querySelector('input').click();
-  d.querySelector('input').onchange = e => {
-    let a = asbLayer();
-    if (a){ a.visible = e.target.checked; }
-    else if (e.target.checked){
-      const G = 'https://api.mcee.go.kr/geoserver/';
-      addLayer(ASB.name, { type: 'FeatureCollection', features: [] }, { type: 'polygon', pinned: true, noLegend: true, quiet: true,
-        src: { kind: 'lc', layer: ASB.layer, op: 1, extra: { viewparams: 'year:undefined' }, eps: [{ u: G + 'wms' }, { u: G + 'me/wms' }, { u: G + 'wms', r: true }] } });
-    }
-    refreshOrder(); buildPanel(); renderLegendAll(); buildAsbList();
-  };
-  box.appendChild(d);
-}
-buildAsbList();
 
 buildLcList();
 
@@ -4738,7 +4726,7 @@ document.addEventListener('dblclick', e => {
 (function(){
   const box = $('#fileBox'); if (!box) return;
   const w = document.createElement('div'); w.className = 'row';
-  w.innerHTML = `<select id="flPick">${FILES.map(f => `<option value="${f[0]}">${f[1]}</option>`).join('')}</select><button type="button" id="flLoad">＋ 내 파일 올리기</button><input type="file" id="flIn" accept=".geojson,.json,.zip" hidden>`;
+  w.innerHTML = `<select id="flPick">${FILES.filter(f => !f[5]).map(f => `<option value="${f[0]}">${f[1]}</option>`).join('')}</select><button type="button" id="flLoad">＋ 내 파일 올리기</button><input type="file" id="flIn" accept=".geojson,.json,.zip" hidden>`;
   box.querySelector('#fl_msg').before(w);
   $('#flLoad').onclick = () => $('#flIn').click();
   $('#flIn').onchange = async e => {
