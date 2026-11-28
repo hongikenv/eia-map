@@ -346,7 +346,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.0</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.1</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -2100,15 +2100,17 @@ function renderLayer(o){
   if (o.group) map.removeLayer(o.group);
   if (o.src && o.src.kind === 'ecobank'){ o.group = L.layerGroup(); return; }   // 이전 버전(그림 방식) 자료는 표시하지 않음
   if (o.src && o.src.kind === 'lc'){
-    const WL = L.TileLayer.WMS.extend({ getTileUrl(c){ const u = L.TileLayer.WMS.prototype.getTileUrl.call(this, c); return o.src.relay ? relayWrap(u) : u; } });
-    const tl = new WL('https://api.mcee.go.kr/geoserver/gwc/service/wms', { layers: o.src.layer, format: 'image/png', transparent: true, tiled: true,
-      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 5, opacity: (o.src.op != null ? o.src.op : 0.7) });
+    /* 받는 방법을 차례로 시도: 0) 캐시 서버 직접 1) 일반 WMS 직접 2) 중계 서버 */
+    const st = o.src.stage || 0, EP = ['https://api.mcee.go.kr/geoserver/gwc/service/wms', 'https://api.mcee.go.kr/geoserver/wms', 'https://api.mcee.go.kr/geoserver/gwc/service/wms'];
+    const WL = L.TileLayer.WMS.extend({ getTileUrl(c){ const u = L.TileLayer.WMS.prototype.getTileUrl.call(this, c); return st === 2 ? relayWrap(u) : u; } });
+    const tl = new WL(EP[st], { layers: o.src.layer, format: 'image/png', transparent: true, tiled: st !== 1,
+      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 5, opacity: (o.src.op != null ? o.src.op : 0.7), referrerPolicy: 'no-referrer' });
     let bad = 0, ok = 0;
     tl.on('tileload', () => { ok++; });
     tl.on('tileerror', () => {
       if (ok || ++bad < 3) return;
-      if (!o.src.relay && relayUrl){ o.src.relay = true; bad = 0; showToast('토지피복지도를 직접 받지 못해 중계 서버로 다시 시도합니다.'); renderLayer(o); refreshOrder(); }
-      else if (!o._lcWarn){ o._lcWarn = true; showToast(`토지피복지도 그림을 받지 못했습니다. 레이어명(${o.src.layer})이 맞는지 확인해 주세요.`); }
+      if (st < 2 && (st < 1 || relayUrl)){ o.src.stage = st + 1; showToast(st === 0 ? '토지피복지도: 다른 주소로 다시 시도합니다.' : '토지피복지도: 중계 서버로 다시 시도합니다.'); renderLayer(o); refreshOrder(); }
+      else if (!o._lcWarn){ o._lcWarn = true; showToast(`토지피복지도 그림을 받지 못했습니다. 레이어명(${o.src.layer})을 확인해 주세요.`); }
     });
     o.group = L.layerGroup([tl]);
     return;
