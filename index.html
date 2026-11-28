@@ -313,6 +313,9 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 #foldBar{display:flex;gap:6px;padding:5px 14px;background:#eef1f5;border-bottom:1px solid #dde;align-items:center;font-size:12px;color:#567}
 #foldBar button{padding:1px 8px;font-size:12px}
 body .hlp{display:none!important}
+.scanbox{border:1px solid #cfd8dc;border-radius:6px;padding:6px 8px;margin:6px 0;background:#f7fafc}
+#scanRes table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:4px}#scanRes td,#scanRes th{border-bottom:1px solid #e3e8ec;padding:2px 4px;text-align:left;vertical-align:top}#scanRes td small{color:#888}
+#scanRes tr.none td{color:#999}
 .srch .srcl{font-size:10px;color:#888;margin:1px 0 2px;line-height:1.3}
 .hi{display:inline-block;margin-left:4px;width:15px;height:15px;line-height:15px;border-radius:50%;background:#e8eef7;color:#2a5db0;font:700 10px/15px sans-serif;text-align:center;cursor:help;vertical-align:middle;font-style:normal}
 #hiTip{position:fixed;z-index:99999;max-width:300px;background:#222;color:#fff;font-size:12px;line-height:1.45;padding:7px 9px;border-radius:6px;box-shadow:0 2px 8px #0005;pointer-events:none;display:none}
@@ -348,7 +351,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.10.1</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.11.0</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -471,6 +474,11 @@ body .hlp{display:none!important}
     <h2>2. 주제도 고르기</h2>
     <div class="row"><button id="thAllOff">미리보기 모두 끄기</button><span class="hint">체크하면 지도에 <b>미리보기</b>로 켜집니다.</span></div>
     <div class="pinhelp">📌 이름을 <b>두 번 클릭</b>하거나, 지도에서 그 자료를 <b>우클릭 → 레이어로 추가</b>하면 도면에 쓸 레이어로 잡혀 오른쪽 레이어 창과 범례에 들어갑니다. 다시 두 번 클릭하면 미리보기로 돌아갑니다.</div>
+    <div class="scanbox">
+      <div class="row"><b>범위 안 주제도 찾기</b><select id="scanTgt" style="flex:1;min-width:120px"></select><button id="scanBtn" class="pri">찾기</button><button id="scanStop" hidden>중지</button></div>
+      <p class="hint" id="scanMsg" style="margin:2px 0"></p>
+      <div id="scanRes"></div>
+    </div>
     <div class="row"><label><input type="checkbox" id="identOn" checked> 지도를 클릭하면 그 자리 자료의 이름·속성 보기</label><span class="hint">우클릭은 항상: 이름·속성 + 좌표·주소 + 레이어로 추가</span></div>
     <div class="src">
       <div class="srch"><b>브이월드 (국토교통부)</b><span class="badge">실시간</span><div class="srcl">출처: 국토교통부 브이월드 2D데이터 API</div></div>
@@ -4792,6 +4800,127 @@ function buildGeoList(){
   });
 }
 buildGeoList();
+
+/* ================= v2.11: 범위 안 주제도 찾기 ================= */
+var scanAbort = false;
+function scanTargets(){
+  const sel = $('#scanTgt'); if (!sel) return; const keep = sel.value; sel.innerHTML = '';
+  const cand = layers.filter(o => !o.src && o.gj && o.gj.features.some(f => f.geometry && /Polygon/.test(f.geometry.type)));
+  cand.slice().sort((a, b) => ((b.buf ? b.buf.dist : 0) - (a.buf ? a.buf.dist : 0))).forEach(o => { const op = document.createElement('option'); op.value = o.id; op.textContent = o.name; sel.appendChild(op); });
+  if (!cand.length){ const op = document.createElement('option'); op.value = ''; op.textContent = '(면 레이어가 없습니다. 버퍼를 먼저 만들어 주세요)'; sel.appendChild(op); }
+  if (keep && [...sel.options].some(x => x.value === keep)) sel.value = keep;
+}
+var scanItems = function(){
+  const out = [];
+  THEMES.forEach(([grp, list]) => list.forEach(t => { if (!themeUnavail.has(t[0])) out.push({ kind: 'vw', grp, code: t[0], name: t[1], type: t[2], color: t[3] }); }));
+  EGIS.forEach(d => { if (!/^eg_c_/.test(d[0])) out.push({ kind: 'eg', grp: '환경공간정보서비스', id: d[0], name: d[1] }); });
+  RIVER.forEach(d => { if (!d[4].byList) out.push({ kind: 'riv', grp: '하천', id: d[0], name: d[1] }); });
+  KEI.forEach(d => out.push({ kind: 'kei', grp: 'KEI 산줄기', id: d[0], name: d[1] }));
+  ECO_GRADES.forEach(d => out.push({ kind: 'eco', grp: '에코뱅크 (국립생태원)', g: d[0], name: d[1] }));
+  GSV_GROUPS.forEach(([grp, , list]) => list.forEach(d => out.push({ kind: 'gsv', grp: '수질오염총량 · ' + grp, code: d[0], name: d[1], color: d[2], gk: d[3] })));
+  return out;
+};
+function scanNames(feats){
+  const r = [];
+  for (const f of feats){ const pr = f.properties || {}; const k = (typeof NAME_KEYS !== 'undefined' ? NAME_KEYS : []).find(k => pr[k] != null && String(pr[k]).trim() && !/^\d+$/.test(String(pr[k]))); if (k){ const v = String(pr[k]).trim(); if (!r.includes(v)) r.push(v); } if (r.length >= 3) break; }
+  return r;
+}
+async function scanOne(it, zone, bb, Lb){
+  let feats = [], partial = false;
+  const b4 = [bb[0], bb[1], bb[2], bb[3]];
+  if (it.kind === 'vw'){
+    if (!getKey()) throw new Error('브이월드 키 없음');
+    let n = 0; await vwData(it.code, Lb, f => { feats.push(f); n++; }, 2); partial = n >= 2000;
+  } else if (it.kind === 'eg' || it.kind === 'riv' || it.kind === 'kei'){
+    const def = egisDef(it.id), q = def[4];
+    const url = it.kind === 'kei' ? keiUrl(q, b4) : q.rim ? rimUrl(q, b4) : egisUrl(q, b4);
+    const j = await egisFetch(url, 45000); feats = j.features || [];
+  } else if (it.kind === 'gsv'){
+    const url = GSV + 'wfs?service=WFS&version=1.0.0&request=GetFeature&outputFormat=application/json&srsName=EPSG:4326&typeName=' + encodeURIComponent(it.code) + '&bbox=' + b4.join(',') + ',EPSG:4326';
+    let j = null, err = '연결 실패';
+    for (const u of [url, relayUrl ? relayWrap(url) : null]){ if (!u) continue; try { const r = await fetch(u); if (!r.ok){ err = 'HTTP ' + r.status; continue; } j = JSON.parse(await r.text()); break; } catch(e){ err = '연결 실패'; } }
+    if (!j) throw new Error(err); feats = j.features || [];
+  }
+  const hit = feats.filter(f => f.geometry && zone.some(z => { try { return turf.booleanIntersects(f, z); } catch(e){ return true; } }));
+  return { hit: hit.length, total: feats.length, partial, names: scanNames(hit) };
+}
+/* 에코뱅크는 한 번 받아서 등급별로 나눔 */
+async function scanEco(zone, bb){
+  if (!getDataKey()) throw new Error('공공데이터포털 키 없음');
+  const a = proj4('EPSG:4326', 'EPSG:5186', [bb[0], bb[1]]), c = proj4('EPSG:4326', 'EPSG:5186', [bb[2], bb[3]]);
+  const j = await ecoFetchJson(ecoWfsUrl([Math.min(a[0], c[0]), Math.min(a[1], c[1]), Math.max(a[0], c[0]), Math.max(a[1], c[1])], 1000));
+  const arr = j.features || [], res = {};
+  ECO_GRADES.forEach(d => res[d[0]] = { hit: 0, total: 0, partial: false, names: [] });
+  const partial = typeof j.totalFeatures === 'number' && j.totalFeatures > arr.length;
+  arr.forEach(f => {
+    if (!f.geometry) return;
+    const g = ecoGrade((f.properties || {}).eczm_grad), r = res[g]; if (!r) return;
+    const gj = { type: 'Feature', properties: {}, geometry: { type: f.geometry.type, coordinates: to4326(f.geometry.coordinates) } };
+    r.total++; r.partial = partial;
+    if (zone.some(z => { try { return turf.booleanIntersects(gj, z); } catch(e){ return true; } })) r.hit++;
+  });
+  return res;
+}
+function scanApply(list){
+  list.forEach(it => {
+    if (it.kind === 'vw') toggleTheme(it.code, it.name, it.type, it.color, true, true);
+    else if (it.kind === 'eg') toggleEgis(it.id, true, true);
+    else if (it.kind === 'riv') toggleRiver(it.id, true, true);
+    else if (it.kind === 'kei') toggleKei(it.id, true, true);
+    else if (it.kind === 'eco') toggleEco(it.g, true, true);
+    else if (it.kind === 'gsv') gsvToggle(it.code, it.name, true, it.color, it.gk, true);
+  });
+  refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists(); buildEcoList();
+  setTimeout(() => { updateThemes(); updateEgis(); updateEco(); updateGsv(); }, 700);
+}
+async function scanRun(){
+  const o = layerById(+$('#scanTgt').value), msg = $('#scanMsg'), res = $('#scanRes');
+  if (!o){ msg.textContent = '범위로 쓸 면 레이어(버퍼 등)를 먼저 골라 주세요.'; return; }
+  if (!window.turf){ msg.textContent = '도구를 불러오지 못했습니다.'; return; }
+  const zone = o.gj.features.filter(f => f.geometry && /Polygon/.test(f.geometry.type));
+  const bb = turf.bbox({ type: 'FeatureCollection', features: zone }), Lb = L.latLngBounds([bb[1], bb[0]], [bb[3], bb[2]]);
+  map.fitBounds(Lb.pad(0.05));
+  const items = scanItems(); scanAbort = false; res.innerHTML = '';
+  $('#scanBtn').disabled = true; $('#scanStop').hidden = false;
+  const rows = []; let done = 0, idx = 0;
+  const upd = () => { msg.textContent = `찾는 중… ${done}/${items.length}`; };
+  const addRow = (it, r, err) => rows.push({ it, r, err });
+  async function worker(){
+    while (!scanAbort && idx < items.length){
+      const it = items[idx++];
+      if (it.kind === 'eco') { done++; continue; }
+      try { addRow(it, await scanOne(it, zone, bb, Lb)); } catch(e){ addRow(it, null, e.message || '실패'); }
+      done++; upd();
+    }
+  }
+  upd();
+  const ecoP = scanEco(zone, bb).then(m => { ECO_GRADES.forEach(d => addRow({ kind: 'eco', grp: '에코뱅크 (국립생태원)', g: d[0], name: d[1] }, m[d[0]])); }).catch(e => ECO_GRADES.forEach(d => addRow({ kind: 'eco', grp: '에코뱅크 (국립생태원)', g: d[0], name: d[1] }, null, e.message)));
+  await Promise.all([worker(), worker(), worker(), ecoP]);
+  $('#scanBtn').disabled = false; $('#scanStop').hidden = true;
+  const order = items.map(i => i.kind + (i.code || i.id || i.g));
+  rows.sort((a, b) => order.indexOf(a.it.kind + (a.it.code || a.it.id || a.it.g)) - order.indexOf(b.it.kind + (b.it.code || b.it.id || b.it.g)));
+  const hit = rows.filter(x => x.r && x.r.hit), bad = rows.filter(x => x.err);
+  msg.textContent = `${scanAbort ? '중지됨. ' : ''}'${o.name}' 안에서 ${hit.length}개 주제도에 자료가 있습니다.` + (bad.length ? ` 받지 못한 주제도 ${bad.length}개는 확인하지 못했습니다.` : '');
+  let h = '<div class="row"><button id="scanOn" class="pri">체크한 주제도 켜기</button><button id="scanAll">전체 체크</button><button id="scanNone">전체 해제</button></div><table><tr><th></th><th>주제도</th><th>범위 안</th></tr>';
+  let lastG = '';
+  const show = rows.filter(x => x.r && x.r.hit);
+  const why = {}; bad.forEach(x => { why[x.err] = (why[x.err] || 0) + 1; });
+  const whyTxt = Object.keys(why).map(k => `${k} ${why[k]}개`).join(', ');
+  show.forEach((x, i) => {
+    if (x.it.grp !== lastG){ lastG = x.it.grp; h += `<tr><td colspan="3"><b>${esc(lastG)}</b></td></tr>`; }
+    h += x.r ? `<tr><td><input type="checkbox" class="scanCk" data-i="${i}" checked></td><td>${esc(x.it.name)}<br><small>${esc(x.r.names.join(', '))}</small></td><td>${x.r.hit}개${x.r.partial ? '<br><small>일부만 조회됨</small>' : ''}</td></tr>`
+      : `<tr class="none"><td></td><td>${esc(x.it.name)}</td><td title="${esc(x.err)}">⚠ ${esc(x.err).slice(0, 24)}</td></tr>`;
+  });
+  if (!show.length) h += '<tr><td colspan="3">범위 안에 겹치는 주제도가 없습니다.</td></tr>';
+  res.innerHTML = h + '</table><p class="hint">겹치지 않는 주제도는 표에 넣지 않았습니다. 이름은 범위 안 자료의 일부 예시입니다.</p>' + (bad.length ? `<p class="hint" style="color:#b33">⚠ 받지 못함: ${esc(whyTxt)}</p>` : '');
+  $('#scanAll').onclick = () => $$('.scanCk').forEach(c => c.checked = true);
+  $('#scanNone').onclick = () => $$('.scanCk').forEach(c => c.checked = false);
+  $('#scanOn').onclick = () => { const sel = $$('.scanCk').filter(c => c.checked).map(c => show[+c.dataset.i].it); if (!sel.length) return; scanApply(sel); msg.textContent = `${sel.length}개 주제도를 미리보기로 켰습니다. 두 번 클릭하면 레이어로 잡힙니다.`; };
+}
+$('#scanBtn').onclick = scanRun;
+$('#scanStop').onclick = () => { scanAbort = true; };
+var _bpScan = buildPanel; buildPanel = function(){ const r = _bpScan.apply(this, arguments); try { scanTargets(); } catch(e){} return r; };
+scanTargets();
 
 buildLcList();
 
