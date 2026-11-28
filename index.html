@@ -346,7 +346,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.1</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.2</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -529,10 +529,10 @@ body .hlp{display:none!important}
       <p class="hint" id="kei_msg"></p>
     </div>
     <div class="src" id="lcBox">
-      <div class="srch"><b>토지피복지도</b><span class="badge gray">환경공간정보서비스</span><div class="hint hlp">환경부 환경공간정보서비스(api.mcee.go.kr) 지도 서비스를 그림으로 겹쳐 보여줍니다. 대분류(7)·중분류(22)·세분류(41) 중에서 고르고, 투명도는 레이어 패널에서 조절합니다. 도면 내보내기에서 타일이 빠지면 알려주세요.</div></div>
-      <div class="row"><select id="lcLv"><option value="lv1">대분류</option><option value="lv2">중분류</option><option value="lv3" selected>세분류</option></select>
-        <input type="text" id="lcYear" value="2025y" style="width:70px" title="기준연도 (예: 2025y)"> <button id="lcAdd">＋ 토지피복지도 올리기</button></div>
-      <div class="row"><label>직접 레이어명</label><input type="text" id="lcName" placeholder="비워두면 위 선택으로 EGIS:lv3_2025y 형태" style="flex:1"></div>
+      <div class="srch"><b>토지피복지도</b><span class="badge gray">환경공간정보서비스</span><div class="hint hlp">환경부 환경공간정보서비스 지도 서비스를 그림으로 겹쳐 보여줍니다. 체크하면 레이어로 올라오고, 투명도는 레이어 패널에서 조절합니다. 세분류는 2024년 영상 기준으로 현행화한 자료라 현재와 일부 차이가 있을 수 있습니다.</div></div>
+      <details class="thgrp" open><summary>대분류 <small class="hint" id="lc1_cnt"></small></summary><div id="lcList1"></div></details>
+      <details class="thgrp"><summary>중분류 <small class="hint" id="lc2_cnt"></small></summary><div id="lcList2"></div></details>
+      <details class="thgrp"><summary>세분류 <small class="hint" id="lc3_cnt"></small></summary><div id="lcList3"></div></details>
       <p class="hint" id="lc_msg"></p>
     </div>
     <div class="src" id="fileBox">
@@ -2196,7 +2196,7 @@ function refreshOrder(){
   const t2 = $('#lyrWinN'); if (t2) t2.textContent = n ? `(${n})` : '';
 }
 const SRC_NAME = { file: '사이트 자료', vworld: '브이월드', ecowfs: '에코뱅크', egis: '환경공간정보', kei: 'KEI 산줄기', rim: '하천정보' };
-function rebuildThemeLists(){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (typeof buildFileList === 'function') buildFileList(); }
+function rebuildThemeLists(){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (typeof buildFileList === 'function') buildFileList(); if (typeof buildLcList === 'function') buildLcList(); }
 function pinLayer(o){
   if (!o || o.pinned) return;
   o.pinned = true; o.visible = true; o.grp = null;
@@ -4459,7 +4459,7 @@ function buildFileList(){
 }
 async function toggleFile(id, on){
   const def = FILES.find(x => x[0] === id), msg = $('#fl_msg'); let o = fileLayerOf(id);
-  const done = () => { refreshOrder(); buildPanel(); renderLegendAll(); buildFileList(); };
+  const done = () => { refreshOrder(); buildPanel(); renderLegendAll(); buildFileList(); if (typeof buildLcList === 'function') buildLcList(); };
   if (!on){ if (o){ o.visible = false; done(); } return; }
   if (o){ o.visible = true; done(); return; }
   msg.textContent = '불러오는 중…';
@@ -4475,16 +4475,41 @@ async function toggleFile(id, on){
     done(); msg.textContent = `${gj.features.length}개를 불러왔습니다.`;
   } catch(e){
     msg.innerHTML = `'${esc(def[4])}' 파일을 불러오지 못했습니다 (${esc(e.message)}). GitHub 저장소의 <b>data</b> 폴더에 이 이름으로 GeoJSON 파일을 올렸는지 확인하거나, 오른쪽 레이어 창의 '＋ 파일'로 직접 올려 쓰세요.`;
-    buildFileList();
+    buildFileList(); if (typeof buildLcList === 'function') buildLcList();
   }
 }
-buildFileList();
-$('#lcAdd').onclick = () => {
-  const nm = ($('#lcName').value || '').trim() || `EGIS:${$('#lcLv').value}_${$('#lcYear').value.trim()}`;
-  const lvName = { lv1: '대분류', lv2: '중분류', lv3: '세분류' }[($('#lcLv').value)] || '';
-  const o = addLayer(`토지피복지도 (${$('#lcName').value.trim() ? nm : lvName + ' ' + $('#lcYear').value.trim()})`, { type: 'FeatureCollection', features: [] }, { type: 'polygon', src: { kind: 'lc', layer: nm, op: 0.7 }, pinned: true, noLegend: true });
-  $('#lc_msg').textContent = `${nm} 그림을 올렸습니다. 안 보이면 레이어명을 확인해 주세요.`;
-};
+buildFileList(); if (typeof buildLcList === 'function') buildLcList();
+
+/* 토지피복지도: 분류별 체크 목록 */
+var LC = { lv1: ['2010yr', '2000yr', '1990yr', '1980yr'], lv2: ['2025y', '2024y', '2023y', '2022y', '2018_g', '2013_g', '2009_g', '2007_g', '2000_g'],
+  lv3: ['2025y', '2024y', '2023y', '2022y', '2021_g', '2020_g', '10th_g', '9th_g', '8th_g', '7th-2_g', '7th_g', '6th-2_g', '6th_g', '1st_renew_g', '5th_g', '4th_2_g', '4th_g', '3rd_g', '2nd_g', '1st_g'] };
+var LC_KO = { lv1: '대분류', lv2: '중분류', lv3: '세분류' };
+const lcLabel = (lv, y) => lv === 'lv1' ? ({ '2010yr': '2010년대 말', '2000yr': '2000년대 말', '1990yr': '1990년대 말', '1980yr': '1980년대 말' })[y] : y.replace(/y$/, '').replace(/_g$/, ' (갱신)');
+const lcLayerOf = nm => layers.find(o => o.src && o.src.kind === 'lc' && o.src.layer === nm);
+function buildLcList(){
+  if (typeof LC === 'undefined' || !LC) return;
+  ['lv1', 'lv2', 'lv3'].forEach((lv, k) => {
+    const box = $('#lcList' + (k + 1)); if (!box) return; box.innerHTML = ''; let n = 0;
+    LC[lv].forEach(y => {
+      const nm = `EGIS:${lv}_${y}`, o = lcLayerOf(nm), on = !!(o && o.visible); if (on) n++;
+      const row = document.createElement('div'); row.className = 'thi';
+      row.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="sw" style="background:rgba(80,160,80,.4);border-color:#4a8"></span><label class="tn">${LC_KO[lv]} ${lcLabel(lv, y)}</label><small>전국</small>`;
+      row.querySelector('label').onclick = () => row.querySelector('input').click();
+      row.querySelector('input').onchange = e => toggleLc(lv, y, e.target.checked);
+      box.appendChild(row);
+    });
+    $('#lc' + (k + 1) + '_cnt').textContent = `(${n}/${LC[lv].length})`;
+  });
+}
+function toggleLc(lv, y, on){
+  const nm = `EGIS:${lv}_${y}`; let o = lcLayerOf(nm);
+  const done = () => { refreshOrder(); buildPanel(); renderLegendAll(); buildLcList(); };
+  if (o){ o.visible = on; done(); return; }
+  if (!on) return;
+  addLayer(`토지피복지도 ${LC_KO[lv]} ${lcLabel(lv, y)}`, { type: 'FeatureCollection', features: [] }, { type: 'polygon', src: { kind: 'lc', layer: nm, op: 0.7 }, pinned: true, noLegend: true, quiet: true });
+  done(); $('#lc_msg').textContent = '그림을 불러오는 중입니다. 지도를 확대하면 더 잘 보입니다.';
+}
+buildLcList();
 
 /* ================= v2.6: 글자 회전 손잡이 ================= */
 ['mousedown', 'touchstart'].forEach(t => document.addEventListener(t, e => { if (e.target.closest && e.target.closest('.rot-h')) e.stopPropagation(); }, true));
