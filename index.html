@@ -346,7 +346,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.4</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.5</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -2257,6 +2257,7 @@ function showToast(m){
   t.textContent = m; t.style.opacity = '1'; clearTimeout(toastT); toastT = setTimeout(() => { t.style.opacity = '0'; }, 2600);
 }
 function deleteLayers(list){
+  list.forEach(o => { if (o.src && o.src.kind === 'lc') lcLegDrop(o.id); });
   if (sketch && list.includes(sketch.o)){ sketch.pts = []; stopSketch(); }
   list.forEach(o => {
     if (o.group) map.removeLayer(o.group);
@@ -2326,8 +2327,7 @@ function layerRow(o, list){
         ${o.src ? '' : `<button data-a="sketch" class="sk ${sketch && sketch.o === o ? 'on' : ''}" title="이 레이어에 직접 그리기 (${({ point: '점', line: '선', polygon: '면' })[o.type]})">✏</button>`}
         <button data-a="zoom" title="이 레이어로 이동">◎</button><button data-a="del" title="삭제">✕</button>
       </div>
-      ${o.src && o.src.kind === 'lc' ? `<div class="row"><label>토지피복 투명도</label><input type="range" min="10" max="100" value="${Math.round((o.src.op != null ? o.src.op : 0.7) * 100)}" data-lcop> <small>${esc(o.src.layer)}</small></div>
-      <details class="lcleg"><summary>범례 보기 (환경부 제공)</summary><img alt="범례" style="max-width:100%;background:#fff;padding:4px;border:1px solid #ccc;margin-top:4px" referrerpolicy="no-referrer" src="https://api.mcee.go.kr/geoserver/wms?service=WMS&version=1.1.0&request=GetLegendGraphic&format=image/png&width=20&height=20&legend_options=fontAntiAliasing:true;fontSize:13&layer=${encodeURIComponent(o.src.layer)}" onerror="this.outerHTML='<div class=hint>서버에서 범례 그림을 받지 못했습니다.</div>'"></details>` : ''}
+      ${o.src && o.src.kind === 'lc' ? `<div class="row"><label>토지피복 투명도</label><input type="range" min="10" max="100" value="${Math.round((o.src.op != null ? o.src.op : 0.7) * 100)}" data-lcop> <small>${esc(o.src.layer)}</small></div>` : ''}
       ${o.src && o.src.mode === 'wms' ? '<div class="hint">브이월드 그림(WMS)으로 표시 중이라 스타일을 바꿀 수 없습니다.</div>' : ''}
       <details class="dsym" ${o._openSym ? 'open' : ''}><summary>기호 (색·선·패턴) · ${({ point: '점', line: '선', polygon: '면' })[o.type]} <span class="fcount">${o.gj.features.length}개</span></summary>
         <div class="row"><label>종류</label><select data-type>${opts([['polygon', '면'], ['line', '선'], ['point', '점']], o.type)}</select>
@@ -4505,11 +4505,24 @@ function buildLcList(){
 function toggleLc(lv, y, on){
   const nm = `EGIS:${lv}_${y}`; let o = lcLayerOf(nm);
   const done = () => { refreshOrder(); buildPanel(); renderLegendAll(); buildLcList(); };
-  if (o){ o.visible = on; done(); return; }
+  if (o){ o.visible = on; lcLegDrop(o.id); if (on) lcLegAdd(o); done(); renderLegendAll(); return; }
   if (!on) return;
-  addLayer(`토지피복지도 ${LC_KO[lv]} ${lcLabel(lv, y)}`, { type: 'FeatureCollection', features: [] }, { type: 'polygon', src: { kind: 'lc', layer: nm, op: 0.7 }, pinned: true, noLegend: true, quiet: true });
-  done(); $('#lc_msg').textContent = '그림을 불러오는 중입니다. 지도를 확대하면 더 잘 보입니다.';
+  o = addLayer(`토지피복지도 ${LC_KO[lv]} ${lcLabel(lv, y)}`, { type: 'FeatureCollection', features: [] }, { type: 'polygon', src: { kind: 'lc', layer: nm, op: 0.7 }, pinned: true, noLegend: true, quiet: true });
+  lcLegAdd(o); done(); renderLegendAll(); $('#lc_msg').textContent = '그림을 불러오는 중입니다. 지도를 확대하면 더 잘 보입니다.';
 }
+/* 토지피복지도 범례 (환경부 분류색: 대분류 7 · 중분류 22 · 세분류 41) */
+var LC_LEG = { lv1: '100 시가화건조지역 255,0,0|200 농업지역 238,233,7|300 산림지역 42,75,45|400 초지 57,153,38|500 습지 124,34,126|600 나지 89,206,202|700 수역 6,2,250', lv2: '110 주거지역 254,230,194|120 공업지역 192,132,132|130 상업지역 237,131,184|140 문화·체육·휴양지역 246,113,138|150 교통지역 247,65,42|160 공공시설지역 246,177,18|210 논 255,255,191|220 밭 247,249,102|230 시설재배지 223,220,115|240 과수원 184,177,44|250 기타재배지 184,145,18|310 활엽수림 51,160,44|320 침엽수림 10,79,64|330 혼효림 51,102,51|410 자연초지 161,213,148|420 인공초지 96,126,51|510 내륙습지 180,167,208|520 연안습지 153,116,153|610 자연나지 193,219,236|620 인공나지 159,242,255|710 내륙수 62,167,255|720 해양수 23,57,255', lv3: '111 단독주거시설 254,230,194|112 공동주거시설 233,193,111|121 공업시설 192,132,132|131 상업·업무시설 237,131,184|132 혼합지역 223,176,164|141 문화·체육·휴양시설 246,113,138|151 공항 229,38,254|152 항만 197,50,81|153 철도 252,4,78|154 도로 247,65,42|155 기타교통·통신시설 190,0,0|161 환경기초시설 246,117,18|162 교육·행정시설 255,122,0|163 기타공공시설 199,88,27|211 경지정리된논 255,255,191|212 경지정리안된논 244,230,168|221 경지정리된밭 247,249,102|222 경지정리안된밭 245,228,10|231 시설재배지 223,220,115|241 과수원 184,177,44|251 목장·양식장 184,145,18|252 기타재배지 170,100,0|311 활엽수림 51,160,44|321 침엽수림 10,79,64|331 혼효림 51,102,51|411 자연초지 161,213,148|421 골프장 128,228,90|422 묘지 113,176,90|423 기타초지 96,126,51|511 내륙습지 180,167,208|521 갯벌 153,116,153|522 염전 124,30,162|611 해변 193,219,236|612 강기슭 171,197,202|613 암벽·바위 171,182,165|621 채광지역 88,90,138|622 운동장 123,181,172|623 기타나지 159,242,255|711 하천 62,167,255|712 호소 93,109,255|721 해양수 23,57,255' };
+function lcLegAdd(o){
+  const lv = o.src.layer.replace(/^EGIS:/, '').split('_')[0]; if (!LC_LEG[lv]) return;
+  LC_LEG[lv].split('|').forEach(t => {
+    const m = t.match(/^(\d+) (\S+) (\d+),(\d+),(\d+)$/); if (!m) return;
+    const hex = '#' + [m[3], m[4], m[5]].map(v => (+v).toString(16).padStart(2, '0')).join('');
+    legendItems.push({ key: 'LC' + o.id + '_' + m[1], lid: null, lcFor: o.id, label: m[2], show: true, type: 'polygon',
+      symbols: [S('fill', { color: hex, op: 100 }), S('stroke', { color: '#777777', w: 0.5, dash: 'solid' })] });
+  });
+}
+const lcLegDrop = id => { legendItems = legendItems.filter(it => it.lcFor !== id); };
+
 buildLcList();
 
 /* ================= v2.6: 글자 회전 손잡이 ================= */
