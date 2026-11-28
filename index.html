@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>환경영향평가 도면 작성기</title>
+<title>홍익기술단 환경영향평가 도면작업시스템</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
@@ -125,6 +125,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #title{left:50%;top:12px;transform:translateX(-50%);padding:4px 18px;white-space:nowrap}
 #inset{left:12px;top:12px;width:150px;height:190px;background:#fff}
 #insetMap{width:100%;height:100%;pointer-events:none}
+#inset #insetTitle{padding:2px 6px;text-align:center;white-space:nowrap;letter-spacing:.5px;line-height:1.3}
 #doguk{position:absolute;inset:0;pointer-events:none;z-index:1100}
 #doguk>div{position:absolute;inset:0}
 .ann,.admn,.symm{background:none!important;border:none!important}
@@ -148,7 +149,9 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:5000;display:flex;align-items:center;justify-content:center}
 #modal[hidden],#settings[hidden]{display:none}
 #settings{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:5000;display:flex;align-items:center;justify-content:center}
-#side h1{display:flex;align-items:center;gap:8px}
+#side h1{display:flex;align-items:center;gap:8px;white-space:nowrap}
+#side h1 .hbtn{flex:none;white-space:nowrap;margin-left:auto}
+#side h1>div{flex:1}
 #tabs{display:flex;position:sticky;top:0;z-index:20;background:#e9edf0;border-bottom:1px solid #ccd}
 #tabs .tab{flex:1;border:none;border-radius:0;background:transparent;padding:9px 6px;font-weight:600;color:#567;border-bottom:3px solid transparent}
 #tabs .tab.on{color:#1d3b2a;background:#f6f7f9;border-bottom-color:#1d6b3a}
@@ -354,7 +357,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.12.2</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1><div style="display:flex;flex-direction:column;line-height:1.15;min-width:0;flex:1"><span style="font-weight:500;opacity:.75;font-size:10.5px;letter-spacing:.5px">홍익기술단</span><span style="white-space:nowrap">환경영향평가 도면작업시스템 <small style="font-weight:400;opacity:.7;font-size:10px">v2.12.5</small></span></div><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -640,6 +643,12 @@ body .hlp{display:none!important}
         <label>이미지</label><span><button id="insetImgBtn">이미지 올리기…</button> <button id="insetImgClr">지우기</button><input type="file" id="insetImgIn" accept="image/*" hidden></span>
         <label>가로 크기</label><input type="range" data-cfg="inset.size" min="80" max="700" step="5">
         <label>테두리</label><select data-cfg="inset.frame" class="frameSel"></select>
+        <label>상단 제목</label><span><label><input type="checkbox" data-cfg="inset.showTitle"> 넣기</label> <input type="text" data-cfg="inset.titleText" style="width:110px" placeholder="KEY MAP"></span>
+        <label>제목 모양</label><span>글자 <input type="number" data-cfg="inset.titleSize" min="6" max="40" style="width:46px"> 글자색 <input type="color" data-cfg="inset.titleColor"> 배경 <input type="color" data-cfg="inset.titleBg"> <label><input type="checkbox" data-cfg="inset.titleBorder"> 아래 선</label></span>
+      </div>
+      <div class="grid">
+        <label>상단 제목</label><span><input type="checkbox" data-cfg="inset.tOn"> <input type="text" data-cfg="inset.tText" style="width:110px"></span>
+        <label>제목 스타일</label><span><input type="color" data-cfg="inset.tBg" title="바탕색"> <input type="color" data-cfg="inset.tColor" title="글자색"> <input type="number" data-cfg="inset.tSize" min="7" max="40" style="width:52px" title="글자 크기"></span>
       </div>
       <div class="row"><b>키맵 이름 글씨</b><button id="ilAdd">＋</button></div>
       <div id="ilList"></div>
@@ -677,7 +686,7 @@ body .hlp{display:none!important}
   <div id="frame"><div id="mapbox">
     <div id="map"></div>
     <div id="title" class="ovl" style="display:none">지역개황도</div>
-    <div id="inset" class="ovl" style="display:none"><div id="insetMap"></div><img id="insetImg" alt="키맵" draggable="false" style="display:none"></div>
+    <div id="inset" class="ovl" style="display:none"><div id="insetTitle" style="display:none"></div><div id="insetMap"></div><img id="insetImg" alt="키맵" draggable="false" style="display:none"></div>
     <div id="north" class="ovl"></div>
     <div id="scale" class="ovl"></div>
     <div id="legend" class="ovl"></div>
@@ -1045,7 +1054,7 @@ const cfg = {
   north: { style: 'compass', size: 64, stroke: '#000000', fill: '#000000', light: '#ffffff', sw: 1, halo: 0, haloColor: '#ffffff',
     nShow: true, nSize: 15, nFont: 'Arial', nColor: '#000000', frame: 'none', bgColor: '#ffffff', bgOp: 0 },
   title: { font: 'Malgun Gothic', size: 20, weight: 700, color: '#222222', frame: 'single', bgColor: '#ffffff', bgOp: 100 },
-  inset: { frame: 'single', mode: 'auto', img: '', size: 150, labels: [] },
+  inset: { frame: 'single', mode: 'auto', img: '', size: 150, labels: [], showTitle: false, titleText: 'KEY MAP', titleSize: 11, titleColor: '#ffffff', titleBg: '#444444', titleBorder: true },
   doguk: { style: 'double', width: 5 },
   paper: { w: 297, h: 420, margin: 10, dpi: 200 },
   map: { bearing: 0 }
@@ -2180,7 +2189,7 @@ function renderLayer(o){
         : L.marker(ll, { interactive: false, keyboard: false, icon: symIcon(s) }) }));
   });
   const lb = o.style.label;
-  if ((o.scanZone || (window.themeNamesOn && o.src && /^(vworld|egis|kei|rim|gsv)$/.test(o.src.kind))) && lb && !lb.field && o.gj.features.length){ const k = scanNameKey(o.gj.features); if (k){ lb.field = k; o._autoLbl = true; } }
+  if (((window.themeNamesOn && o.src && /^(vworld|egis|kei|rim|gsv)$/.test(o.src.kind))) && lb && !lb.field && o.gj.features.length){ const k = scanNameKey(o.gj.features); if (k){ lb.field = k; o._autoLbl = true; } }
   if (lb && lb.field){
     g.addLayer(L.geoJSON(o.gj, { renderer, interactive: false, style: { stroke: false, fill: false },
       pointToLayer: (f, ll) => L.circleMarker(ll, { renderer, interactive: false, radius: 0, stroke: false, fill: false }),
@@ -2822,10 +2831,19 @@ let insetSig = '';
 function renderInsetFrame(){
   const el = $('#inset'), c = cfg.inset, imgMode = c.mode === 'image' && !!c.img;
   renderInsetLabels();
+  el.querySelectorAll('.ikt').forEach(x => x.remove());
+  if (c.tOn){ const t = document.createElement('div'); t.className = 'ikt'; t.textContent = c.tText || 'KEY MAP';
+    Object.assign(t.style, { position: 'absolute', left: '0', top: '0', zIndex: 1250, padding: '1px 8px', background: c.tBg || '#333', color: c.tColor || '#fff', fontSize: (c.tSize || 11) + 'px', fontWeight: 700, letterSpacing: '.5px', pointerEvents: 'none', fontFamily: fontStack(cfg.legend.font) }); el.appendChild(t); }
   el.style.border = frameCss(c.frame);
   const w = Math.max(60, +c.size || 150);
   el.style.width = w + 'px';
-  el.style.height = imgMode ? 'auto' : Math.round(w * 190 / 150) + 'px';
+  el.style.height = 'auto';
+  const tb = $('#insetTitle');
+  if (c.showTitle){
+    tb.style.display = ''; tb.textContent = c.titleText || 'KEY MAP';
+    Object.assign(tb.style, { fontSize: (+c.titleSize || 11) + 'px', color: c.titleColor || '#fff', background: c.titleBg || '#444', fontWeight: 700, fontFamily: fontStack(cfg.legend.font), borderBottom: c.titleBorder ? '1px solid #111' : 'none' });
+  } else tb.style.display = 'none';
+  $('#insetMap').style.height = imgMode ? '' : Math.round(w * 190 / 150) + 'px';
   const im = $('#insetImg'), mp = $('#insetMap');
   if (imgMode){ if (im.getAttribute('src') !== c.img) im.src = c.img; im.style.display = 'block'; mp.style.display = 'none'; }
   else { im.style.display = 'none'; mp.style.display = ''; }
@@ -2844,7 +2862,7 @@ function updateInset(rebuildBase){
   if ($('#inset').style.display === 'none') return;
   if (cfg.inset.mode === 'image' && cfg.inset.img) return;   // 내 키맵 이미지를 쓰는 중
   if (!insetMap){
-    insetMap = L.map('insetMap', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false,
+    insetMap = L.map('insetMap', { zoomControl: false, rotateControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false,
       doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false });
     rebuildBase = true;
   }
@@ -3929,7 +3947,7 @@ function projData(){
 }
 /* ===== 작업 파일 저장 · 열기 (Ctrl+S / Ctrl+Shift+S / Ctrl+O) ===== */
 const FS_OK = 'showSaveFilePicker' in window;   // 크롬·엣지: 같은 파일에 덮어쓰기 가능
-const JSON_TYPES = [{ description: '도면 작성기 작업 파일', accept: { 'application/json': ['.json'] } }];
+const JSON_TYPES = [{ description: '도면작업시스템 작업 파일', accept: { 'application/json': ['.json'] } }];
 let curFile = { name: '', handle: null };
 const stem = n => String(n || '').replace(/\.json$/i, '');
 const cleanName = n => (stem(n).trim() || (fileBase() + '_작업')).replace(/[\\/:*?"<>|]/g, '_');
@@ -3937,7 +3955,7 @@ function setCurFile(name, handle){
   curFile = { name: stem(name), handle: handle || null };
   $('#curFile').textContent = curFile.name ? '📄 ' + curFile.name : '새 작업';
   $('#curFile').title = curFile.name ? curFile.name + '.json' + (curFile.handle ? ' (Ctrl+S로 이 파일에 바로 저장)' : '') : '아직 저장하지 않은 작업';
-  document.title = (curFile.name ? curFile.name + ' – ' : '') + '환경영향평가 도면 작성기';
+  document.title = (curFile.name ? curFile.name + ' – ' : '') + '홍익기술단 환경영향평가 도면작업시스템';
 }
 const projBlob = () => new Blob([JSON.stringify(projData())], { type: 'application/json' });
 async function writeHandle(h){
@@ -4901,7 +4919,7 @@ function scanApply(list, zone, on){
   });
   list.forEach(it => {
     const o = it.kind === 'vw' ? themeLayer(it.code) : it.kind === 'gsv' ? gsvLayerOf(it.code) : (it.kind === 'eg' || it.kind === 'riv' || it.kind === 'kei') ? layers.find(x => x.src && x.src.id === it.id) : null;
-    if (o && zone && on){ o.scanZone = zone; o.group && renderLayer(o); } else if (o && !on) o.scanZone = null;
+    if (o && !on) o.scanZone = null;
   });
   refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists(); buildEcoList();
   if (on) setTimeout(() => { updateThemes(); updateEgis(); updateEco(); updateGsv(); }, 700);
@@ -4953,7 +4971,7 @@ async function scanRun(){
   $('#scanAll').onclick = () => $$('.scanCk').forEach(c => c.checked = true);
   $('#scanNone').onclick = () => $$('.scanCk').forEach(c => c.checked = false);
   $('#scanOff').onclick = () => { const sel = $$('.scanCk').filter(c => c.checked).map(c => show[+c.dataset.i].it); if (!sel.length) return; scanApply(sel, null, false); msg.textContent = `${sel.length}개 주제도를 껐습니다.`; };
-  $('#scanOn').onclick = () => { const sel = $$('.scanCk').filter(c => c.checked).map(c => show[+c.dataset.i].it); if (!sel.length) return; scanApply(sel, zone); msg.textContent = `${sel.length}개 주제도를 미리보기로 켰습니다. 이름 글씨는 범위 안 자료만 표시됩니다. 두 번 클릭하면 레이어로 잡힙니다.`; };
+  $('#scanOn').onclick = () => { const sel = $$('.scanCk').filter(c => c.checked).map(c => show[+c.dataset.i].it); if (!sel.length) return; scanApply(sel, zone); msg.textContent = `${sel.length}개 주제도를 미리보기로 켰습니다. 두 번 클릭하면 레이어로 잡힙니다.`; };
 }
 $('#scanBtn').onclick = scanRun;
 $('#scanStop').onclick = () => { scanAbort = true; };
