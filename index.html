@@ -312,7 +312,9 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 .sec.folded>*:not(h2){display:none!important}
 #foldBar{display:flex;gap:6px;padding:5px 14px;background:#eef1f5;border-bottom:1px solid #dde;align-items:center;font-size:12px;color:#567}
 #foldBar button{padding:1px 8px;font-size:12px}
-body:not(.help-on) .hlp{display:none!important}
+body .hlp{display:none!important}
+.hi{display:inline-block;margin-left:4px;width:15px;height:15px;line-height:15px;border-radius:50%;background:#e8eef7;color:#2a5db0;font:700 10px/15px sans-serif;text-align:center;cursor:help;vertical-align:middle;font-style:normal}
+#hiTip{position:fixed;z-index:99999;max-width:300px;background:#222;color:#fff;font-size:12px;line-height:1.45;padding:7px 9px;border-radius:6px;box-shadow:0 2px 8px #0005;pointer-events:none;display:none}
 .hbtn.on{background:rgba(255,255,255,.3)}
 /* 통일된 ＋/－ 펼침 표시 */
 .sec details>summary,.lyr details>summary,.li details>summary{list-style:none}
@@ -338,7 +340,7 @@ body:not(.help-on) .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.6.0</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.7.0</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -374,8 +376,8 @@ body:not(.help-on) .hlp{display:none!important}
   </div>
 
   <div class="sec">
-    <h2>4. 글자 넣기</h2>
-    <div class="row"><button id="annPlace" class="pri">＋ 지도 클릭해서 넣기</button><button id="annDeselect">선택 해제</button></div>
+    <h2>4. 글자 삽입</h2>
+    <div class="row"><button id="annPlace" class="pri">＋ 지도 클릭해서 삽입</button><button id="annDeselect">선택 해제</button></div>
     <div id="annFormTitle">새 글자 기본 설정</div>
     <div id="annForm"></div>
     <div class="row" style="margin-top:8px"><label><input type="checkbox" id="annShowAll" checked> 글자 모두 보이기</label><span class="hint" id="annCount"></span></div>
@@ -408,7 +410,7 @@ body:not(.help-on) .hlp{display:none!important}
     <div id="drawList"></div>
     <p class="hint">지도를 클릭해 점을 찍고 <b>더블클릭(또는 Enter)</b>으로 끝냅니다. <b>Shift</b>를 누른 채 찍으면 수평·수직·45°로 곧게 그어집니다. Backspace: 마지막 점 취소 · Esc: 그리기 취소<br>
       선을 누르면 위 설정으로 고칠 수 있고, 꼭짓점(■)을 끌어 모양을 바꿉니다. 꼭짓점 우클릭: 점 삭제 · Delete 키: 선 삭제<br>
-      글자는 4. 글자 넣기의 '채운 박스' 등으로 선 끝에 붙이면 위치도 설명 상자가 됩니다.</p>
+      글자는 4. 글자 삽입의 '채운 박스' 등으로 선 끝에 붙이면 위치도 설명 상자가 됩니다.</p>
   </div>
 
   <div class="sec">
@@ -519,6 +521,13 @@ body:not(.help-on) .hlp{display:none!important}
         <div id="keiList"></div>
       </details>
       <p class="hint" id="kei_msg"></p>
+    </div>
+    <div class="src" id="lcBox">
+      <div class="srch"><b>토지피복지도</b><span class="badge gray">환경공간정보서비스</span><div class="hint hlp">환경부 환경공간정보서비스(api.mcee.go.kr) 지도 서비스를 그림으로 겹쳐 보여줍니다. 대분류(7)·중분류(22)·세분류(41) 중에서 고르고, 투명도는 레이어 패널에서 조절합니다. 도면 내보내기에서 타일이 빠지면 알려주세요.</div></div>
+      <div class="row"><select id="lcLv"><option value="lv1">대분류</option><option value="lv2">중분류</option><option value="lv3" selected>세분류</option></select>
+        <input type="text" id="lcYear" value="2025y" style="width:70px" title="기준연도 (예: 2025y)"> <button id="lcAdd">＋ 토지피복지도 올리기</button></div>
+      <div class="row"><label>직접 레이어명</label><input type="text" id="lcName" placeholder="비워두면 위 선택으로 EGIS:lv3_2025y 형태" style="flex:1"></div>
+      <p class="hint" id="lc_msg"></p>
     </div>
     <div class="src" id="fileBox">
       <div class="srch"><b>사이트에 올려 둔 자료 (data 폴더)</b><span class="badge gray">파일</span><div class="hint">국립생물자원관·물환경정보시스템 등에서 받은 지도파일을 data 폴더에 넣어 쓰는 방식</div></div>
@@ -763,7 +772,7 @@ $$('.fontSel').forEach(s => s.innerHTML = fontOptions());
 $$('.wSel').forEach(s => s.innerHTML = opts(WEIGHTS, 400));
 $$('.frameSel').forEach(s => s.innerHTML = opts(FRAMES, 'single'));
 
-/* ================= 글자 모양 (글자 넣기 · 행정구역 이름 · 레이어 이름 공용) ================= */
+/* ================= 글자 모양 (글자 삽입 · 행정구역 이름 · 레이어 이름 공용) ================= */
 const ANN_TYPES = [['text', '일반 글자'], ['admin', '네모칸 (□충□주□시)'], ['ridge', '원형 (○백○두)'], ['box', '채운 박스'],
   ['obox', '테두리 박스'], ['round', '둥근 박스'], ['dot', '점 + 글자'], ['under', '밑줄 글자']];
 const annTypeName = t => (ANN_TYPES.find(x => x[0] === t) || ['', ''])[1].split(' ')[0];
@@ -2083,6 +2092,11 @@ function edgeLatLng(g, pos){
 function renderLayer(o){
   if (o.group) map.removeLayer(o.group);
   if (o.src && o.src.kind === 'ecobank'){ o.group = L.layerGroup(); return; }   // 이전 버전(그림 방식) 자료는 표시하지 않음
+  if (o.src && o.src.kind === 'lc'){
+    o.group = L.layerGroup([L.tileLayer.wms('https://api.mcee.go.kr/geoserver/gwc/service/wms', { layers: o.src.layer, format: 'image/png', transparent: true, tiled: true,
+      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 5, opacity: (o.src.op != null ? o.src.op : 0.7), crossOrigin: 'anonymous' })]);
+    return;
+  }
   if (o.src && o.src.mode === 'wms'){
     const c = o.src.code.toLowerCase();
     o.group = L.layerGroup([L.tileLayer.wms('https://api.vworld.kr/req/wms', { layers: c, styles: c, format: 'image/png', transparent: true,
@@ -2120,9 +2134,9 @@ function renderLayer(o){
         const at = lb.pos ? edgeLatLng(f.geometry, lb.pos) : null;
         if (at){
           const m = L.circleMarker(at, { renderer, interactive: false, radius: 0, stroke: false, fill: false });
-          m.bindTooltip(html, { permanent: true, direction: 'center', className: 'flabel', interactive: false });
+          m.bindTooltip(html, { permanent: true, direction: 'center', className: 'flabel', interactive: false, offset: [+lb.dx || 0, +lb.dy || 0] });
           g.addLayer(m);
-        } else l.bindTooltip(html, { permanent: true, direction: 'center', className: 'flabel', interactive: false });
+        } else l.bindTooltip(html, { permanent: true, direction: 'center', className: 'flabel', interactive: false, offset: [+lb.dx || 0, +lb.dy || 0] });
       } }));
   }
   o.group = g;
@@ -2294,6 +2308,7 @@ function layerRow(o, list){
         ${o.src ? '' : `<button data-a="sketch" class="sk ${sketch && sketch.o === o ? 'on' : ''}" title="이 레이어에 직접 그리기 (${({ point: '점', line: '선', polygon: '면' })[o.type]})">✏</button>`}
         <button data-a="zoom" title="이 레이어로 이동">◎</button><button data-a="del" title="삭제">✕</button>
       </div>
+      ${o.src && o.src.kind === 'lc' ? `<div class="row"><label>토지피복 투명도</label><input type="range" min="10" max="100" value="${Math.round((o.src.op != null ? o.src.op : 0.7) * 100)}" data-lcop> <small>${esc(o.src.layer)}</small></div>` : ''}
       ${o.src && o.src.mode === 'wms' ? '<div class="hint">브이월드 그림(WMS)으로 표시 중이라 스타일을 바꿀 수 없습니다.</div>' : ''}
       <details class="dsym" ${o._openSym ? 'open' : ''}><summary>기호 (색·선·패턴) · ${({ point: '점', line: '선', polygon: '면' })[o.type]} <span class="fcount">${o.gj.features.length}개</span></summary>
         <div class="row"><label>종류</label><select data-type>${opts([['polygon', '면'], ['line', '선'], ['point', '점']], o.type)}</select>
@@ -2303,17 +2318,22 @@ function layerRow(o, list){
         <div class="row"><label>표시할 속성</label><select data-lf>${opts([['', '(표시 안 함)'], ['__text', '✏ 직접 입력한 글자'], ...keys.map(k => [k, k])], o.style.label.field)}</select></div>
         <div class="row" data-lctr style="${o.style.label.field === '__text' ? '' : 'display:none'}"><label>표시할 글자</label><input type="text" data-lctext value="${esc(o.style.label.ctext || '')}" placeholder="이 레이어의 도형마다 이 글자를 표시" style="flex:1;min-width:0"></div>
         <div class="row"><label>위치</label><select data-lpos>${opts([['', '도형 가운데'], ['n', '경계선 위쪽'], ['s', '경계선 아래쪽'], ['w', '경계선 왼쪽'], ['e', '경계선 오른쪽']], o.style.label.pos || '')}</select></div>
+        <div class="row"><label>위치 미세조정</label><span><button type="button" data-nudge="l">◀</button><button type="button" data-nudge="u">▲</button><button type="button" data-nudge="d">▼</button><button type="button" data-nudge="r">▶</button> <input type="number" data-ldx value="${+o.style.label.dx||0}" style="width:54px" title="가로(px)"> <input type="number" data-ldy value="${+o.style.label.dy||0}" style="width:54px" title="세로(px)"> px <button type="button" data-nudge="0">처음 위치</button></span></div>
         <div class="lts">${tsFormHtml(false)}</div></details>`;
     d.querySelector('.dsym').addEventListener('toggle', e => { o._openSym = e.target.open; });
     d.querySelector('.dlbl').addEventListener('toggle', e => { o._openLbl = e.target.open; });
     const redraw = () => { renderLayer(o); refreshOrder(); renderLegendAll(); d.querySelector('.sym').innerHTML = legendSym(layerSymObj(o), 'P'); };
     bindSymEditor(d.querySelector('.dsym'), o.type, () => o.style.symbols, v => { o.style.symbols = v; }, redraw, () => { redraw(); buildPanel(); });
+    const lco = d.querySelector('[data-lcop]'); if (lco) lco.oninput = () => { o.src.op = lco.value / 100; renderLayer(o); refreshOrder(); schedCheckpoint(); };
     d.querySelector('[data-cp="copy"]').onclick = () => copyStyle(o);
     d.querySelector('[data-cp="paste"]').onclick = () => pasteStyle([o]);
     d.querySelector('[data-type]').onchange = e => { o.type = e.target.value; renderLegendAll(); buildPanel(); };
     d.querySelector('[data-lf]').onchange = e => { o.style.label.field = e.target.value; const r = d.querySelector('[data-lctr]'); if (r) r.style.display = e.target.value === '__text' ? '' : 'none'; renderLayer(o); refreshOrder(); schedCheckpoint(); };
     d.querySelector('[data-lctext]').oninput = e => { o.style.label.ctext = e.target.value; clearTimeout(o._lt2); o._lt2 = setTimeout(() => { renderLayer(o); refreshOrder(); schedCheckpoint(); }, 200); };
     d.querySelector('[data-lpos]').onchange = e => { o.style.label.pos = e.target.value; renderLayer(o); refreshOrder(); schedCheckpoint(); };
+    const setOff = (dx, dy) => { o.style.label.dx = dx; o.style.label.dy = dy; d.querySelector('[data-ldx]').value = dx; d.querySelector('[data-ldy]').value = dy; renderLayer(o); refreshOrder(); schedCheckpoint(); };
+    d.querySelectorAll('[data-nudge]').forEach(b => b.onclick = () => { const k = b.dataset.nudge, st = 6, dx = +o.style.label.dx || 0, dy = +o.style.label.dy || 0; setOff(k === '0' ? 0 : dx + (k === 'l' ? -st : k === 'r' ? st : 0), k === '0' ? 0 : dy + (k === 'u' ? -st : k === 'd' ? st : 0)); });
+    d.querySelector('[data-ldx]').onchange = d.querySelector('[data-ldy]').onchange = () => setOff(+d.querySelector('[data-ldx]').value || 0, +d.querySelector('[data-ldy]').value || 0);
     const lts = d.querySelector('.lts'); fillTsForm(lts, o.style.label);
     bindTsForm(lts, () => o.style.label, () => { clearTimeout(o._lt); o._lt = setTimeout(() => { renderLayer(o); refreshOrder(); }, 150); });
     d.querySelector('.selcb').onclick = e => {
@@ -2875,7 +2895,7 @@ $('#paperPreset').onchange = () => {
 $('#paperSwap').onclick = () => { [cfg.paper.w, cfg.paper.h] = [cfg.paper.h, cfg.paper.w]; syncCfgUI(); layoutFrame(); };
 window.addEventListener('resize', layoutFrame);
 
-/* ================= 글자 넣기 ================= */
+/* ================= 글자 삽입 ================= */
 function migrateAnn(a){
   if (a.textColor) return a;
   const t = a.type || 'text', d = tsDefaults(t), c1 = a.color, c2 = a.color2;
@@ -2960,7 +2980,7 @@ function setPlacing(on){
   placing = on;
   if (on && selAnn) deselectAnn();
   $('#annPlace').classList.toggle('on', on);
-  $('#annPlace').textContent = on ? '■ 그만 넣기 (Esc)' : '＋ 지도 클릭해서 넣기';
+  $('#annPlace').textContent = on ? '■ 그만 넣기 (Esc)' : '＋ 지도 클릭해서 삽입';
   $('#map').classList.toggle('annmode', on);
 }
 $('#annPlace').onclick = () => { if (drawing) setDrawing(false); setPlacing(!placing); };
@@ -3438,7 +3458,7 @@ function identify(e, withPoint){
     }
     const picked = isPicked(h);
     acts.push([picked ? '🧺 담은 것에서 빼기' : '🧺 담기 (여러 개 → 한 레이어)', '', () => { togglePick(h); map.closePopup(); }]);
-    if (h.name) acts.push(['이 이름을 글자로 넣기', '', () => { addAnn(Object.assign({}, annDraft, { text: h.name, lat: ll.lat, lng: ll.lng })); done(`'${h.name}' 글자를 넣었습니다. ① 작업 → 4. 글자 넣기에서 모양을 바꿀 수 있습니다.`); }]);
+    if (h.name) acts.push(['이 이름을 글자로 삽입', '', () => { addAnn(Object.assign({}, annDraft, { text: h.name, lat: ll.lat, lng: ll.lng })); done(`'${h.name}' 글자를 넣었습니다. ① 작업 → 4. 글자 삽입에서 모양을 바꿀 수 있습니다.`); }]);
     const ab = it.querySelector('.acts');
     acts.forEach(([t, c, fn]) => { const b = document.createElement('button'); b.textContent = t; if (c) b.className = c; b.onclick = fn; ab.appendChild(b); });
     box.appendChild(it);
@@ -4441,6 +4461,12 @@ async function toggleFile(id, on){
   }
 }
 buildFileList();
+$('#lcAdd').onclick = () => {
+  const nm = ($('#lcName').value || '').trim() || `EGIS:${$('#lcLv').value}_${$('#lcYear').value.trim()}`;
+  const lvName = { lv1: '대분류', lv2: '중분류', lv3: '세분류' }[($('#lcLv').value)] || '';
+  const o = addLayer(`토지피복지도 (${$('#lcName').value.trim() ? nm : lvName + ' ' + $('#lcYear').value.trim()})`, { type: 'FeatureCollection', features: [] }, { type: 'polygon', src: { kind: 'lc', layer: nm, op: 0.7 }, pinned: true, noLegend: true });
+  $('#lc_msg').textContent = `${nm} 그림을 올렸습니다. 안 보이면 레이어명을 확인해 주세요.`;
+};
 
 /* ================= v2.6: 글자 회전 손잡이 ================= */
 ['mousedown', 'touchstart'].forEach(t => document.addEventListener(t, e => { if (e.target.closest && e.target.closest('.rot-h')) e.stopPropagation(); }, true));
@@ -4498,10 +4524,57 @@ document.addEventListener('dblclick', e => {
     if (x.id || x.closest('#layerList,#legItems,#annList,#drawList,#baseList,#themeList,#ecoList,#egisList,#rivList,#keiList,#fileList')) return;
     if (x.tagName === 'P' || x.matches('.pinhelp, .srch .hint') || x.textContent.trim().length >= 10) x.classList.add('hlp');
   });
-  const ht = $('#helpTgl');
-  const setHelp = on => { document.body.classList.toggle('help-on', on); ht.classList.toggle('on', on); ht.title = on ? '도움말 글 숨기기' : '출처·설명 글 보기'; store.set('helpOn', on ? '1' : '0'); };
-  ht.onclick = () => setHelp(!document.body.classList.contains('help-on'));
-  setHelp(store.get('helpOn', '0') === '1');
+  /* 도움말: 항목에 커서를 올리면 짧게 표시 */
+  const tip = document.createElement('div'); tip.id = 'hiTip'; document.body.appendChild(tip);
+  document.querySelectorAll('.hlp').forEach(x => {
+    const txt = x.textContent.replace(/\s+/g, ' ').trim(); if (!txt) return;
+    const ic = document.createElement('i'); ic.className = 'hi'; ic.textContent = 'i'; ic.dataset.tip = txt;
+    const prev = x.previousElementSibling, h2 = x.closest('.sec') && x.closest('.sec').querySelector(':scope>h2');
+    if (x.closest('.srch') && x.parentElement.querySelector('b')) x.parentElement.querySelector('b').after(ic);
+    else if (prev && !prev.matches('input,select,textarea,button')) (prev.querySelector('label,summary,b') || prev).appendChild(ic);
+    else if (h2) h2.insertBefore(ic, h2.querySelector('.tgl'));
+    else x.before(ic);
+  });
+  const showTip = e => { const t = e.target.closest && e.target.closest('.hi'); if (!t){ tip.style.display = 'none'; return; } tip.textContent = t.dataset.tip; tip.style.display = 'block';
+    const r = t.getBoundingClientRect(); tip.style.left = Math.max(6, Math.min(innerWidth - 310, r.left)) + 'px'; tip.style.top = (r.bottom + 6) + 'px'; };
+  document.addEventListener('mouseover', showTip); document.addEventListener('click', e => { if (e.target.closest && e.target.closest('.hi')){ e.stopPropagation(); showTip(e); } });
+  const ht = $('#helpTgl'); if (ht) ht.remove();
+})();
+
+/* ================= v2.7: 색 팔레트 (모든 색 선택칸 공통) ================= */
+(function initPalette(){
+  const COLS = ['#000000','#434343','#666666','#999999','#cccccc','#ffffff','#e60012','#ff5722','#f29900','#ffc107','#ffeb3b','#cddc39',
+    '#8bc34a','#2e9d3a','#00897b','#00a6b4','#03a9f4','#1f6feb','#3f51b5','#8e44ad','#d63384','#e91e63','#795548','#a1887f',
+    '#fde0dc','#ffe0b2','#fff9c4','#c8e6c9','#b2ebf2','#bbdefb','#d1c4e9','#f8bbd0','#8b0000','#7a3e00','#1b5e20','#0d47a1','#311b92','#4a148c','#880e4f','#3e2723'];
+  const box = document.createElement('div'); box.id = 'palPop';
+  box.style.cssText = 'position:fixed;z-index:99998;display:none;background:#fff;border:1px solid #bbb;border-radius:8px;padding:8px;box-shadow:0 4px 14px #0004;width:226px';
+  document.body.appendChild(box);
+  let cur = null, recent = []; try { recent = JSON.parse(store.get('recentColors', '[]')) || []; } catch(e){}
+  const sw = c => `<button type="button" data-c="${c}" title="${c}" style="width:22px;height:22px;margin:1px;border:1px solid #888;border-radius:3px;background:${c};padding:0;cursor:pointer"></button>`;
+  const draw = () => {
+    box.innerHTML = '<div style="font-size:11px;color:#555;margin-bottom:3px">팔레트</div>' + COLS.map(sw).join('') +
+      (recent.length ? '<div style="font-size:11px;color:#555;margin:5px 0 2px">최근 쓴 색</div>' + recent.map(sw).join('') : '') +
+      '<div style="margin-top:6px;display:flex;gap:4px"><input type="text" id="palHex" placeholder="#RRGGBB" style="flex:1;min-width:0"><button type="button" id="palOk">적용</button><button type="button" id="palMore" title="색상 직접 고르기">더 많은 색…</button></div>';
+  };
+  const apply = c => {
+    if (!cur) return; cur.value = c; cur.dispatchEvent(new Event('input', { bubbles: true })); cur.dispatchEvent(new Event('change', { bubbles: true }));
+    recent = [c, ...recent.filter(x => x !== c)].slice(0, 8); store.set('recentColors', JSON.stringify(recent));
+  };
+  document.addEventListener('click', e => {
+    const inp = e.target.closest && e.target.closest('input[type=color]');
+    if (inp){
+      e.preventDefault(); cur = inp; draw(); box.style.display = 'block';
+      const r = inp.getBoundingClientRect(); box.style.left = Math.max(4, Math.min(innerWidth - 234, r.left)) + 'px';
+      box.style.top = (r.bottom + 4 + 230 > innerHeight ? Math.max(4, r.top - 234) : r.bottom + 4) + 'px'; return;
+    }
+    if (box.contains(e.target)){
+      const b = e.target.closest('[data-c]'); if (b){ apply(b.dataset.c); box.style.display = 'none'; return; }
+      if (e.target.id === 'palOk'){ const v = $('#palHex').value.trim(); if (/^#?[0-9a-f]{6}$/i.test(v)){ apply(v[0] === '#' ? v : '#' + v); box.style.display = 'none'; } return; }
+      if (e.target.id === 'palMore' && cur){ box.style.display = 'none'; try { cur.showPicker(); } catch(_){} }
+      return;
+    }
+    box.style.display = 'none';
+  }, true);
 })();
 </script>
 </body>
