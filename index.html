@@ -346,7 +346,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.2</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.3</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -2104,7 +2104,7 @@ function renderLayer(o){
     const st = o.src.stage || 0, EP = ['https://api.mcee.go.kr/geoserver/gwc/service/wms', 'https://api.mcee.go.kr/geoserver/wms', 'https://api.mcee.go.kr/geoserver/gwc/service/wms'];
     const WL = L.TileLayer.WMS.extend({ getTileUrl(c){ const u = L.TileLayer.WMS.prototype.getTileUrl.call(this, c); return st === 2 ? relayWrap(u) : u; } });
     const tl = new WL(EP[st], { layers: o.src.layer, format: 'image/png', transparent: true, tiled: st !== 1,
-      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 5, opacity: (o.src.op != null ? o.src.op : 0.7), referrerPolicy: 'no-referrer' });
+      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 20, opacity: (o.src.op != null ? o.src.op : 0.7), referrerPolicy: 'no-referrer' });
     let bad = 0, ok = 0;
     tl.on('tileload', () => { ok++; });
     tl.on('tileerror', () => {
@@ -2118,7 +2118,7 @@ function renderLayer(o){
   if (o.src && o.src.mode === 'wms'){
     const c = o.src.code.toLowerCase();
     o.group = L.layerGroup([L.tileLayer.wms('https://api.vworld.kr/req/wms', { layers: c, styles: c, format: 'image/png', transparent: true,
-      version: '1.3.0', key: getKey(), domain: location.origin, tileSize: 512, maxZoom: 20, zIndex: 6, opacity: 0.8 })]);
+      version: '1.3.0', key: getKey(), domain: location.origin, tileSize: 512, maxZoom: 20, zIndex: 21, opacity: 0.8 })]);
     return;
   }
   const g = L.layerGroup(), feats = o.gj.features || [];
