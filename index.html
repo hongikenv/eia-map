@@ -351,7 +351,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.11.3</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.11.4</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -479,6 +479,7 @@ body .hlp{display:none!important}
       <p class="hint" id="scanMsg" style="margin:2px 0"></p>
       <div id="scanRes"></div>
     </div>
+    <div class="row"><label><input type="checkbox" id="thNames"> 켜진 주제도에 이름 글씨 표시</label><span class="hint">이름 항목이 있는 도형 주제도에 한해 켜고 끕니다. (직접 정한 글씨 설정은 그대로)</span></div>
     <div class="row"><label><input type="checkbox" id="identOn" checked> 지도를 클릭하면 그 자리 자료의 이름·속성 보기</label><span class="hint">우클릭은 항상: 이름·속성 + 좌표·주소 + 레이어로 추가</span></div>
     <div class="src">
       <div class="srch"><b>브이월드 (국토교통부)</b><span class="badge">실시간</span><div class="srcl">출처: 국토교통부 브이월드 2D데이터 API</div></div>
@@ -2173,7 +2174,7 @@ function renderLayer(o){
         : L.marker(ll, { interactive: false, keyboard: false, icon: symIcon(s) }) }));
   });
   const lb = o.style.label;
-  if (o.scanZone && lb && !lb.field && o.gj.features.length){ const k = scanNameKey(o.gj.features); if (k) lb.field = k; }
+  if ((o.scanZone || (window.themeNamesOn && o.src && /^(vworld|egis|kei|rim|gsv)$/.test(o.src.kind))) && lb && !lb.field && o.gj.features.length){ const k = scanNameKey(o.gj.features); if (k){ lb.field = k; o._autoLbl = true; } }
   if (lb && lb.field){
     g.addLayer(L.geoJSON(o.gj, { renderer, interactive: false, style: { stroke: false, fill: false },
       pointToLayer: (f, ll) => L.circleMarker(ll, { renderer, interactive: false, radius: 0, stroke: false, fill: false }),
@@ -4947,6 +4948,17 @@ $('#scanBtn').onclick = scanRun;
 $('#scanStop').onclick = () => { scanAbort = true; };
 var _bpScan = buildPanel; buildPanel = function(){ const r = _bpScan.apply(this, arguments); try { scanTargets(); } catch(e){} return r; };
 scanTargets();
+
+window.themeNamesOn = store.get('thNames', '') === '1';
+$('#thNames').checked = window.themeNamesOn;
+$('#thNames').onchange = e => {
+  window.themeNamesOn = e.target.checked; store.set('thNames', e.target.checked ? '1' : '');
+  layers.filter(o => o.src && /^(vworld|egis|kei|rim|gsv)$/.test(o.src.kind)).forEach(o => {
+    if (!window.themeNamesOn){ if (o._autoLbl && o.style.label){ o.style.label.field = ''; o._autoLbl = false; } }
+    if (o.visible || !window.themeNamesOn) renderLayer(o);
+  });
+  refreshOrder(); buildPanel();
+};
 
 buildLcList();
 
