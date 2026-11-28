@@ -351,7 +351,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.11.1</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.11.3</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -2173,12 +2173,14 @@ function renderLayer(o){
         : L.marker(ll, { interactive: false, keyboard: false, icon: symIcon(s) }) }));
   });
   const lb = o.style.label;
+  if (o.scanZone && lb && !lb.field && o.gj.features.length){ const k = scanNameKey(o.gj.features); if (k) lb.field = k; }
   if (lb && lb.field){
     g.addLayer(L.geoJSON(o.gj, { renderer, interactive: false, style: { stroke: false, fill: false },
       pointToLayer: (f, ll) => L.circleMarker(ll, { renderer, interactive: false, radius: 0, stroke: false, fill: false }),
       onEachFeature: (f, l) => {
         const v = lb.field === '__text' ? lb.ctext : (f.properties ? f.properties[lb.field] : null);
         if (v == null || String(v).trim() === '') return;
+        if (o.scanZone){ if (f._in === undefined){ try { f._in = o.scanZone.some(z => turf.booleanIntersects(f, z)); } catch(e){ f._in = true; } } if (!f._in) return; }
         const inner = labelInner(Object.assign({}, lb, { text: String(v).trim().replace(/\r?\n/g, '|') }));
         const html = lb.rotate ? `<div style="transform:rotate(${lb.rotate}deg)">${inner}</div>` : inner;
         const at = lb.pos ? edgeLatLng(f.geometry, lb.pos) : null;
@@ -4820,9 +4822,24 @@ var scanItems = function(){
   GSV_GROUPS.forEach(([grp, , list]) => { if (grp === '수계') list.forEach(d => out.push({ kind: 'gsv', grp: '수계 (물환경정보시스템)', code: d[0], name: d[1], color: d[2], gk: d[3] })); });
   return out;
 };
+function scanNameKey(feats){
+  const bad = v => !v || /^[\d.\-\s]+$/.test(v);
+  for (const f of feats.slice(0, 50)){
+    const pr = f.properties || {};
+    for (const k of NAME_KEYS){ if (pr[k] != null && !bad(String(pr[k]).trim())) return k; }
+    const k = Object.keys(pr).find(k => /(^|_)(nm|name)$|명$|nam$/i.test(k) && typeof pr[k] === 'string' && !bad(pr[k].trim())); if (k) return k;
+  }
+  return '';
+}
 function scanNames(feats){
-  const r = [];
-  for (const f of feats){ const pr = f.properties || {}; const k = (typeof NAME_KEYS !== 'undefined' ? NAME_KEYS : []).find(k => pr[k] != null && String(pr[k]).trim() && !/^\d+$/.test(String(pr[k]))); if (k){ const v = String(pr[k]).trim(); if (!r.includes(v)) r.push(v); } if (r.length >= 3) break; }
+  const r = [], bad = v => !v || /^[\d.\-\s]+$/.test(v);
+  for (const f of feats){
+    const pr = f.properties || {}; let v = '';
+    for (const k of NAME_KEYS){ const x = pr[k] != null ? pr[k] : pr[k.toUpperCase()]; if (x != null && !bad(String(x).trim())){ v = String(x).trim(); break; } }
+    if (!v){ const k = Object.keys(pr).find(k => /(^|_)(nm|name)$|명$|nam$/i.test(k) && typeof pr[k] === 'string' && !bad(pr[k].trim())); if (k) v = pr[k].trim(); }
+    if (v && !r.includes(v)) r.push(v);
+    if (r.length >= 5) break;
+  }
   return r;
 }
 async function scanOne(it, zone, bb, Lb){
@@ -4861,7 +4878,7 @@ async function scanEco(zone, bb){
   });
   return res;
 }
-function scanApply(list){
+function scanApply(list, zone){
   list.forEach(it => {
     if (it.kind === 'vw') toggleTheme(it.code, it.name, it.type, it.color, true, true);
     else if (it.kind === 'eg') toggleEgis(it.id, true, true);
@@ -4870,6 +4887,10 @@ function scanApply(list){
     else if (it.kind === 'eco') toggleEco(it.g, true, true);
     else if (it.kind === 'gsv') gsvToggle(it.code, it.name, true, it.color, it.gk, true);
     else if (it.kind === 'img'){ const c = document.querySelector(it.sel + ' input'); if (c && !c.checked) c.click(); }
+  });
+  list.forEach(it => {
+    const o = it.kind === 'vw' ? themeLayer(it.code) : it.kind === 'gsv' ? gsvLayerOf(it.code) : (it.kind === 'eg' || it.kind === 'riv' || it.kind === 'kei') ? layers.find(x => x.src && x.src.id === it.id) : null;
+    if (o && zone){ o.scanZone = zone; o.group && renderLayer(o); }
   });
   refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists(); buildEcoList();
   setTimeout(() => { updateThemes(); updateEgis(); updateEco(); updateGsv(); }, 700);
@@ -4883,6 +4904,7 @@ async function scanRun(){
   map.fitBounds(Lb.pad(0.05));
   const items = scanItems(); scanAbort = false; res.innerHTML = '';
   $('#scanBtn').disabled = true; $('#scanStop').hidden = false;
+  window._scanZone = zone;
   const rows = []; let done = 0, idx = 0;
   const upd = () => { msg.textContent = `찾는 중… ${done}/${items.length}`; };
   const addRow = (it, r, err) => rows.push({ it, r, err });
@@ -4919,7 +4941,7 @@ async function scanRun(){
   res.innerHTML = h + '</table><p class="hint">겹치지 않는 주제도는 표에 넣지 않았습니다. 이름은 범위 안 자료의 일부 예시입니다.</p>' + (bad.length ? `<p class="hint" style="color:#b33">⚠ 받지 못함: ${esc(whyTxt)}</p>` : '');
   $('#scanAll').onclick = () => $$('.scanCk').forEach(c => c.checked = true);
   $('#scanNone').onclick = () => $$('.scanCk').forEach(c => c.checked = false);
-  $('#scanOn').onclick = () => { const sel = $$('.scanCk').filter(c => c.checked).map(c => show[+c.dataset.i].it); if (!sel.length) return; scanApply(sel); msg.textContent = `${sel.length}개 주제도를 미리보기로 켰습니다. 두 번 클릭하면 레이어로 잡힙니다.`; };
+  $('#scanOn').onclick = () => { const sel = $$('.scanCk').filter(c => c.checked).map(c => show[+c.dataset.i].it); if (!sel.length) return; scanApply(sel, zone); msg.textContent = `${sel.length}개 주제도를 미리보기로 켰습니다. 이름 글씨는 범위 안 자료만 표시됩니다. 두 번 클릭하면 레이어로 잡힙니다.`; };
 }
 $('#scanBtn').onclick = scanRun;
 $('#scanStop').onclick = () => { scanAbort = true; };
