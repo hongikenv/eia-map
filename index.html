@@ -347,7 +347,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.7</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.10</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -4684,15 +4684,31 @@ buildCenList();
 
 /* 물환경정보시스템(mulmoa) GeoServer: wqp 작업공간 — 도형(WFS) 우선, 막히면 그림(WMS) */
 var GSV = 'https://www.mulmoa.go.kr/geoserver/wqp/';
-var GSV_ITEMS = [['wqp:han_step2_basin', '한강 step2 basin (wqp:han_step2_basin)']];
+var GSV_GROUPS = [
+  ['수계', true, [['han_step2_specialbasin', '한강 특대유역', '#2e9d3a'], ['geum_step4_specialbasin', '금강 특대유역', '#2e9d3a'], ['han_step2_basin', '한강 단위유역', '#e60012'], ['nd_step4_basin', '낙동강 단위유역', '#e60012'],
+    ['geum_step4_basin', '금강 단위유역', '#e60012'], ['ys_step4_basin', '영산강·섬진강 단위유역', '#e60012'], ['jw_step2_basin', '진위천 단위유역', '#e60012'], ['sg_step1_basin', '삽교호 단위유역', '#e60012']]],
+  ['수질측정지점', false, [['4suji_ha', '하천'], ['4suji_ho', '호소'], ['4suji_do', '도 측정망'], ['4suji_gong', '공단'], ['4suji_nong', '농업'], ['14bo', '보']]],
+  ['수질자동측정지점', false, [['5suzi_ja', '자동측정망'], ['5suzi_tms', 'TMS']]],
+  ['기타측정지점', false, [['6suri_aws', 'AWS(기상)'], ['6suri_dam', '댐'], ['6suri_su', '수위'], ['6suri_woo', '우량'], ['6suri_yu', '유량'], ['6ji', '기타 지점']]],
+  ['환경기초시설', false, [['17nong', '농공단지처리시설', '#1e6fff', 'pt'], ['17etc', '기타공동처리시설', '#6ddc1a', 'pt'], ['17boon', '분뇨처리시설', '#ff00c8', 'pt'], ['17san', '산업폐수종말처리시설', '#0b2a6f', 'pt'],
+    ['17me', '매립장침출수처리시설', '#00a38a', 'pt'], ['17chok', '축산폐수공공처리시설', '#a0400f', 'pt'], ['17ma', '마을하수도', '#ffee00', 'pt'], ['17ha', '하수종말처리시설', '#ff0000', 'pt']]],
+  ['하천', false, [['13kuk', '국가하천'], ['13ji', '지방하천'], ['13ji2', '지방하천 2']]],
+  ['수질영향권역', false, [['3dae', '대권역', '#4a90e2'], ['3jong', '중권역', '#d9534f'], ['3so', '소권역', '#f2e85a']]],
+  ['행정구역', false, [['2sido', '시도'], ['2sigungu', '시군구'], ['2um', '읍면동'], ['2ri', '리']]],
+  ['지류총량', false, [['jiryu', '지류총량'], ['jiryu_point', '지류총량 지점'], ['tmdl_spot', '총량 지점']]]
+];
+var GSV_ITEMS = [];
 var GSV_CUSTOM = []; try { GSV_CUSTOM = JSON.parse(store.get('gsvCustom', '[]')) || []; } catch(e){}
 function gsvLayerOf(code){ return layers.find(o => o.src && (o.src.kind === 'gsv' || (o.src.kind === 'lc' && o.src.gsv)) && (o.src.code === code || o.src.layer === code)); }
-function gsvToggle(code, name, on){
+function gsvToggle(code, name, on, col, kind){
   let o = gsvLayerOf(code);
   if (o) o.visible = on;
   else if (on){
-    const color = PALETTE[layers.length % PALETTE.length];
-    addLayer('총량 · ' + name, { type: 'FeatureCollection', features: [] }, { type: 'polygon', style: themeStyle('polygon', color), pinned: true, quiet: true, src: { kind: 'gsv', code, color } });
+    const color = col || PALETTE[layers.length % PALETTE.length];
+    const pt = kind === 'pt';
+    const st = pt ? { symbols: [S('marker', { shape: 'square', size: 9, fill: color, stroke: '#ffffff', sw: 1 })], label: labelDefaults() }
+      : col ? { symbols: [S('stroke', { color, w: 2.2, dash: 'solid' })], label: labelDefaults() } : themeStyle('polygon', color);
+    addLayer(name, { type: 'FeatureCollection', features: [] }, { type: pt ? 'point' : 'polygon', style: st, pinned: true, quiet: true, src: { kind: 'gsv', code, color, minZ: pt ? 8 : col ? 6 : 9 } });
   }
   refreshOrder(); buildPanel(); renderLegendAll(); buildGsvList(); if (on) updateGsv();
 }
@@ -4710,7 +4726,7 @@ async function updateGsv(){
   gsvBusy = true;
   try {
     for (const o of on){
-      if (map.getZoom() < 9){ $('#gsvMsg').textContent = '조금 더 확대하면 받아옵니다.'; continue; }
+      if (map.getZoom() < (o.src.minZ || 9)){ $('#gsvMsg').textContent = '조금 더 확대하면 받아옵니다.'; continue; }
       const v = map.getBounds().pad(0.05), b = snap02([v.getWest(), v.getSouth(), v.getEast(), v.getNorth()]);
       const lb = L.latLngBounds([b[1], b[0]], [b[3], b[2]]);
       o._fetched = o._fetched || [];
@@ -4743,20 +4759,29 @@ async function updateGsv(){
 map.on('moveend', () => { clearTimeout(window._gsvT); window._gsvT = setTimeout(updateGsv, 400); });
 function buildGsvList(){
   const box = $('#gsvList'); if (!box) return; box.innerHTML = '';
-  [...GSV_ITEMS, ...GSV_CUSTOM].forEach(([code, name]) => {
+  const row = (code, name, col, kind) => {
+    code = 'wqp:' + code.replace(/^wqp:/, '');
     const o = gsvLayerOf(code), on = !!(o && o.visible);
     const d = document.createElement('div'); d.className = 'thi';
-    d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="sw" style="background:rgba(2,136,209,.4);border-color:#0288D1"></span><label class="tn">${esc(name)}</label>${o && o.src.kind === 'gsv' ? `<small>${o.gj.features.length}개</small>` : o ? '<small>그림</small>' : ''}`;
+    d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}>${col && kind === 'pt' ? `<span style="display:inline-block;width:10px;height:10px;background:${col};margin:0 6px 0 4px"></span>` : col ? `<span style="display:inline-block;width:16px;height:0;border-top:3px solid ${col};margin:0 6px 3px 2px"></span>` : '<span class="sw" style="background:rgba(2,136,209,.4);border-color:#0288D1"></span>'}<label class="tn">${esc(name)}</label>${o && o.src.kind === 'gsv' ? `<small>${o.gj.features.length}개</small>` : o ? '<small>그림</small>' : ''}`;
     d.querySelector('label').onclick = () => d.querySelector('input').click();
-    d.querySelector('input').onchange = e => gsvToggle(code, name, e.target.checked);
-    box.appendChild(d);
+    d.querySelector('input').onchange = e => gsvToggle(code, name, e.target.checked, col, kind);
+    return d;
+  };
+  GSV_GROUPS.forEach(([g, open, arr]) => {
+    const det = document.createElement('details'); det.className = 'thgrp'; det.open = open;
+    const n = arr.filter(([c]) => { const o = gsvLayerOf('wqp:' + c); return o && o.visible; }).length;
+    det.innerHTML = `<summary>${esc(g)} <small class="hint">(${n}/${arr.length})</small></summary>`;
+    arr.forEach(([c, nm, col, kd]) => det.appendChild(row(c, nm, col, kd)));
+    box.appendChild(det);
   });
+  if (GSV_CUSTOM.length){ const det = document.createElement('details'); det.className = 'thgrp'; det.open = true; det.innerHTML = '<summary>직접 추가한 것</summary>'; GSV_CUSTOM.forEach(([c, nm]) => det.appendChild(row(c, nm))); box.appendChild(det); }
 }
 $('#gsvCaps').onclick = () => window.open(GSV + 'wms?service=WMS&version=1.1.1&request=GetCapabilities', '_blank');
 $('#gsvAdd').onclick = () => {
   const code = $('#gsvCode').value.trim(), name = $('#gsvName').value.trim() || code;
   if (!/^[\w]+:[\w\-]+$/.test(code)){ $('#gsvMsg').textContent = '레이어명은 wqp:이름 형태로 넣어 주세요.'; return; }
-  if ([...GSV_ITEMS, ...GSV_CUSTOM].some(x => x[0] === code)){ $('#gsvMsg').textContent = '이미 있는 레이어입니다.'; return; }
+  if (GSV_CUSTOM.some(x => x[0] === code)){ $('#gsvMsg').textContent = '이미 있는 레이어입니다.'; return; }
   GSV_CUSTOM.push([code, name]); store.set('gsvCustom', JSON.stringify(GSV_CUSTOM)); $('#gsvCode').value = $('#gsvName').value = ''; $('#gsvMsg').textContent = '추가했습니다. 체크하면 켜집니다.'; buildGsvList();
 };
 buildGsvList();
