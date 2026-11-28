@@ -111,6 +111,7 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 #legend table{border-collapse:collapse}
 #legend th{padding:4px 10px;font-size:1.1em}
 #legend td{padding:2px 8px}
+.lgx{display:none;margin-left:6px;color:#c33;cursor:pointer;font-size:.85em;font-weight:700}#legend td.t:hover .lgx{display:inline}
 #legend td.s{padding:2px 4px}
 #legend.al-left td.t{text-align:left}
 #legend.al-center td.t{text-align:center}
@@ -204,6 +205,8 @@ button.pri{background:#1d6b3a;color:#fff;border-color:#1d6b3a}
 .idw .pdrag{cursor:move;user-select:none;-webkit-user-select:none;touch-action:none;background:#e9eef5;color:#567;font-size:11px;text-align:center;padding:2px 6px;border-radius:4px;margin:0 0 5px}
 .idw .pdrag:hover,.idw .pdrag.dragging{background:#d6e4f5;color:#0a64d0}
 #inset img{display:block;width:100%;height:auto;pointer-events:none}
+#inset .ilb{position:absolute;z-index:1200;transform:translate(-50%,-50%);white-space:nowrap;cursor:move;line-height:1.2;touch-action:none}
+.ilrow{display:flex;gap:4px;align-items:center;margin:2px 0}.ilrow input[type=text]{flex:1;min-width:0}.ilrow input[type=number]{width:46px}
 #workbar{position:absolute;top:8px;right:8px;z-index:1200;display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:rgba(255,255,255,.95);border:1px solid #ccd;border-radius:6px;padding:4px 6px;box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:12px}
 #lyrDock #workbar{position:static;border:none;border-bottom:1px solid #ccd;border-radius:0;box-shadow:none;background:#fff;padding:6px 8px}
 #lyrDock #workbar #curFile{flex:1 1 100%;max-width:none;font-weight:600}
@@ -351,7 +354,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.11.4</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.12.2</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -421,7 +424,7 @@ body .hlp{display:none!important}
     <div id="drawList"></div>
     <p class="hint">지도를 클릭해 점을 찍고 <b>더블클릭(또는 Enter)</b>으로 끝냅니다. <b>Shift</b>를 누른 채 찍으면 수평·수직·45°로 곧게 그어집니다. Backspace: 마지막 점 취소 · Esc: 그리기 취소<br>
       선을 누르면 위 설정으로 고칠 수 있고, 꼭짓점(■)을 끌어 모양을 바꿉니다. 꼭짓점 우클릭: 점 삭제 · Delete 키: 선 삭제<br>
-      글자는 4. 글자 삽입의 '채운 박스' 등으로 선 끝에 붙이면 위치도 설명 상자가 됩니다.</p>
+      글자는 4. 글자 삽입의 '채운 박스' 등으로 선 끝에 붙이면 키맵 설명 상자가 됩니다.</p>
   </div>
 
   <div class="sec">
@@ -587,7 +590,7 @@ body .hlp{display:none!important}
       <label><input type="checkbox" class="tg" data-t="legend" checked>범례</label>
       <label><input type="checkbox" class="tg" data-t="scale" checked>축척</label>
       <label><input type="checkbox" class="tg" data-t="north" checked>방위표</label>
-      <label><input type="checkbox" class="tg" data-t="inset">위치도</label>
+      <label><input type="checkbox" class="tg" data-t="inset">키맵</label>
       <label><input type="checkbox" class="tg" data-t="title">제목</label>
     </div>
     <div class="row"><button id="resetPos" title="범례·축척·방위표 등을 처음 위치로">요소 기본 위치로</button></div>
@@ -631,14 +634,17 @@ body .hlp{display:none!important}
         <label>배경</label><span><input type="color" data-cfg="title.bgColor"><input type="range" data-cfg="title.bgOp" min="0" max="100" style="width:90px"><span class="pv" data-cfgpv="title.bgOp"></span></span>
       </div>
     </details>
-    <details><summary>위치도 (키맵)</summary>
+    <details><summary>키맵</summary>
       <div class="grid">
         <label>방식</label><select data-cfg="inset.mode"><option value="auto">자동 (우리나라 지도 + 현재 범위)</option><option value="image">내가 만든 키맵 이미지</option></select>
         <label>이미지</label><span><button id="insetImgBtn">이미지 올리기…</button> <button id="insetImgClr">지우기</button><input type="file" id="insetImgIn" accept="image/*" hidden></span>
         <label>가로 크기</label><input type="range" data-cfg="inset.size" min="80" max="700" step="5">
         <label>테두리</label><select data-cfg="inset.frame" class="frameSel"></select>
       </div>
-      <p class="hint">키맵을 따로 만들어(PNG·JPG·SVG) 올리면 도면의 위치도 자리에 그대로 들어갑니다. 위의 '위치도' 체크가 켜지며, 지도 위에서 끌어 옮길 수 있습니다. 이미지는 작업 파일(.json)에 함께 저장됩니다.</p>
+      <div class="row"><b>키맵 이름 글씨</b><button id="ilAdd">＋</button></div>
+      <div id="ilList"></div>
+      <p class="hint">키맵 위에 지역 이름이나 '사업대상지역' 같은 설명을 넣습니다. 키맵 위에서 끌어 옮기고, 두 번 클릭하면 글자를 고칠 수 있습니다. 키맵 이미지를 올린 경우에도 그 위에 얹힙니다.</p>
+      <p class="hint">키맵을 따로 만들어(PNG·JPG·SVG) 올리면 도면의 키맵 자리에 그대로 들어갑니다. 위의 '키맵' 체크가 켜지며, 지도 위에서 끌어 옮길 수 있습니다. 이미지는 작업 파일(.json)에 함께 저장됩니다.</p>
     </details>
   </div>
 
@@ -671,7 +677,7 @@ body .hlp{display:none!important}
   <div id="frame"><div id="mapbox">
     <div id="map"></div>
     <div id="title" class="ovl" style="display:none">지역개황도</div>
-    <div id="inset" class="ovl" style="display:none"><div id="insetMap"></div><img id="insetImg" alt="위치도" draggable="false" style="display:none"></div>
+    <div id="inset" class="ovl" style="display:none"><div id="insetMap"></div><img id="insetImg" alt="키맵" draggable="false" style="display:none"></div>
     <div id="north" class="ovl"></div>
     <div id="scale" class="ovl"></div>
     <div id="legend" class="ovl"></div>
@@ -1039,7 +1045,7 @@ const cfg = {
   north: { style: 'compass', size: 64, stroke: '#000000', fill: '#000000', light: '#ffffff', sw: 1, halo: 0, haloColor: '#ffffff',
     nShow: true, nSize: 15, nFont: 'Arial', nColor: '#000000', frame: 'none', bgColor: '#ffffff', bgOp: 0 },
   title: { font: 'Malgun Gothic', size: 20, weight: 700, color: '#222222', frame: 'single', bgColor: '#ffffff', bgOp: 100 },
-  inset: { frame: 'single', mode: 'auto', img: '', size: 150 },
+  inset: { frame: 'single', mode: 'auto', img: '', size: 150, labels: [] },
   doguk: { style: 'double', width: 5 },
   paper: { w: 297, h: 420, margin: 10, dpi: 200 },
   map: { bearing: 0 }
@@ -2541,6 +2547,7 @@ function moveLayer(o, target, where){ applyDrop({ o }, { o: target }, where); }
 const cfgGet = p => p.split('.').reduce((o, k) => o[k], cfg);
 const cfgSet = (p, v) => { const ks = p.split('.'); ks.slice(0, -1).reduce((o, k) => o[k], cfg)[ks[ks.length - 1]] = v; };
 function syncCfgUI(){
+  if (typeof buildInsetLbList === 'function') buildInsetLbList();
   $$('[data-cfg]').forEach(el => { const v = cfgGet(el.dataset.cfg); if (el.type === 'checkbox') el.checked = !!v; else el.value = v; });
   $$('[data-cfgpv]').forEach(s => s.textContent = cfgGet(s.dataset.cfgpv) + '%');
 }
@@ -2570,10 +2577,11 @@ function renderLegend(){
   const cols = Math.max(1, +c.cols || 1);
   let rows = '';
   for (let i = 0; i < items.length; i += cols){
-    rows += '<tr>' + items.slice(i, i + cols).map(it => `<td class="s">${legendSym(itemObj(it), 'G', c.sym)}</td><td class="t">${esc(it.label)}</td>`).join('')
+    rows += '<tr>' + items.slice(i, i + cols).map((it, j) => `<td class="s">${legendSym(itemObj(it), 'G', c.sym)}</td><td class="t">${esc(it.label)}<span class="lgx" data-html2canvas-ignore="true" data-i="${i + j}" title="이 항목을 범례에서 빼기 (왼쪽 패널에서 다시 넣을 수 있음)">✕</span></td>`).join('')
       + (i + cols > items.length ? '<td></td><td></td>'.repeat(i + cols - items.length) : '') + '</tr>';
   }
   el.innerHTML = rows ? `<table>${c.showTitle ? `<tr><th colspan="${cols * 2}">${esc(c.title)}</th></tr>` : ''}${rows}</table>` : '';
+  el.querySelectorAll('.lgx').forEach(x => { x.onmousedown = e => e.stopPropagation(); x.onclick = e => { e.stopPropagation(); const it = items[+x.dataset.i]; if (it){ it.show = false; renderLegendAll(); schedCheckpoint(); } }; });
   el.className = `ovl lg-${c.frame} al-${c.align}`;
   Object.assign(el.style, { fontFamily: fontStack(c.font), fontSize: c.size + 'px', fontWeight: c.weight, color: c.color, background: rgba(c.bgColor, c.bgOp) });
   el.style.display = (rows && $('.tg[data-t="legend"]').checked) ? '' : 'none';
@@ -2804,7 +2812,7 @@ if (canRotate){
   $('#rotHint').textContent = '지도 회전 기능을 불러오지 못했습니다. (인터넷 연결 또는 방화벽 확인)';
 }
 
-/* ================= 제목 · 위치도 · 도곽 ================= */
+/* ================= 제목 · 키맵 · 도곽 ================= */
 function renderTitle(){
   const c = cfg.title;
   Object.assign($('#title').style, { fontFamily: fontStack(c.font), fontSize: c.size + 'px', fontWeight: c.weight, color: c.color,
@@ -2813,6 +2821,7 @@ function renderTitle(){
 let insetSig = '';
 function renderInsetFrame(){
   const el = $('#inset'), c = cfg.inset, imgMode = c.mode === 'image' && !!c.img;
+  renderInsetLabels();
   el.style.border = frameCss(c.frame);
   const w = Math.max(60, +c.size || 150);
   el.style.width = w + 'px';
@@ -4879,22 +4888,23 @@ async function scanEco(zone, bb){
   });
   return res;
 }
-function scanApply(list, zone){
+function scanApply(list, zone, on){
+  if (on === undefined) on = true;
   list.forEach(it => {
-    if (it.kind === 'vw') toggleTheme(it.code, it.name, it.type, it.color, true, true);
-    else if (it.kind === 'eg') toggleEgis(it.id, true, true);
-    else if (it.kind === 'riv') toggleRiver(it.id, true, true);
-    else if (it.kind === 'kei') toggleKei(it.id, true, true);
-    else if (it.kind === 'eco') toggleEco(it.g, true, true);
-    else if (it.kind === 'gsv') gsvToggle(it.code, it.name, true, it.color, it.gk, true);
-    else if (it.kind === 'img'){ const c = document.querySelector(it.sel + ' input'); if (c && !c.checked) c.click(); }
+    if (it.kind === 'vw') toggleTheme(it.code, it.name, it.type, it.color, on, true);
+    else if (it.kind === 'eg') toggleEgis(it.id, on, true);
+    else if (it.kind === 'riv') toggleRiver(it.id, on, true);
+    else if (it.kind === 'kei') toggleKei(it.id, on, true);
+    else if (it.kind === 'eco') toggleEco(it.g, on, true);
+    else if (it.kind === 'gsv') gsvToggle(it.code, it.name, on, it.color, it.gk, true);
+    else if (it.kind === 'img'){ const c = document.querySelector(it.sel + ' input'); if (c && c.checked !== on) c.click(); }
   });
   list.forEach(it => {
     const o = it.kind === 'vw' ? themeLayer(it.code) : it.kind === 'gsv' ? gsvLayerOf(it.code) : (it.kind === 'eg' || it.kind === 'riv' || it.kind === 'kei') ? layers.find(x => x.src && x.src.id === it.id) : null;
-    if (o && zone){ o.scanZone = zone; o.group && renderLayer(o); }
+    if (o && zone && on){ o.scanZone = zone; o.group && renderLayer(o); } else if (o && !on) o.scanZone = null;
   });
   refreshOrder(); buildPanel(); renderLegendAll(); rebuildThemeLists(); buildEcoList();
-  setTimeout(() => { updateThemes(); updateEgis(); updateEco(); updateGsv(); }, 700);
+  if (on) setTimeout(() => { updateThemes(); updateEgis(); updateEco(); updateGsv(); }, 700);
 }
 async function scanRun(){
   const o = layerById(+$('#scanTgt').value), msg = $('#scanMsg'), res = $('#scanRes');
@@ -4925,7 +4935,7 @@ async function scanRun(){
   rows.sort((a, b) => order.indexOf(a.it.kind + (a.it.code || a.it.id || a.it.g)) - order.indexOf(b.it.kind + (b.it.code || b.it.id || b.it.g)));
   const hit = rows.filter(x => x.r && x.r.hit), bad = rows.filter(x => x.err);
   msg.textContent = `${scanAbort ? '중지됨. ' : ''}'${o.name}' 안에서 ${hit.length}개 주제도에 자료가 있습니다.` + (bad.length ? ` 받지 못한 주제도 ${bad.length}개는 확인하지 못했습니다.` : '');
-  let h = '<div class="row"><button id="scanOn" class="pri">체크한 주제도 켜기</button><button id="scanAll">전체 체크</button><button id="scanNone">전체 해제</button></div><table><tr><th></th><th>주제도</th><th>범위 안</th></tr>';
+  let h = '<div class="row"><button id="scanOn" class="pri">체크한 주제도 켜기</button><button id="scanOff">체크한 주제도 끄기</button><button id="scanAll">전체 체크</button><button id="scanNone">전체 해제</button></div><table><tr><th></th><th>주제도</th><th>범위 안</th></tr>';
   let lastG = '';
   const show = rows.filter(x => x.r && x.r.hit);
   const imgs = [{ kind: 'img', sel: '#asbList', name: ASB.name }, { kind: 'img', sel: '#cenList', name: CEN.name }];
@@ -4942,6 +4952,7 @@ async function scanRun(){
   res.innerHTML = h + '</table><p class="hint">겹치지 않는 주제도는 표에 넣지 않았습니다. 이름은 범위 안 자료의 일부 예시입니다.</p>' + (bad.length ? `<p class="hint" style="color:#b33">⚠ 받지 못함: ${esc(whyTxt)}</p>` : '');
   $('#scanAll').onclick = () => $$('.scanCk').forEach(c => c.checked = true);
   $('#scanNone').onclick = () => $$('.scanCk').forEach(c => c.checked = false);
+  $('#scanOff').onclick = () => { const sel = $$('.scanCk').filter(c => c.checked).map(c => show[+c.dataset.i].it); if (!sel.length) return; scanApply(sel, null, false); msg.textContent = `${sel.length}개 주제도를 껐습니다.`; };
   $('#scanOn').onclick = () => { const sel = $$('.scanCk').filter(c => c.checked).map(c => show[+c.dataset.i].it); if (!sel.length) return; scanApply(sel, zone); msg.textContent = `${sel.length}개 주제도를 미리보기로 켰습니다. 이름 글씨는 범위 안 자료만 표시됩니다. 두 번 클릭하면 레이어로 잡힙니다.`; };
 }
 $('#scanBtn').onclick = scanRun;
@@ -4959,6 +4970,88 @@ $('#thNames').onchange = e => {
   });
   refreshOrder(); buildPanel();
 };
+
+/* ================= 왼쪽 패널: Shift+끌기로 네모칸 한꺼번에 켜고 끄기 ================= */
+(function(){
+  let st = null, box = null, suppress = false;
+  const panels = '#side, #lyrDock';
+  document.addEventListener('mousedown', e => {
+    if (!e.shiftKey || e.button !== 0 || !e.target.closest || !e.target.closest(panels)) return;
+    if (e.target.closest('input[type=text],input[type=number],input[type=color],input[type=range],textarea,select')) return;
+    st = { x: e.clientX, y: e.clientY, p: e.target.closest(panels), moved: false };
+    e.preventDefault();
+  }, true);
+  document.addEventListener('mousemove', e => {
+    if (!st) return;
+    if (!st.moved && Math.hypot(e.clientX - st.x, e.clientY - st.y) < 5) return;
+    st.moved = true;
+    if (!box){ box = document.createElement('div'); box.style.cssText = 'position:fixed;z-index:99999;border:1.5px dashed #1a73e8;background:rgba(26,115,232,.12);pointer-events:none'; document.body.appendChild(box); }
+    const x1 = Math.min(st.x, e.clientX), y1 = Math.min(st.y, e.clientY), x2 = Math.max(st.x, e.clientX), y2 = Math.max(st.y, e.clientY);
+    Object.assign(box.style, { left: x1 + 'px', top: y1 + 'px', width: (x2 - x1) + 'px', height: (y2 - y1) + 'px' });
+    st.r = [x1, y1, x2, y2];
+  });
+  document.addEventListener('mouseup', () => {
+    if (!st) return;
+    const s0 = st; st = null; if (box){ box.remove(); box = null; }
+    if (!s0.moved || !s0.r) return;
+    const [x1, y1, x2, y2] = s0.r;
+    const hits = [...s0.p.querySelectorAll('input[type=checkbox]')].filter(c => {
+      if (c.disabled || !c.offsetParent) return false;
+      const r = c.getBoundingClientRect(); return r.width > 0 && r.right >= x1 && r.left <= x2 && r.bottom >= y1 && r.top <= y2;
+    });
+    if (!hits.length){ suppress = true; setTimeout(() => suppress = false, 80); return; }
+    const target = !hits[0].checked;
+    const todo = hits.filter(c => c.checked !== target);
+    todo.forEach(c => c.click());
+    suppress = true; setTimeout(() => suppress = false, 80);
+    showToast(`${hits.length}개 중 ${todo.length}개를 ${target ? '켰' : '껐'}습니다.`);
+  });
+  document.addEventListener('click', e => { if (suppress){ e.stopPropagation(); e.preventDefault(); } }, true);
+})();
+
+/* ================= 키맵 이름 글씨 ================= */
+function insetLabels(){ if (!Array.isArray(cfg.inset.labels)) cfg.inset.labels = []; return cfg.inset.labels; }
+function renderInsetLabels(){
+  const el = $('#inset'); if (!el) return;
+  el.querySelectorAll('.ilb').forEach(x => x.remove());
+  insetLabels().forEach((lb, i) => {
+    const d = document.createElement('div'); d.className = 'ilb';
+    d.textContent = lb.text;
+    Object.assign(d.style, { left: (lb.x * 100) + '%', top: (lb.y * 100) + '%', fontSize: (lb.size || 11) + 'px', fontWeight: lb.bold === false ? 400 : 700, color: lb.color || '#e60012', fontFamily: fontStack(cfg.legend.font) });
+    if (lb.box){ d.style.border = `1.5px solid ${lb.color || '#e60012'}`; d.style.background = '#ffffff'; d.style.padding = '1px 5px'; }
+    else d.style.textShadow = '-1px 0 #fff,1px 0 #fff,0 -1px #fff,0 1px #fff,-1px -1px #fff,1px 1px #fff,-1px 1px #fff,1px -1px #fff';
+    d.addEventListener('pointerdown', e => {
+      e.stopPropagation(); e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const mv = ev => { lb.x = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)); lb.y = Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height)); d.style.left = lb.x * 100 + '%'; d.style.top = lb.y * 100 + '%'; };
+      const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); schedCheckpoint(); };
+      window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+    });
+    d.addEventListener('dblclick', e => { e.stopPropagation(); const t = prompt('키맵에 넣을 글자', lb.text); if (t != null && t.trim()){ lb.text = t.trim(); renderInsetLabels(); buildInsetLbList(); schedCheckpoint(); } });
+    el.appendChild(d);
+  });
+}
+function buildInsetLbList(){
+  const box = $('#ilList'); if (!box) return; box.innerHTML = '';
+  insetLabels().forEach((lb, i) => {
+    const d = document.createElement('div'); d.className = 'ilrow';
+    d.innerHTML = `<input type="text" value="${esc(lb.text)}"><select title="모양"><option value="1" ${lb.box ? 'selected' : ''}>박스</option><option value="0" ${lb.box ? '' : 'selected'}>글자만</option></select><input type="number" min="6" max="60" value="${lb.size || 11}" title="글자 크기"><input type="color" value="${lb.color || '#e60012'}" title="색"><button title="삭제">✕</button>`;
+    const [tx, sel, sz, col, del] = d.children;
+    tx.oninput = () => { lb.text = tx.value; renderInsetLabels(); };
+    sel.onchange = () => { lb.box = sel.value === '1'; renderInsetLabels(); schedCheckpoint(); };
+    sz.oninput = () => { lb.size = +sz.value || 11; renderInsetLabels(); };
+    col.oninput = () => { lb.color = col.value; renderInsetLabels(); };
+    del.onclick = () => { insetLabels().splice(i, 1); renderInsetLabels(); buildInsetLbList(); schedCheckpoint(); };
+    box.appendChild(d);
+  });
+}
+$('#ilAdd').onclick = () => {
+  const n = insetLabels().length;
+  insetLabels().push(n === 0 ? { text: '사업대상지역', x: 0.5, y: 0.5, size: 12, color: '#e60012', box: true } : { text: '이름', x: 0.5, y: 0.3 + 0.08 * (n % 6), size: 10, color: '#555555', box: false, bold: false });
+  const tg = $('.tg[data-t="inset"]'); if (tg && !tg.checked){ tg.checked = true; tg.dispatchEvent(new Event('change')); }
+  renderInsetLabels(); buildInsetLbList(); schedCheckpoint();
+};
+renderInsetLabels(); buildInsetLbList();
 
 buildLcList();
 
