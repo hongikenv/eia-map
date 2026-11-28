@@ -313,6 +313,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 #foldBar{display:flex;gap:6px;padding:5px 14px;background:#eef1f5;border-bottom:1px solid #dde;align-items:center;font-size:12px;color:#567}
 #foldBar button{padding:1px 8px;font-size:12px}
 body .hlp{display:none!important}
+.srch .srcl{font-size:10px;color:#888;margin:1px 0 2px;line-height:1.3}
 .hi{display:inline-block;margin-left:4px;width:15px;height:15px;line-height:15px;border-radius:50%;background:#e8eef7;color:#2a5db0;font:700 10px/15px sans-serif;text-align:center;cursor:help;vertical-align:middle;font-style:normal}
 #hiTip{position:fixed;z-index:99999;max-width:300px;background:#222;color:#fff;font-size:12px;line-height:1.45;padding:7px 9px;border-radius:6px;box-shadow:0 2px 8px #0005;pointer-events:none;display:none}
 .hbtn.on{background:rgba(255,255,255,.3)}
@@ -347,7 +348,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.11</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.10.1</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -472,85 +473,64 @@ body .hlp{display:none!important}
     <div class="pinhelp">📌 이름을 <b>두 번 클릭</b>하거나, 지도에서 그 자료를 <b>우클릭 → 레이어로 추가</b>하면 도면에 쓸 레이어로 잡혀 오른쪽 레이어 창과 범례에 들어갑니다. 다시 두 번 클릭하면 미리보기로 돌아갑니다.</div>
     <div class="row"><label><input type="checkbox" id="identOn" checked> 지도를 클릭하면 그 자리 자료의 이름·속성 보기</label><span class="hint">우클릭은 항상: 이름·속성 + 좌표·주소 + 레이어로 추가</span></div>
     <div class="src">
-      <div class="srch"><b>브이월드 (국토교통부)</b><span class="badge">실시간</span><div class="hint">브이월드 2D데이터 API</div></div>
+      <div class="srch"><b>브이월드 (국토교통부)</b><span class="badge">실시간</span><div class="srcl">출처: 국토교통부 브이월드 2D데이터 API</div></div>
       <div id="themeList"></div>
-      <details><summary>목록에 없는 브이월드 자료 직접 추가</summary>
-      <div class="grid">
-        <label>자료 코드</label><input type="text" id="thCode" placeholder="예: LT_C_UQ114">
-        <label>이름</label><input type="text" id="thName" placeholder="범례에 들어갈 이름">
-        <label>종류</label><select id="thType"><option value="polygon">면</option><option value="line">선</option><option value="point">점</option></select>
-      </div>
-      <div class="row"><button id="thAdd">추가</button></div>
-      <p class="hint" id="thMsg" style="color:#b33"></p>
-      <p class="hint">코드는 브이월드 홈페이지 → 오픈API → 2D데이터 API 레퍼런스의 데이터 목록에 있습니다. (예: LT_C_UQ114)</p>
-    </details>
     </div>
     <div class="src" id="ecoBox">
-      <div class="srch"><b>에코뱅크 (국립생태원)</b><span class="badge">실시간</span><div class="hint">공공데이터포털 국립생태원_생태자연도 서비스 (WFS)</div></div>
+      <div class="srch"><b>에코뱅크 (국립생태원)</b><span class="badge">실시간</span><div class="srcl">출처: 국립생태원 생태자연도 (공공데이터포털 WFS)</div></div>
       <details class="thgrp" open><summary><input type="checkbox" id="eco_all" title="전체 켜기/끄기"> 생태자연도 <small class="hint" id="eco_cnt"></small></summary>
         <div id="ecoList"></div>
       </details>
       <p class="hint" id="eco_msg"></p>
-      <details><summary>문제가 있을 때</summary>
-        <div class="row"><button id="eco_test">지금 화면 요청을 새 창에서 열어보기</button></div>
-        <p class="hint">새 창에 글자(오류 메시지)가 나오면 그 내용을 알려주세요. 주소창에 인증키가 보이니 캡처할 때는 가려주세요.</p>
-      </details>
     </div>
     <div class="src" id="egisBox">
-      <div class="srch"><b>환경공간정보서비스 (기후에너지환경부)</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="hint">환경공간정보서비스 GeoServer WFS · 중계 서버 경유</div></div>
+      <div class="srch"><b>환경공간정보서비스 (기후에너지환경부)</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="srcl">출처: 기후에너지환경부 환경공간정보서비스 (GeoServer WFS)</div></div>
       <details class="thgrp" open><summary><input type="checkbox" id="egis_all" title="전체 켜기/끄기"> 환경주제도 <small class="hint" id="egis_cnt"></small></summary>
         <div id="egisList"></div>
       </details>
       <p class="hint" id="egis_msg"></p>
-      <details><summary>환경공간정보서비스 자료 직접 추가 (자연발생석면 등)</summary>
-        <div class="grid">
-          <label>레이어 이름</label><input type="text" id="egCode" placeholder="예: me:xxxxxxxx">
-          <label>표시 이름</label><input type="text" id="egName" placeholder="범례에 들어갈 이름">
-          <label>종류</label><select id="egType"><option value="polygon">면</option><option value="line">선</option><option value="point">점</option></select>
-          <label>색</label><input type="color" id="egColor" value="#8e24aa">
-          <label>조건(선택)</label><input type="text" id="egCql" placeholder="예: type_code='A'">
-        </div>
-        <div class="row"><button id="egAdd">추가</button><button id="egCaps">레이어 목록 열기</button></div>
-        <p class="hint" id="egMsg" style="color:#b33"></p>
-        <p class="hint hlp">'레이어 목록 열기'를 누르면 새 창에 환경공간정보서비스의 전체 레이어 목록(XML)이 열립니다. Ctrl+F로 '석면' 같은 한글 제목을 찾아 바로 위·아래 <b>&lt;Name&gt;</b> 값(예: me:abc_def)을 위 칸에 붙여넣으세요. 추가한 자료는 이 PC에 기억되고, 레이어로 잡으면 작업 파일에도 함께 저장됩니다.</p>
-      </details>
     </div>
     <div class="src" id="rivBox">
-      <div class="srch"><b>하천 (국가 · 지방 · 소하천)</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="hint">국가·지방하천: 하천정보관리시스템(RIMGIS) · 소하천: 환경공간정보서비스</div></div>
+      <div class="srch"><b>하천 (국가 · 지방 · 소하천)</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="srcl">출처: 하천정보관리시스템(RIMGIS) · 환경공간정보서비스(소하천)</div></div>
       <details class="thgrp" open><summary><input type="checkbox" id="riv_all" title="전체 켜기/끄기"> 하천 <small class="hint" id="riv_cnt"></small></summary>
         <div id="rivList"></div>
       </details>
       <p class="hint" id="riv_msg">국가하천은 처음 받을 때 하천 하나씩 통째로 받아 시간이 걸리고, 그 뒤로는 이 PC에 보관해 두어 빠릅니다.</p>
     </div>
     <div class="src" id="keiBox">
-      <div class="srch"><b>KEI 지역환경정보시스템 · 산줄기</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="hint">신산경표 산줄기 (박성태, 2010) · 한국환경연구원 GeoServer WFS</div></div>
+      <div class="srch"><b>KEI 지역환경정보시스템 · 산줄기</b><span class="badge">실시간</span><span class="badge gray">중계</span><div class="srcl">출처: 한국환경연구원 지역환경정보시스템 · 신산경표 산줄기(박성태, 2010)</div></div>
       <details class="thgrp" open><summary><input type="checkbox" id="kei_all" title="전체 켜기/끄기"> 백두대간 및 산줄기 <small class="hint" id="kei_cnt"></small></summary>
         <div id="keiList"></div>
       </details>
       <p class="hint" id="kei_msg"></p>
     </div>
     <div class="src" id="lcBox">
-      <div class="srch"><b>토지피복지도</b><span class="badge gray">환경공간정보서비스</span><div class="hint hlp">환경부 환경공간정보서비스 지도 서비스를 그림으로 겹쳐 보여줍니다. 체크하면 레이어로 올라오고, 투명도는 레이어 패널에서 조절합니다. 세분류는 2024년 영상 기준으로 현행화한 자료라 현재와 일부 차이가 있을 수 있습니다.</div></div>
+      <div class="srch"><b>토지피복지도</b><span class="badge gray">환경공간정보서비스</span><div class="srcl">출처: 기후에너지환경부 환경공간정보서비스 토지피복지도</div><div class="hint hlp">환경부 환경공간정보서비스 지도 서비스를 그림으로 겹쳐 보여줍니다. 체크하면 레이어로 올라오고, 투명도는 레이어 패널에서 조절합니다. 세분류는 2024년 영상 기준으로 현행화한 자료라 현재와 일부 차이가 있을 수 있습니다.</div></div>
       <details class="thgrp" open><summary>대분류 <small class="hint" id="lc1_cnt"></small></summary><div id="lcList1"></div></details>
       <details class="thgrp"><summary>중분류 <small class="hint" id="lc2_cnt"></small></summary><div id="lcList2"></div></details>
       <details class="thgrp"><summary>세분류 <small class="hint" id="lc3_cnt"></small></summary><div id="lcList3"></div></details>
       <p class="hint" id="lc_msg"></p>
     </div>
     <div class="src" id="asbBox">
-      <div class="srch"><b>석면관리 종합정보망</b><span class="badge gray">환경공간정보서비스</span></div>
+      <div class="srch"><b>석면관리 종합정보망</b><span class="badge gray">환경공간정보서비스</span><div class="srcl">출처: 기후에너지환경부 석면관리 종합정보망(환경공간정보서비스)</div></div>
       <div id="asbList"></div>
     </div>
     <div class="src" id="cenBox">
-      <div class="srch"><b>겨울철 조류 동시센서스</b><span class="badge gray">국립생물자원관</span><div class="hint hlp">국립생물자원관 철새정보시스템(species.nibr.go.kr)의 지도 서비스를 그림으로 겹쳐 보여줍니다.</div></div>
+      <div class="srch"><b>겨울철 조류 동시센서스</b><span class="badge gray">국립생물자원관</span><div class="srcl">출처: 국립생물자원관 철새정보시스템(species.nibr.go.kr)</div><div class="hint hlp">국립생물자원관 철새정보시스템(species.nibr.go.kr)의 지도 서비스를 그림으로 겹쳐 보여줍니다.</div></div>
       <div id="cenList"></div>
     </div>
     <div class="src" id="gsvBox">
-      <div class="srch"><b>수질오염총량 · 물환경정보</b><span class="badge gray">물환경정보시스템</span><div class="hint hlp">물환경정보시스템(mulmoa.go.kr) 지도 서버의 자료를 도형 레이어로 받습니다. 도형 받기가 막히면 그림으로 자동 전환됩니다.</div></div>
+      <div class="srch"><b>수질오염총량 · 물환경정보</b><span class="badge gray">물환경정보시스템</span><div class="srcl">출처: 물환경정보시스템(mulmoa.go.kr)</div><div class="hint hlp">물환경정보시스템(mulmoa.go.kr) 지도 서버의 자료를 도형 레이어로 받습니다. 도형 받기가 막히면 그림으로 자동 전환됩니다.</div></div>
       <div id="gsvList"></div>
       <p class="hint" id="gsvMsg"></p>
     </div>
+    <div class="src" id="geoBox">
+      <div class="srch"><b>지질도</b><span class="badge gray">한국지질자원연구원</span><div class="srcl">출처: 한국지질자원연구원 지오빅데이터 오픈플랫폼</div><div class="hint hlp">한국지질자원연구원 지오빅데이터 오픈플랫폼의 지질도를 그림으로 겹쳐 보여줍니다. 설정(⚙)에 지질도 인증키를 넣어야 합니다.</div></div>
+      <div id="geoList"></div>
+      <p class="hint" id="geoMsg"></p>
+    </div>
     <div class="src" id="fileBox">
-      <div class="srch"><b>사이트에 올려 둔 자료 (data 폴더)</b><span class="badge gray">파일</span><div class="hint">국립생물자원관·물환경정보시스템 등에서 받은 지도파일을 data 폴더에 넣어 쓰는 방식</div></div>
+      <div class="srch"><b>사이트에 올려 둔 자료 (data 폴더)</b><span class="badge gray">파일</span><div class="srcl">출처: 국립생물자원관·물환경정보시스템 등에서 받은 지도파일</div></div>
       <details class="thgrp" open><summary>조사지역 · 유역 <small class="hint" id="fl_cnt"></small></summary>
         <div id="fileList"></div>
       </details>
@@ -708,6 +688,8 @@ body .hlp{display:none!important}
   <p class="hint" id="keyHint"></p>
   <div class="grid"><label>공공데이터포털 인증키</label><span><input type="password" id="dkey" style="flex:1;min-width:230px" placeholder="일반 인증키(Decoding) 붙여넣기"><button id="dkeyShow">보기</button></span></div>
   <p class="hint">에코뱅크 생태자연도 등 공공데이터포털(data.go.kr) API에 씁니다. 이 키도 이 PC의 브라우저에만 저장됩니다.</p>
+  <div class="grid"><label>지질도 인증키 (KIGAM)</label><span><input type="password" id="kkey" style="flex:1;min-width:230px" placeholder="한국지질자원연구원 지질도 인증키"><button id="kkeyShow">보기</button></span></div>
+  <p class="hint">지질도(한국지질자원연구원 지오빅데이터)에 씁니다. 이 PC의 브라우저에만 저장되고, 저장소나 도면 파일에는 들어가지 않습니다.</p>
   <div class="grid"><label>중계 서버 주소</label><span><input type="text" id="relayIn" style="flex:1;min-width:230px" placeholder="예: https://eia-relay.아이디.workers.dev"><button id="relayTest">확인</button></span></div>
   <p class="hint" id="relayHint">환경공간정보서비스처럼 브라우저에서 바로 받을 수 없는 자료를 받아올 때 씁니다. 팀원 모두 같은 주소를 넣으면 됩니다.</p>
   <div class="mbtn"><button id="vkeyDel">개인 키 지우기</button> <button id="vkeySave" class="pri">저장</button> <button id="settingsClose">닫기</button></div>
@@ -1113,9 +1095,11 @@ function updateKeyState(){
 }
 let dataKey = pick('dataGoKey', 'dataGoKey');
 const getDataKey = () => dataKey;
+const getKigamKey = () => store.get('kigamKey', '') || '';
 $('#openSettings').onclick = () => {
   $('#vkey').value = vwKey; $('#vkey').type = 'password'; $('#vkeyShow').textContent = '보기';
   $('#dkey').value = dataKey; $('#dkey').type = 'password'; $('#dkeyShow').textContent = '보기';
+  $('#kkey').value = store.get('kigamKey', ''); $('#kkey').type = 'password'; $('#kkeyShow').textContent = '보기';
   $('#relayIn').value = relayUrl;
   const sh = [SHARED.vworldKey && '브이월드', SHARED.dataGoKey && '공공데이터포털', SHARED.relayUrl && '중계 서버'].filter(Boolean);
   $('#keyHint').innerHTML = (sh.length ? `<b>팀 공용 설정 사용 중:</b> ${sh.join(' · ')} (config.js). 칸을 비워 두면 공용 키를 씁니다. 개인 키를 넣으면 이 PC에서만 그 키가 우선합니다.<br>` : '')
@@ -1125,9 +1109,11 @@ $('#openSettings').onclick = () => {
 $('#settingsClose').onclick = () => { $('#settings').hidden = true; };
 $('#vkeyShow').onclick = () => { const i = $('#vkey'); i.type = i.type === 'password' ? 'text' : 'password'; $('#vkeyShow').textContent = i.type === 'password' ? '보기' : '숨기기'; };
 function applyKeyChange(){ keepOwn('vworldKey', vwKey, 'vworldKey'); updateKeyState(); setBase(); buildBaseList(); updateAdmin(); updateThemes(); updateInset(true); }
+$('#kkeyShow').onclick = () => { const i = $('#kkey'); i.type = i.type === 'password' ? 'text' : 'password'; $('#kkeyShow').textContent = i.type === 'password' ? '보기' : '숨기기'; };
 $('#dkeyShow').onclick = () => { const i = $('#dkey'); i.type = i.type === 'password' ? 'text' : 'password'; $('#dkeyShow').textContent = i.type === 'password' ? '보기' : '숨기기'; };
 function applyDataKey(){ keepOwn('dataGoKey', dataKey, 'dataGoKey'); ecoFetched = []; updateEcoBox(); updateEco(); }
 $('#vkeySave').onclick = () => {
+  store.set('kigamKey', $('#kkey').value.trim());
   vwKey = $('#vkey').value.trim() || SHARED.vworldKey; dataKey = $('#dkey').value.trim() || SHARED.dataGoKey;
   const nr = $('#relayIn').value.trim() || SHARED.relayUrl; if (nr !== relayUrl){ relayUrl = nr; keepOwn('relayUrl', relayUrl, 'relayUrl'); layers.forEach(o => { if (o.src && /^(egis|kei|rim)$/.test(o.src.kind)){ o._fetched = []; o.src.err = ''; } }); }
   applyKeyChange(); applyDataKey(); updateEgis(); buildEgisList(); buildKeiList(); buildRiverList(); $('#settings').hidden = true;
@@ -1674,11 +1660,11 @@ function toggleTheme(code, name, type, color, on, batch){
   if (!batch) afterThemeToggle(on);
 }
 $('#thAllOff').onclick = () => { layers.forEach(o => { if (o.src && !o.pinned) o.visible = false; }); afterThemeToggle(false); rebuildThemeLists(); };
-$('#thAdd').onclick = () => {
+(document.getElementById('thAdd')||{}).onclick = () => {
   const code = $('#thCode').value.trim().toUpperCase(), name = $('#thName').value.trim() || code, type = $('#thType').value;
   if (!/^[A-Z0-9_]+$/.test(code)){ alert('자료 코드를 확인해 주세요. (영문·숫자·_ 만, 예: LT_C_UQ114)'); return; }
   if (themeLayer(code)){ alert('이미 추가된 자료입니다.'); return; }
-  themeUnavail.delete(code); $('#thMsg').textContent = '';
+  themeUnavail.delete(code); (document.getElementById('thMsg')||{}).textContent = '';
   $('#thCode').value = ''; $('#thName').value = '';
   toggleTheme(code, name, type, PALETTE[layers.length % PALETTE.length], true);
 };
@@ -1712,7 +1698,7 @@ async function updateThemes(){
           themeUnavail.add(o.src.code);
           map.removeLayer(o.group); layers.splice(layers.indexOf(o), 1);
           legendItems = legendItems.filter(x => x.lid !== o.id);
-          if (!themeInfo(o.src.code)) $('#thMsg').textContent = `'${o.src.code}'는 브이월드 2D데이터 API에서 받을 수 없는 코드입니다. 코드를 확인해 주세요.`;
+          if (!themeInfo(o.src.code)) (document.getElementById('thMsg')||{}).textContent = `'${o.src.code}'는 브이월드 2D데이터 API에서 받을 수 없는 코드입니다. 코드를 확인해 주세요.`;
           refreshOrder(); buildPanel(); renderLegendAll();
         }
         buildThemeList(); continue;
@@ -1837,7 +1823,7 @@ $('#eco_all').onchange = e => {
   for (const [g] of ECO_GRADES) if (!toggleEco(g, on, true)) break;
   refreshOrder(); buildPanel(); renderLegendAll(); buildEcoList(); if (on) updateEco();
 };
-$('#eco_test').onclick = () => {
+(document.getElementById('eco_test')||{}).onclick = () => {
   if (!getDataKey()){ alert('⚙ 설정에 공공데이터포털 인증키를 먼저 넣어주세요.'); return; }
   const c = map.getCenter(), p = proj4('EPSG:4326', 'EPSG:5186', [c.lng, c.lat]);
   window.open(ecoWfsUrl([p[0] - 500, p[1] - 500, p[0] + 500, p[1] + 500], 5), '_blank');
@@ -2139,8 +2125,9 @@ function renderLayer(o){
     const EPS = o.src.eps || [{ u: G + 'gwc/service/wms', t: true }, { u: G + 'wms' }, { u: G + 'gwc/service/wms', t: true, r: true }];
     const st = Math.min(o.src.stage || 0, EPS.length - 1), E = EPS[st];
     const WL = L.TileLayer.WMS.extend({ getTileUrl(c){ const u = L.TileLayer.WMS.prototype.getTileUrl.call(this, c); return E.r ? relayWrap(u) : u; } });
+    const kg = o.src.kigam ? { key: getKigamKey() } : {};
     const tl = new WL(E.u, Object.assign({ layers: o.src.layer, format: 'image/png', transparent: true, tiled: !!E.t,
-      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 20, opacity: (o.src.op != null ? o.src.op : 0.7), referrerPolicy: 'no-referrer' }, o.src.extra || {}));
+      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 20, opacity: (o.src.op != null ? o.src.op : 0.7), referrerPolicy: 'no-referrer' }, o.src.extra || {}, kg));
     let bad = 0, ok = 0;
     tl.on('tileload', () => { ok++; });
     tl.on('tileerror', () => {
@@ -2233,7 +2220,7 @@ function refreshOrder(){
   const t2 = $('#lyrWinN'); if (t2) t2.textContent = n ? `(${n})` : '';
 }
 const SRC_NAME = { file: '사이트 자료', vworld: '브이월드', ecowfs: '에코뱅크', egis: '환경공간정보', kei: 'KEI 산줄기', rim: '하천정보' };
-function rebuildThemeLists(){ if (typeof buildGsvList === 'function') buildGsvList(); buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (typeof buildFileList === 'function') buildFileList(); if (typeof buildLcList === 'function') buildLcList(); if (typeof buildAsbList === 'function') buildAsbList(); }
+function rebuildThemeLists(){ if (typeof buildGeoList === 'function') buildGeoList(); if (typeof buildGsvList === 'function') buildGsvList(); buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (typeof buildFileList === 'function') buildFileList(); if (typeof buildLcList === 'function') buildLcList(); if (typeof buildAsbList === 'function') buildAsbList(); }
 function pinLayer(o){
   if (!o || o.pinned) return;
   o.pinned = true; o.visible = true; o.grp = null;
@@ -3556,7 +3543,7 @@ map.on('click', e => {
 
 /* 그림(WMS) 주제도: 지도를 누르면 그 자리의 속성을 서버에 물어봄 (GetFeatureInfo) */
 async function wmsInfo(e){
-  const ls = layers.filter(o => o.visible && o.src && o.src.kind === 'lc' && !o.src.arcgis && o.group && map.hasLayer(o.group));
+  const ls = layers.filter(o => o.visible && o.src && o.src.kind === 'lc' && !o.src.arcgis && !o.src.kigam && o.group && map.hasLayer(o.group));
   if (!ls.length) return;
   const ll = e.latlng, pt = L.CRS.EPSG3857.project(ll), res = 156543.03392804097 / Math.pow(2, map.getZoom()), half = res * 50;
   const bbox = [pt.x - half, pt.y - half, pt.x + half, pt.y + half].join(',');
@@ -4498,11 +4485,11 @@ applyTool();
 setTimeout(checkpoint, 1500);
 
 /* ================= v2.6: 환경공간정보 직접 추가 ================= */
-$('#egCaps').onclick = () => {
+(document.getElementById('egCaps')||{}).onclick = () => {
   if (!relayUrl){ alert('중계 서버가 필요합니다. ⚙ 설정에 중계 서버 주소를 넣어주세요.'); return; }
   window.open(relayWrap('https://api.mcee.go.kr/geoserver/me/wfs?service=WFS&version=1.0.0&request=GetCapabilities'), '_blank');
 };
-$('#egAdd').onclick = () => {
+(document.getElementById('egAdd')||{}).onclick = () => {
   const tn = $('#egCode').value.trim(), name = $('#egName').value.trim(), type = $('#egType').value, color = $('#egColor').value, cql = $('#egCql').value.trim();
   const msg = $('#egMsg'); msg.textContent = '';
   if (!/^[A-Za-z0-9_]+:[A-Za-z0-9_]+$/.test(tn)){ msg.textContent = '레이어 이름은 me:영문이름 형식이어야 합니다. (레이어 목록 열기에서 <Name> 값을 복사)'; return; }
@@ -4776,6 +4763,35 @@ function buildGsvList(){
   });
 }
 buildGsvList();
+
+/* 지질도 (KIGAM 오픈API WMS, 인증키 필요) */
+var GEO = [['L_50K_Geology_Map', '5만 지질도'], ['L_250K_Geology_Map', '25만 지질도'], ['L_1M_Geology_Map', '100만 지질도'], ['l_50k_geology_frame_latest', '5만 지질도 도곽'],
+  ['L_10k_coalfield_geologic_map', '1만 탄전지질도'], ['L_25k_coalfield_geologic_map', '2.5만 탄전지질도']];
+function geoLayerOf(id){ return layers.find(o => o.src && o.src.kind === 'lc' && o.src.kigam && o.src.layer === id); }
+function geoToggle(id, name, on){
+  let o = geoLayerOf(id);
+  if (o) o.visible = on;
+  else if (on){
+    if (!getKigamKey()){ $('#geoMsg').textContent = '설정(⚙)에서 지질도 인증키를 먼저 넣어 주세요.'; showToast('지질도 인증키가 필요합니다. 설정(⚙)에 넣어 주세요.'); buildGeoList(); return; }
+    const U = 'https://data.kigam.re.kr/openapi/wms';
+    addLayer(name, { type: 'FeatureCollection', features: [] }, { type: 'polygon', pinned: false, noLegend: true, quiet: true,
+      src: { kind: 'lc', kigam: true, layer: id, op: 0.7, extra: { version: '1.1.1', format: 'image/png' }, eps: [{ u: U }, { u: U, r: true }] } });
+    $('#geoMsg').textContent = '';
+  }
+  refreshOrder(); buildPanel(); renderLegendAll(); buildGeoList();
+}
+function buildGeoList(){
+  const box = $('#geoList'); if (!box) return; box.innerHTML = '';
+  GEO.forEach(([id, name]) => {
+    const o = geoLayerOf(id), on = !!(o && o.visible);
+    const d = document.createElement('div'); d.className = 'thi';
+    d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="sw" style="background:rgba(160,120,60,.4);border-color:#a0783c"></span><label class="tn" title="두 번 클릭: 레이어로 잡기">${esc(name)}</label>${pinTag(o)}<small>그림</small>`;
+    d.querySelector('input').onchange = e => geoToggle(id, name, e.target.checked);
+    bindPinRow(d, () => geoLayerOf(id), () => geoToggle(id, name, true));
+    box.appendChild(d);
+  });
+}
+buildGeoList();
 
 buildLcList();
 
