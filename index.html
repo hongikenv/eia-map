@@ -346,7 +346,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.0</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.1</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -538,6 +538,10 @@ body .hlp{display:none!important}
     <div class="src" id="asbBox">
       <div class="srch"><b>석면관리 종합정보망</b><span class="badge gray">환경공간정보서비스</span></div>
       <div id="asbList"></div>
+    </div>
+    <div class="src" id="cenBox">
+      <div class="srch"><b>겨울철 조류 동시센서스</b><span class="badge gray">국립생물자원관</span><div class="hint hlp">국립생물자원관 철새정보시스템(species.nibr.go.kr)의 지도 서비스를 그림으로 겹쳐 보여줍니다.</div></div>
+      <div id="cenList"></div>
     </div>
     <div class="src" id="fileBox">
       <div class="srch"><b>사이트에 올려 둔 자료 (data 폴더)</b><span class="badge gray">파일</span><div class="hint">국립생물자원관·물환경정보시스템 등에서 받은 지도파일을 data 폴더에 넣어 쓰는 방식</div></div>
@@ -4444,7 +4448,6 @@ $('#egAdd').onclick = () => {
 
 /* ================= v2.6: 사이트 data 폴더 자료 (동시센서스 · 수질오염총량 단위유역) ================= */
 const FILES = [
-  ['fl_census', '겨울철 조류 동시센서스 조사지역', 'polygon', '#8E24AA', 'data/winter_census.geojson'],
   ['fl_tmdl', '수질오염총량 관리지역 (단위유역)', 'polygon', '#0288D1', 'data/tmdl_unit_basin.geojson']
 ];
 const fileLayerOf = id => layers.find(o => o.src && o.src.kind === 'file' && o.src.id === id);
@@ -4507,7 +4510,7 @@ var LC_KO = { lv1: '대분류', lv2: '중분류', lv3: '세분류' };
 const lcLabel = (lv, y) => lv === 'lv1' ? ({ '2010yr': '2010년대 말', '2000yr': '2000년대 말', '1990yr': '1990년대 말', '1980yr': '1980년대 말' })[y] : y.replace(/y$/, '').replace(/_g$/, ' (갱신)');
 const lcLayerOf = nm => layers.find(o => o.src && o.src.kind === 'lc' && o.src.layer === nm);
 function buildLcList(){
-  if (typeof LC === 'undefined' || !LC) return; if (typeof buildAsbList === 'function') buildAsbList();
+  if (typeof LC === 'undefined' || !LC) return; if (typeof buildAsbList === 'function') buildAsbList(); if (typeof buildCenList === 'function') buildCenList();
   ['lv1', 'lv2', 'lv3'].forEach((lv, k) => {
     const box = $('#lcList' + (k + 1)); if (!box) return; box.innerHTML = ''; let n = 0;
     LC[lv].forEach(y => {
@@ -4581,6 +4584,30 @@ function buildAsbList(){
   box.appendChild(d);
 }
 buildAsbList();
+
+/* 겨울철 조류 동시센서스 (국립생물자원관 WMS) */
+var CEN = { name: '겨울철 조류 동시센서스 조사지역', layer: 'nibr_visitant:visitant_census' };
+function cenLayer(){ return layers.find(o => o.src && o.src.kind === 'lc' && o.src.layer === CEN.layer); }
+function buildCenList(){
+  if (typeof CEN === 'undefined' || !CEN) return;
+  const box = $('#cenList'); if (!box) return; box.innerHTML = '';
+  const o = cenLayer(), on = !!(o && o.visible);
+  const d = document.createElement('div'); d.className = 'thi';
+  d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="sw" style="background:rgba(142,36,170,.4);border-color:#8E24AA"></span><label class="tn">${CEN.name}</label><small>전국</small>`;
+  d.querySelector('label').onclick = () => d.querySelector('input').click();
+  d.querySelector('input').onchange = e => {
+    const a = cenLayer();
+    if (a) a.visible = e.target.checked;
+    else if (e.target.checked){
+      const U = 'https://species.nibr.go.kr/geosvr/wms';
+      addLayer(CEN.name, { type: 'FeatureCollection', features: [] }, { type: 'polygon', pinned: true, noLegend: true, quiet: true,
+        src: { kind: 'lc', layer: CEN.layer, op: 0.85, extra: { version: '1.3.0' }, eps: [{ u: U, t: true }, { u: U, t: true, r: true }] } });
+    }
+    refreshOrder(); buildPanel(); renderLegendAll(); buildCenList();
+  };
+  box.appendChild(d);
+}
+buildCenList();
 
 buildLcList();
 
