@@ -347,7 +347,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.10</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.11</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -547,10 +547,7 @@ body .hlp{display:none!important}
     <div class="src" id="gsvBox">
       <div class="srch"><b>수질오염총량 · 물환경정보</b><span class="badge gray">물환경정보시스템</span><div class="hint hlp">물환경정보시스템(mulmoa.go.kr) 지도 서버의 자료를 도형 레이어로 받습니다. 도형 받기가 막히면 그림으로 자동 전환됩니다.</div></div>
       <div id="gsvList"></div>
-      <details class="thgrp"><summary>다른 레이어 직접 추가</summary>
-        <div class="row"><input type="text" id="gsvCode" placeholder="레이어명 예: wqp:han_step2_basin" style="flex:1"><input type="text" id="gsvName" placeholder="표시 이름" style="width:110px"><button id="gsvAdd">＋ 추가</button></div>
-        <div class="row"><button id="gsvCaps">레이어 목록 열기</button><span class="hint" id="gsvMsg"></span></div>
-      </details>
+      <p class="hint" id="gsvMsg"></p>
     </div>
     <div class="src" id="fileBox">
       <div class="srch"><b>사이트에 올려 둔 자료 (data 폴더)</b><span class="badge gray">파일</span><div class="hint">국립생물자원관·물환경정보시스템 등에서 받은 지도파일을 data 폴더에 넣어 쓰는 방식</div></div>
@@ -2236,7 +2233,7 @@ function refreshOrder(){
   const t2 = $('#lyrWinN'); if (t2) t2.textContent = n ? `(${n})` : '';
 }
 const SRC_NAME = { file: '사이트 자료', vworld: '브이월드', ecowfs: '에코뱅크', egis: '환경공간정보', kei: 'KEI 산줄기', rim: '하천정보' };
-function rebuildThemeLists(){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (typeof buildFileList === 'function') buildFileList(); if (typeof buildLcList === 'function') buildLcList(); if (typeof buildAsbList === 'function') buildAsbList(); }
+function rebuildThemeLists(){ if (typeof buildGsvList === 'function') buildGsvList(); buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (typeof buildFileList === 'function') buildFileList(); if (typeof buildLcList === 'function') buildLcList(); if (typeof buildAsbList === 'function') buildAsbList(); }
 function pinLayer(o){
   if (!o || o.pinned) return;
   o.pinned = true; o.visible = true; o.grp = null;
@@ -4694,13 +4691,12 @@ var GSV_GROUPS = [
     ['17me', '매립장침출수처리시설', '#00a38a', 'pt'], ['17chok', '축산폐수공공처리시설', '#a0400f', 'pt'], ['17ma', '마을하수도', '#ffee00', 'pt'], ['17ha', '하수종말처리시설', '#ff0000', 'pt']]],
   ['하천', false, [['13kuk', '국가하천'], ['13ji', '지방하천'], ['13ji2', '지방하천 2']]],
   ['수질영향권역', false, [['3dae', '대권역', '#4a90e2'], ['3jong', '중권역', '#d9534f'], ['3so', '소권역', '#f2e85a']]],
-  ['행정구역', false, [['2sido', '시도'], ['2sigungu', '시군구'], ['2um', '읍면동'], ['2ri', '리']]],
   ['지류총량', false, [['jiryu', '지류총량'], ['jiryu_point', '지류총량 지점'], ['tmdl_spot', '총량 지점']]]
 ];
 var GSV_ITEMS = [];
-var GSV_CUSTOM = []; try { GSV_CUSTOM = JSON.parse(store.get('gsvCustom', '[]')) || []; } catch(e){}
 function gsvLayerOf(code){ return layers.find(o => o.src && (o.src.kind === 'gsv' || (o.src.kind === 'lc' && o.src.gsv)) && (o.src.code === code || o.src.layer === code)); }
-function gsvToggle(code, name, on, col, kind){
+function gsvToggle(code, name, on, col, kind, batch){
+  code = 'wqp:' + code.replace(/^wqp:/, '');
   let o = gsvLayerOf(code);
   if (o) o.visible = on;
   else if (on){
@@ -4708,9 +4704,9 @@ function gsvToggle(code, name, on, col, kind){
     const pt = kind === 'pt';
     const st = pt ? { symbols: [S('marker', { shape: 'square', size: 9, fill: color, stroke: '#ffffff', sw: 1 })], label: labelDefaults() }
       : col ? { symbols: [S('stroke', { color, w: 2.2, dash: 'solid' })], label: labelDefaults() } : themeStyle('polygon', color);
-    addLayer(name, { type: 'FeatureCollection', features: [] }, { type: pt ? 'point' : 'polygon', style: st, pinned: true, quiet: true, src: { kind: 'gsv', code, color, minZ: pt ? 8 : col ? 6 : 9 } });
+    addLayer(name, { type: 'FeatureCollection', features: [] }, { type: pt ? 'point' : 'polygon', style: st, pinned: false, quiet: true, src: { kind: 'gsv', code, color, minZ: pt ? 8 : col ? 6 : 9 } });
   }
-  refreshOrder(); buildPanel(); renderLegendAll(); buildGsvList(); if (on) updateGsv();
+  if (!batch){ refreshOrder(); buildPanel(); renderLegendAll(); buildGsvList(); if (on) updateGsv(); }
 }
 function gsvToImage(o, why){
   const code = o.src.code, U = GSV + 'wms';
@@ -4763,27 +4759,22 @@ function buildGsvList(){
     code = 'wqp:' + code.replace(/^wqp:/, '');
     const o = gsvLayerOf(code), on = !!(o && o.visible);
     const d = document.createElement('div'); d.className = 'thi';
-    d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}>${col && kind === 'pt' ? `<span style="display:inline-block;width:10px;height:10px;background:${col};margin:0 6px 0 4px"></span>` : col ? `<span style="display:inline-block;width:16px;height:0;border-top:3px solid ${col};margin:0 6px 3px 2px"></span>` : '<span class="sw" style="background:rgba(2,136,209,.4);border-color:#0288D1"></span>'}<label class="tn">${esc(name)}</label>${o && o.src.kind === 'gsv' ? `<small>${o.gj.features.length}개</small>` : o ? '<small>그림</small>' : ''}`;
-    d.querySelector('label').onclick = () => d.querySelector('input').click();
+    d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}>${col && kind === 'pt' ? `<span style="display:inline-block;width:10px;height:10px;background:${col};margin:0 6px 0 4px"></span>` : col ? `<span style="display:inline-block;width:16px;height:0;border-top:3px solid ${col};margin:0 6px 3px 2px"></span>` : '<span class="sw" style="background:rgba(2,136,209,.4);border-color:#0288D1"></span>'}<label class="tn" title="두 번 클릭: 레이어로 잡기">${esc(name)}</label>${pinTag(o)}${o && o.src.kind === 'gsv' ? `<small>${o.gj.features.length}개</small>` : o ? '<small>그림</small>' : ''}`;
     d.querySelector('input').onchange = e => gsvToggle(code, name, e.target.checked, col, kind);
+    bindPinRow(d, () => gsvLayerOf(code), () => gsvToggle(code, name, true, col, kind));
     return d;
   };
   GSV_GROUPS.forEach(([g, open, arr]) => {
     const det = document.createElement('details'); det.className = 'thgrp'; det.open = open;
     const n = arr.filter(([c]) => { const o = gsvLayerOf('wqp:' + c); return o && o.visible; }).length;
-    det.innerHTML = `<summary>${esc(g)} <small class="hint">(${n}/${arr.length})</small></summary>`;
+    det.innerHTML = `<summary><input type="checkbox" title="전체 켜기/끄기"> ${esc(g)} <small class="hint">(${n}/${arr.length})</small></summary>`;
+    const mc = det.querySelector('summary input'); mc.checked = n === arr.length; mc.indeterminate = n > 0 && n < arr.length;
+    mc.onclick = e => e.stopPropagation();
+    mc.onchange = e => { arr.forEach(([c, nm, col, kd]) => gsvToggle('wqp:' + c, nm, e.target.checked, col, kd, true)); refreshOrder(); buildPanel(); renderLegendAll(); buildGsvList(); if (e.target.checked) updateGsv(); };
     arr.forEach(([c, nm, col, kd]) => det.appendChild(row(c, nm, col, kd)));
     box.appendChild(det);
   });
-  if (GSV_CUSTOM.length){ const det = document.createElement('details'); det.className = 'thgrp'; det.open = true; det.innerHTML = '<summary>직접 추가한 것</summary>'; GSV_CUSTOM.forEach(([c, nm]) => det.appendChild(row(c, nm))); box.appendChild(det); }
 }
-$('#gsvCaps').onclick = () => window.open(GSV + 'wms?service=WMS&version=1.1.1&request=GetCapabilities', '_blank');
-$('#gsvAdd').onclick = () => {
-  const code = $('#gsvCode').value.trim(), name = $('#gsvName').value.trim() || code;
-  if (!/^[\w]+:[\w\-]+$/.test(code)){ $('#gsvMsg').textContent = '레이어명은 wqp:이름 형태로 넣어 주세요.'; return; }
-  if (GSV_CUSTOM.some(x => x[0] === code)){ $('#gsvMsg').textContent = '이미 있는 레이어입니다.'; return; }
-  GSV_CUSTOM.push([code, name]); store.set('gsvCustom', JSON.stringify(GSV_CUSTOM)); $('#gsvCode').value = $('#gsvName').value = ''; $('#gsvMsg').textContent = '추가했습니다. 체크하면 켜집니다.'; buildGsvList();
-};
 buildGsvList();
 
 buildLcList();
