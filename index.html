@@ -347,7 +347,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.4</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.9.5</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -4689,7 +4689,7 @@ var TMDL_ITEMS = [
 var TMDL_SUB = [
   ['수계', [[31, 'tkdaeyuyeok'], [32, 'jinAdan'], [33, 'sapgoy'], [34, '9hangang'], [35, '10kms'], [36, '11yeoungjb'], [37, '12nak']]],
   ['수질영향권역', [[39, '3dae (대)'], [40, '3jong (중)'], [41, '3so (소)']]],
-  ['환경기초시설', [[18, '17etc'], [19, '17ha'], [20, '17ma'], [21, '17me'], [22, '17nong'], [23, '17san'], [24, '15chi'], [25, '17boon'], [26, '17chok']]],
+  ['환경기초시설', [[18, '17etc (기타)'], [19, '17ha (하수처리시설 추정)'], [20, '17ma'], [21, '17me'], [22, '17nong (농공단지 추정)'], [23, '17san (산업단지 추정)'], [24, '15chi'], [25, '17boon (분뇨 추정)'], [26, '17chok (축산 추정)']]],
   ['총량 미비 레이어', [[48, '10km'], [49, '11yeoung'], [50, '13ji'], [51, '2ri'], [52, 'kktkdaeyuyeok']]],
   ['지류총량', [[64, 'tmdl_common'], [65, 'tmdl_merge'], [66, 'tmdl_tmdl'], [67, 'jiryu'], [70, 'tmdl_spot']]],
   ['하천', [[28, '13kuk'], [29, '13ji2']]]
@@ -4702,24 +4702,102 @@ function tmdlToggle(name, ids, on){
     src: { kind: 'lc', layer: 'TMDL:' + ids, op: 0.8, arcgis: { url: TMDL_URL, layers: 'show:' + ids } } });
   refreshOrder(); buildPanel(); renderLegendAll(); buildTmdlList();
 }
+/* ---- 벡터(도형)로 받기: ArcGIS REST query → GeoJSON (브이월드처럼 레이어로 잡힘) ---- */
+const AGS_PX = 'https://211.114.21.35/inacc/Proxy.jsp?';
+const esriToGj = (j) => {
+  const area = r => { let a = 0; for (let k = 0; k < r.length - 1; k++) a += r[k][0] * r[k + 1][1] - r[k + 1][0] * r[k][1]; return a; };
+  const feats = [];
+  (j.features || []).forEach(f => {
+    const g = f.geometry; if (!g) return; let geom = null;
+    if (g.x != null) geom = { type: 'Point', coordinates: [g.x, g.y] };
+    else if (g.points) geom = { type: 'MultiPoint', coordinates: g.points };
+    else if (g.paths) geom = g.paths.length === 1 ? { type: 'LineString', coordinates: g.paths[0] } : { type: 'MultiLineString', coordinates: g.paths };
+    else if (g.rings){
+      const polys = [];
+      g.rings.forEach(r => { if (area(r) < 0 || !polys.length) polys.push([r]); else polys[polys.length - 1].push(r); });
+      geom = polys.length === 1 ? { type: 'Polygon', coordinates: polys[0] } : { type: 'MultiPolygon', coordinates: polys };
+    }
+    if (geom) feats.push({ type: 'Feature', geometry: geom, properties: f.attributes || {} });
+  });
+  return { type: 'FeatureCollection', features: feats };
+};
+async function agsFetch(inner){
+  const routes = [AGS_PX + inner, relayUrl ? relayWrap(inner) : null, relayUrl ? relayWrap(AGS_PX + inner) : null].filter(Boolean);
+  let lastErr = '연결하지 못했습니다';
+  for (const u of routes){
+    try {
+      const r = await fetch(u); if (!r.ok){ lastErr = 'HTTP ' + r.status; continue; }
+      const t = await r.text(); let j; try { j = JSON.parse(t); } catch(e){ lastErr = '응답 형식 오류'; continue; }
+      if (j.error){ lastErr = j.error.message || '서버 오류'; continue; }
+      return j;
+    } catch(e){ lastErr = '연결하지 못했습니다 (서버가 다른 사이트의 요청을 막았을 수 있습니다)'; }
+  }
+  throw new Error(lastErr);
+}
+function agsLayerOf(id){ return layers.find(o => o.src && o.src.kind === 'ags' && o.src.sub === id); }
+function agsToggle(id, name, on){
+  let o = agsLayerOf(id);
+  if (o) o.visible = on;
+  else if (on){
+    const color = PALETTE[layers.length % PALETTE.length];
+    o = addLayer('총량 · ' + name, { type: 'FeatureCollection', features: [] }, { type: 'polygon', style: themeStyle('polygon', color), pinned: true, quiet: true, src: { kind: 'ags', sub: id, color } });
+  }
+  refreshOrder(); buildPanel(); renderLegendAll(); buildTmdlList(); if (on) updateAgs();
+}
+let agsBusy = false;
+async function updateAgs(){
+  if (agsBusy) return;
+  const on = layers.filter(o => o.src && o.src.kind === 'ags' && o.visible); if (!on.length) return;
+  agsBusy = true; const msg = $('#tmdl_msg');
+  try {
+    for (const o of on){
+      if (map.getZoom() < 9){ msg.textContent = '조금 더 확대하면 받아옵니다.'; continue; }
+      const v = map.getBounds().pad(0.05), b = snap02([v.getWest(), v.getSouth(), v.getEast(), v.getNorth()]);
+      const lb = L.latLngBounds([b[1], b[0]], [b[3], b[2]]);
+      o._fetched = o._fetched || [];
+      if (o._fetched.some(fb => fb.contains(lb))) continue;
+      o._keys = o._keys || new Set(o.gj.features.map(f => f._k).filter(Boolean));
+      msg.textContent = `'${o.name}' 받는 중…`;
+      const off = (b[2] - b[0]) / 800;
+      const inner = `${TMDL_URL}/${o.src.sub}/query?where=1%3D1&geometry=${encodeURIComponent(b.join(','))}&geometryType=esriGeometryEnvelope&inSR=4326&outSR=4326&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&maxAllowableOffset=${off}&f=json`;
+      try {
+        const j = await agsFetch(inner), gj = esriToGj(j); let added = 0;
+        gj.features.forEach((f, i) => {
+          const k = JSON.stringify(f.properties).slice(0, 160) + '|' + JSON.stringify(f.geometry.coordinates).slice(0, 60) + i;
+          if (o._keys.has(k)) return; o._keys.add(k); f._k = k; o.gj.features.push(f); added++;
+        });
+        o._fetched.push(lb); o.src.err = '';
+        if (added){
+          if (o.gj.features.length === added){ const t = detectType(o.gj); if (t !== o.type){ o.type = t; o.style = themeStyle(t, o.src.color); renderLegendAll(); buildPanel(); } }
+          renderLayer(o); refreshOrder();
+        }
+        msg.textContent = j.exceededTransferLimit ? '일부만 받았습니다. 더 확대하면 나머지가 보입니다.' : '';
+      } catch(e){ o.src.err = e.message; msg.textContent = `'${o.name}' 자료를 받지 못했습니다: ${e.message}. 아래 "그림으로 보기"를 쓰세요.`; break; }
+    }
+  } finally { agsBusy = false; }
+}
+map.on('moveend', () => { clearTimeout(window._agsT); window._agsT = setTimeout(updateAgs, 400); });
 function buildTmdlList(){
   if (typeof TMDL_ITEMS === 'undefined') return;
   const box = $('#tmdlList'); if (!box) return; box.innerHTML = '';
-  const row = (name, ids) => {
-    const o = tmdlLayerOf(ids), on = !!(o && o.visible);
+  const row = (label, on, fn, small) => {
     const d = document.createElement('div'); d.className = 'thi';
-    d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="sw" style="background:rgba(2,136,209,.4);border-color:#0288D1"></span><label class="tn">${esc(name)}</label>`;
+    d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="sw" style="background:rgba(2,136,209,.4);border-color:#0288D1"></span><label class="tn">${esc(label)}</label>${small ? `<small>${small}</small>` : ''}`;
     d.querySelector('label').onclick = () => d.querySelector('input').click();
-    d.querySelector('input').onchange = e => tmdlToggle(name, ids, e.target.checked);
+    d.querySelector('input').onchange = e => fn(e.target.checked);
     return d;
   };
-  TMDL_ITEMS.forEach(([n, ids]) => box.appendChild(row(n, ids)));
-  const det = document.createElement('details'); det.className = 'thgrp'; det.innerHTML = '<summary>세부 레이어 (서버 이름 그대로)</summary>';
   TMDL_SUB.forEach(([g, arr]) => {
-    const h = document.createElement('div'); h.className = 'hint'; h.style.margin = '4px 0 0 6px'; h.textContent = g; det.appendChild(h);
-    arr.forEach(([id, nm]) => det.appendChild(row(`${g} · ${nm}`, String(id))));
+    const det = document.createElement('details'); det.className = 'thgrp'; det.open = g === '수질영향권역' || g === '환경기초시설' || g === '지류총량';
+    const onN = arr.filter(([id]) => { const o = agsLayerOf(id); return o && o.visible; }).length;
+    det.innerHTML = `<summary>${esc(g)} <small class="hint">(${onN}/${arr.length})</small></summary>`;
+    arr.forEach(([id, nm]) => { const o = agsLayerOf(id); det.appendChild(row(nm, !!(o && o.visible), on => agsToggle(id, `${g} · ${nm}`, on), o ? o.gj.features.length + '개' : '')); });
+    box.appendChild(det);
   });
-  box.appendChild(det);
+  const rd = document.createElement('details'); rd.className = 'thgrp'; rd.innerHTML = '<summary>그림으로 보기 (속성·스타일 없음, 도형이 안 받아질 때)</summary>';
+  TMDL_ITEMS.forEach(([n, ids]) => { const o = tmdlLayerOf(ids); rd.appendChild(row(n, !!(o && o.visible), on => tmdlToggle(n, ids, on))); });
+  box.appendChild(rd);
+  const m = document.createElement('p'); m.className = 'hint'; m.id = 'tmdl_msg'; box.appendChild(m);
 }
 buildTmdlList();
 
