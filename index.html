@@ -346,7 +346,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.5</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.7</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -423,7 +423,7 @@ body .hlp{display:none!important}
     <h2>6. 범례</h2>
     <div class="row"><label><input type="checkbox" id="legMaster"> 범례 항목 전체 넣기 / 빼기</label><span class="hint" id="legCnt"></span></div>
     <div id="legItems"></div>
-    <div class="row"><button id="legAdd">＋ 직접 항목 추가</button><button id="legAllOn">모두 넣기</button><button id="legAllOff">모두 빼기</button></div>
+    <div class="row"><button id="legAdd">＋ 직접 항목 추가</button><button id="legAllOn">모두 넣기</button><button id="legAllOff">모두 빼기</button><button id="legDelChk" title="체크된 항목을 범례에서 삭제">－ 체크 항목 삭제</button><button id="legDelAll" title="범례 항목 전체 삭제">－ 전체 삭제</button></div>
     <details><summary>범례 스타일</summary>
       <div class="grid">
         <label>제목</label><span><input type="text" data-cfg="legend.title" style="width:110px"><label><input type="checkbox" data-cfg="legend.showTitle">표시</label></span>
@@ -534,6 +534,10 @@ body .hlp{display:none!important}
       <details class="thgrp"><summary>중분류 <small class="hint" id="lc2_cnt"></small></summary><div id="lcList2"></div></details>
       <details class="thgrp"><summary>세분류 <small class="hint" id="lc3_cnt"></small></summary><div id="lcList3"></div></details>
       <p class="hint" id="lc_msg"></p>
+    </div>
+    <div class="src" id="asbBox">
+      <div class="srch"><b>석면관리 종합정보망</b><span class="badge gray">환경공간정보서비스</span></div>
+      <div id="asbList"></div>
     </div>
     <div class="src" id="fileBox">
       <div class="srch"><b>사이트에 올려 둔 자료 (data 폴더)</b><span class="badge gray">파일</span><div class="hint">국립생물자원관·물환경정보시스템 등에서 받은 지도파일을 data 폴더에 넣어 쓰는 방식</div></div>
@@ -2100,17 +2104,20 @@ function renderLayer(o){
   if (o.group) map.removeLayer(o.group);
   if (o.src && o.src.kind === 'ecobank'){ o.group = L.layerGroup(); return; }   // 이전 버전(그림 방식) 자료는 표시하지 않음
   if (o.src && o.src.kind === 'lc'){
-    /* 받는 방법을 차례로 시도: 0) 캐시 서버 직접 1) 일반 WMS 직접 2) 중계 서버 */
-    const st = o.src.stage || 0, EP = ['https://api.mcee.go.kr/geoserver/gwc/service/wms', 'https://api.mcee.go.kr/geoserver/wms', 'https://api.mcee.go.kr/geoserver/gwc/service/wms'];
-    const WL = L.TileLayer.WMS.extend({ getTileUrl(c){ const u = L.TileLayer.WMS.prototype.getTileUrl.call(this, c); return st === 2 ? relayWrap(u) : u; } });
-    const tl = new WL(EP[st], { layers: o.src.layer, format: 'image/png', transparent: true, tiled: st !== 1,
-      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 20, opacity: (o.src.op != null ? o.src.op : 0.7), referrerPolicy: 'no-referrer' });
+    /* 받는 방법을 차례로 시도: 직접 → 직접(다른 주소) → 중계 서버 */
+    const G = 'https://api.mcee.go.kr/geoserver/';
+    const EPS = o.src.eps || [{ u: G + 'gwc/service/wms', t: true }, { u: G + 'wms' }, { u: G + 'gwc/service/wms', t: true, r: true }];
+    const st = Math.min(o.src.stage || 0, EPS.length - 1), E = EPS[st];
+    const WL = L.TileLayer.WMS.extend({ getTileUrl(c){ const u = L.TileLayer.WMS.prototype.getTileUrl.call(this, c); return E.r ? relayWrap(u) : u; } });
+    const tl = new WL(E.u, Object.assign({ layers: o.src.layer, format: 'image/png', transparent: true, tiled: !!E.t,
+      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 20, opacity: (o.src.op != null ? o.src.op : 0.7), referrerPolicy: 'no-referrer' }, o.src.extra || {}));
     let bad = 0, ok = 0;
     tl.on('tileload', () => { ok++; });
     tl.on('tileerror', () => {
       if (ok || ++bad < 3) return;
-      if (st < 2 && (st < 1 || relayUrl)){ o.src.stage = st + 1; showToast(st === 0 ? '토지피복지도: 다른 주소로 다시 시도합니다.' : '토지피복지도: 중계 서버로 다시 시도합니다.'); renderLayer(o); refreshOrder(); }
-      else if (!o._lcWarn){ o._lcWarn = true; showToast(`토지피복지도 그림을 받지 못했습니다. 레이어명(${o.src.layer})을 확인해 주세요.`); }
+      const nx = EPS[st + 1];
+      if (nx && (!nx.r || relayUrl)){ o.src.stage = st + 1; showToast(nx.r ? '중계 서버로 다시 시도합니다.' : '다른 주소로 다시 시도합니다.'); renderLayer(o); refreshOrder(); }
+      else if (!o._lcWarn){ o._lcWarn = true; showToast(`그림을 받지 못했습니다. 레이어명(${o.src.layer})을 확인해 주세요.`); }
     });
     o.group = L.layerGroup([tl]);
     return;
@@ -2196,7 +2203,7 @@ function refreshOrder(){
   const t2 = $('#lyrWinN'); if (t2) t2.textContent = n ? `(${n})` : '';
 }
 const SRC_NAME = { file: '사이트 자료', vworld: '브이월드', ecowfs: '에코뱅크', egis: '환경공간정보', kei: 'KEI 산줄기', rim: '하천정보' };
-function rebuildThemeLists(){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (typeof buildFileList === 'function') buildFileList(); if (typeof buildLcList === 'function') buildLcList(); }
+function rebuildThemeLists(){ buildThemeList(); buildEcoList(); buildEgisList(); buildKeiList(); buildRiverList(); if (typeof buildFileList === 'function') buildFileList(); if (typeof buildLcList === 'function') buildLcList(); if (typeof buildAsbList === 'function') buildAsbList(); }
 function pinLayer(o){
   if (!o || o.pinned) return;
   o.pinned = true; o.visible = true; o.grp = null;
@@ -2602,6 +2609,13 @@ const legSetAll = on => { legendItems.forEach(it => it.show = on); renderLegendA
 $('#legMaster').onchange = e => legSetAll(e.target.checked);
 $('#legAllOn').onclick = () => legSetAll(true);
 $('#legAllOff').onclick = () => legSetAll(false);
+const legDel = all => {
+  const L0 = legendItems.filter(it => all || it.show);
+  if (!L0.length){ showToast('삭제할 범례 항목이 없습니다.'); return; }
+  if (!confirm(`범례 항목 ${L0.length}개를 삭제할까요? (레이어 자체는 지워지지 않습니다)`)) return;
+  legendItems = legendItems.filter(it => !L0.includes(it)); renderLegendAll(); schedCheckpoint();
+};
+$('#legDelChk').onclick = () => legDel(false); $('#legDelAll').onclick = () => legDel(true);
 $('#legAdd').onclick = () => {
   legendItems.push({ key: 'C' + (++legSeq), lid: null, label: '새 항목', show: true, type: 'polygon', _open: true,
     symbols: [S('fill', { color: '#f2c94c', op: 60 }), S('stroke', { color: '#333333', w: 1, dash: 'solid' })] });
@@ -4460,7 +4474,7 @@ function buildFileList(){
 }
 async function toggleFile(id, on){
   const def = FILES.find(x => x[0] === id), msg = $('#fl_msg'); let o = fileLayerOf(id);
-  const done = () => { refreshOrder(); buildPanel(); renderLegendAll(); buildFileList(); if (typeof buildLcList === 'function') buildLcList(); };
+  const done = () => { refreshOrder(); buildPanel(); renderLegendAll(); buildFileList(); if (typeof buildLcList === 'function') buildLcList(); if (typeof buildAsbList === 'function') buildAsbList(); };
   if (!on){ if (o){ o.visible = false; done(); } return; }
   if (o){ o.visible = true; done(); return; }
   msg.textContent = '불러오는 중…';
@@ -4476,10 +4490,10 @@ async function toggleFile(id, on){
     done(); msg.textContent = `${gj.features.length}개를 불러왔습니다.`;
   } catch(e){
     msg.innerHTML = `'${esc(def[4])}' 파일을 불러오지 못했습니다 (${esc(e.message)}). GitHub 저장소의 <b>data</b> 폴더에 이 이름으로 GeoJSON 파일을 올렸는지 확인하거나, 오른쪽 레이어 창의 '＋ 파일'로 직접 올려 쓰세요.`;
-    buildFileList(); if (typeof buildLcList === 'function') buildLcList();
+    buildFileList(); if (typeof buildLcList === 'function') buildLcList(); if (typeof buildAsbList === 'function') buildAsbList();
   }
 }
-buildFileList(); if (typeof buildLcList === 'function') buildLcList();
+buildFileList(); if (typeof buildLcList === 'function') buildLcList(); if (typeof buildAsbList === 'function') buildAsbList();
 
 /* 토지피복지도: 분류별 체크 목록 */
 var LC = { lv1: ['2010yr', '2000yr', '1990yr', '1980yr'], lv2: ['2025y', '2024y', '2023y', '2022y', '2018_g', '2013_g', '2009_g', '2007_g', '2000_g'],
@@ -4488,7 +4502,7 @@ var LC_KO = { lv1: '대분류', lv2: '중분류', lv3: '세분류' };
 const lcLabel = (lv, y) => lv === 'lv1' ? ({ '2010yr': '2010년대 말', '2000yr': '2000년대 말', '1990yr': '1990년대 말', '1980yr': '1980년대 말' })[y] : y.replace(/y$/, '').replace(/_g$/, ' (갱신)');
 const lcLayerOf = nm => layers.find(o => o.src && o.src.kind === 'lc' && o.src.layer === nm);
 function buildLcList(){
-  if (typeof LC === 'undefined' || !LC) return;
+  if (typeof LC === 'undefined' || !LC) return; if (typeof buildAsbList === 'function') buildAsbList();
   ['lv1', 'lv2', 'lv3'].forEach((lv, k) => {
     const box = $('#lcList' + (k + 1)); if (!box) return; box.innerHTML = ''; let n = 0;
     LC[lv].forEach(y => {
@@ -4514,6 +4528,7 @@ function toggleLc(lv, y, on){
 var LC_LEG = { lv1: '100 시가화건조지역 255,0,0|200 농업지역 238,233,7|300 산림지역 42,75,45|400 초지 57,153,38|500 습지 124,34,126|600 나지 89,206,202|700 수역 6,2,250', lv2: '110 주거지역 254,230,194|120 공업지역 192,132,132|130 상업지역 237,131,184|140 문화·체육·휴양지역 246,113,138|150 교통지역 247,65,42|160 공공시설지역 246,177,18|210 논 255,255,191|220 밭 247,249,102|230 시설재배지 223,220,115|240 과수원 184,177,44|250 기타재배지 184,145,18|310 활엽수림 51,160,44|320 침엽수림 10,79,64|330 혼효림 51,102,51|410 자연초지 161,213,148|420 인공초지 96,126,51|510 내륙습지 180,167,208|520 연안습지 153,116,153|610 자연나지 193,219,236|620 인공나지 159,242,255|710 내륙수 62,167,255|720 해양수 23,57,255', lv3: '111 단독주거시설 254,230,194|112 공동주거시설 233,193,111|121 공업시설 192,132,132|131 상업·업무시설 237,131,184|132 혼합지역 223,176,164|141 문화·체육·휴양시설 246,113,138|151 공항 229,38,254|152 항만 197,50,81|153 철도 252,4,78|154 도로 247,65,42|155 기타교통·통신시설 190,0,0|161 환경기초시설 246,117,18|162 교육·행정시설 255,122,0|163 기타공공시설 199,88,27|211 경지정리된논 255,255,191|212 경지정리안된논 244,230,168|221 경지정리된밭 247,249,102|222 경지정리안된밭 245,228,10|231 시설재배지 223,220,115|241 과수원 184,177,44|251 목장·양식장 184,145,18|252 기타재배지 170,100,0|311 활엽수림 51,160,44|321 침엽수림 10,79,64|331 혼효림 51,102,51|411 자연초지 161,213,148|421 골프장 128,228,90|422 묘지 113,176,90|423 기타초지 96,126,51|511 내륙습지 180,167,208|521 갯벌 153,116,153|522 염전 124,30,162|611 해변 193,219,236|612 강기슭 171,197,202|613 암벽·바위 171,182,165|621 채광지역 88,90,138|622 운동장 123,181,172|623 기타나지 159,242,255|711 하천 62,167,255|712 호소 93,109,255|721 해양수 23,57,255' };
 function lcLegAdd(o){
   const lv = o.src.layer.replace(/^EGIS:/, '').split('_')[0]; if (!LC_LEG[lv]) return;
+  if (lv === 'lv3' && cfg.legend.cols < 3){ cfg.legend.cols = 3; const se = document.querySelector('[data-cfg="legend.cols"]'); if (se) se.value = '3'; }
   LC_LEG[lv].split('|').forEach(t => {
     const m = t.match(/^(\d+) (\S+) (\d+),(\d+),(\d+)$/); if (!m) return;
     const hex = '#' + [m[3], m[4], m[5]].map(v => (+v).toString(16).padStart(2, '0')).join('');
@@ -4522,6 +4537,30 @@ function lcLegAdd(o){
   });
 }
 const lcLegDrop = id => { legendItems = legendItems.filter(it => it.lcFor !== id); };
+
+/* 자연발생석면지질도 (me:na_stone_info) */
+var ASB = { id: 'asb', name: '자연발생석면 (석면관리 종합정보망)', layer: 'me:na_stone_info' };
+function asbLayer(){ return layers.find(o => o.src && o.src.kind === 'lc' && o.src.layer === ASB.layer); }
+function buildAsbList(){
+  if (typeof ASB === 'undefined' || !ASB) return;
+  const box = $('#asbList'); if (!box) return; box.innerHTML = '';
+  const o = asbLayer(), on = !!(o && o.visible);
+  const d = document.createElement('div'); d.className = 'thi';
+  d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="sw" style="background:rgba(255,152,0,.5);border-color:#f90"></span><label class="tn">${ASB.name}</label><small>전국</small>`;
+  d.querySelector('label').onclick = () => d.querySelector('input').click();
+  d.querySelector('input').onchange = e => {
+    let a = asbLayer();
+    if (a){ a.visible = e.target.checked; }
+    else if (e.target.checked){
+      const G = 'https://api.mcee.go.kr/geoserver/';
+      addLayer(ASB.name, { type: 'FeatureCollection', features: [] }, { type: 'polygon', pinned: true, noLegend: true, quiet: true,
+        src: { kind: 'lc', layer: ASB.layer, op: 1, extra: { viewparams: 'year:undefined' }, eps: [{ u: G + 'wms' }, { u: G + 'me/wms' }, { u: G + 'wms', r: true }] } });
+    }
+    refreshOrder(); buildPanel(); renderLegendAll(); buildAsbList();
+  };
+  box.appendChild(d);
+}
+buildAsbList();
 
 buildLcList();
 
