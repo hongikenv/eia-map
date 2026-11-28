@@ -308,7 +308,7 @@ textarea[data-ts="text"]{width:100%;box-sizing:border-box;resize:vertical;font:i
 /* 접이식 섹션 (＋/－) */
 .sec>h2.fold{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin:0}
 .sec:not(.folded)>h2.fold{margin-bottom:8px}
-.sec>h2.fold .tgl{margin-left:auto;width:22px;height:22px;padding:0;line-height:1;font-size:13px;font-weight:700;border-radius:4px;color:#1d3b2a;flex:none}
+.sec>h2.fold .tgl{margin-left:0;width:22px;height:22px;padding:0;line-height:1;font-size:13px;font-weight:700;border-radius:4px;color:#1d3b2a;flex:none}
 .sec.folded>*:not(h2){display:none!important}
 #foldBar{display:flex;gap:6px;padding:5px 14px;background:#eef1f5;border-bottom:1px solid #dde;align-items:center;font-size:12px;color:#567}
 #foldBar button{padding:1px 8px;font-size:12px}
@@ -335,12 +335,18 @@ body .hlp{display:none!important}
 .aw .rot-h:before{content:'';position:absolute;left:3px;top:10px;width:2px;height:18px;background:#0a84ff}
 .ann-sel .aw .rot-h{display:block}
 .exporting .aw .rot-h{display:none!important}
+.hact{margin-left:auto;display:flex;gap:4px;flex:none}
+.hact button{width:26px;height:24px;padding:0;font-size:16px;font-weight:700;line-height:1;border-radius:4px}
+.hact button.on{background:#1d3b2a;color:#fff}
+#bufMake,#annPlace,#drawStart{display:none!important}
+.insrow{display:flex;align-items:center;gap:6px;border:1px solid #b9c9bd;background:#f2f8f3;border-radius:6px;padding:5px 8px;margin:0 0 5px;font-size:12.5px}
+.insrow b{flex:1}.insrow button{padding:1px 7px}
 #sketchFname{width:120px;font-size:12px;padding:1px 4px}
 </style>
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.7.0</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.0</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -393,7 +399,7 @@ body .hlp{display:none!important}
       <button class="dpre" data-pre="leader" title="한쪽 끝에 점">●─ 지시선</button><button class="dpre" data-pre="arrow">→ 화살표</button><button class="dpre" data-pre="line">─ 선</button></div>
     <div id="drawFormTitle">새 선 기본 설정</div>
     <div class="grid">
-      <label>선</label><span><input type="color" id="dColor" value="#e60012"><input type="number" id="dW" value="2.5" step="0.5" min="0.5" max="20" title="굵기"><select id="dDash"></select></span>
+      <label>선</label><span><input type="color" id="dColor" value="#e60012"><input type="number" id="dW" value="2.5" step="0.5" min="0.5" max="20" title="굵기"><select id="dDash"></select><span title="점선·파선 사이 간격 배율 (1=기본)"> 간격×<input type="number" id="dGapK" value="1" min="0.3" max="8" step="0.25" style="width:56px"></span></span>
       <label>시작점 끝</label><select id="dStart"></select>
       <label>끝점 끝</label><select id="dEnd"></select>
       <label>끝 모양 크기</label><span><input type="number" id="dCap" value="12" min="4" max="60">px</span>
@@ -747,16 +753,17 @@ const fontOptions = sel => FONT_GROUPS.map(([g, list]) => `<optgroup label="${g}
 const WEIGHTS = [[100, '100 아주 가늘게'], [200, '200'], [300, '300 가늘게'], [400, '400 보통'], [500, '500'], [600, '600'], [700, '700 굵게'], [800, '800'], [900, '900 아주 굵게']];
 const FRAMES = [['single', '실선'], ['double', '이중선'], ['thick', '굵은선'], ['none', '없음']];
 const DASHES = [['solid', '실선'], ['dash', '파선'], ['longdash', '긴 파선'], ['even', '등간격 파선'], ['dot', '점선'], ['dashdot', '일점쇄선'], ['dashdot2', '이점쇄선']];
-function dashArr(kind, w){
-  w = Math.max(+w || 0, 0.5);
+function dashArr(kind, w, gk){
+  const GK = Math.max(0.2, +gk || 1), _w = w; w = Math.max(+w || 0, 0.5);
   const g = w * 1.5 + 2, d = Math.max(1.5, w), L0 = w * 6 + 6;
+  const R = a => a ? a.map((v, k) => k % 2 ? v * GK : v) : a;
   switch (kind){
-    case 'dash': return [w * 4 + 2, w * 3 + 2];
-    case 'longdash': return [w * 8 + 8, w * 3 + 3];
-    case 'even': return [w * 2.5, w * 2.5];
-    case 'dot': return [d, w * 2 + 2];
-    case 'dashdot': return [L0, g, d, g];
-    case 'dashdot2': return [L0, g, d, g, d, g];
+    case 'dash': return R([w * 4 + 2, w * 3 + 2]);
+    case 'longdash': return R([w * 8 + 8, w * 3 + 3]);
+    case 'even': return R([w * 2.5, w * 2.5]);
+    case 'dot': return R([d, w * 2 + 2]);
+    case 'dashdot': return R([L0, g, d, g]);
+    case 'dashdot2': return R([L0, g, d, g, d, g]);
     default: return null;
   }
 }
@@ -959,7 +966,7 @@ function legendSym(obj, pfx, k = 1){
       return;
     }
     if (s.k === 'stroke'){
-      const lw = Math.min(+s.w || 1, type === 'line' ? 9 : 4), da = dashArr(s.dash, lw), dash = da ? `stroke-dasharray="${da.join(' ')}"` : '';
+      const lw = Math.min(+s.w || 1, type === 'line' ? 9 : 4), da = dashArr(s.dash, lw, s.gapk), dash = da ? `stroke-dasharray="${da.join(' ')}"` : '';
       body += type === 'line'
         ? `<line x1="3" y1="9" x2="43" y2="9" stroke="${s.color}" stroke-width="${lw}" stroke-opacity="${s.op / 100}" ${dash}/>`
         : `<rect x="4" y="3" width="38" height="12" fill="none" stroke="${s.color}" stroke-width="${lw}" stroke-opacity="${s.op / 100}" ${dash}/>`;
@@ -975,7 +982,7 @@ function symRow(s, i){
   switch (s.k){
     case 'fill': f = `<input type="color" data-f="color" value="${s.color}">${opr}`; break;
     case 'pattern': f = `<select data-f="pat">${opts(PATTERNS, s.pat)}</select><input type="color" data-f="color" value="${s.color}"><input type="number" data-f="gap" value="${s.gap}" min="3" max="40" title="간격(px)"><input type="number" data-f="w" value="${s.w}" min="0.5" max="8" step="0.5" title="굵기">${opr}`; break;
-    case 'stroke': f = `<input type="color" data-f="color" value="${s.color}"><input type="number" data-f="w" value="${s.w}" min="0.5" max="30" step="0.5" title="굵기"><select data-f="dash">${opts(DASHES, s.dash)}</select>${opr}`; break;
+    case 'stroke': f = `<input type="color" data-f="color" value="${s.color}"><input type="number" data-f="w" value="${s.w}" min="0.5" max="30" step="0.5" title="굵기"><select data-f="dash">${opts(DASHES, s.dash)}</select><span title="점선·파선 사이 간격 배율 (1=기본)">간격×<input type="number" data-f="gapk" value="${s.gapk || 1}" min="0.3" max="8" step="0.25"></span>${opr}`; break;
     case 'shadow': f = `<input type="color" data-f="color" value="${s.color}" title="그림자 색"><span title="오른쪽(+)·왼쪽(-) px">↔<input type="number" data-f="dx" value="${s.dx}" min="-30" max="30" step="0.5"></span><span title="아래(+)·위(-) px">↕<input type="number" data-f="dy" value="${s.dy}" min="-30" max="30" step="0.5"></span><span title="흐림 정도 px">흐림<input type="number" data-f="blur" value="${s.blur}" min="0" max="20" step="0.5"></span>${opr}`; break;
     case 'marker': f = `<select data-f="shape">${opts(SHAPES, s.shape)}</select><input type="number" data-f="size" value="${s.size}" min="2" max="60" title="크기"><input type="color" data-f="fill" value="${s.fill}" title="채움색"><input type="color" data-f="stroke" value="${s.stroke}" title="테두리색"><input type="number" data-f="sw" value="${s.sw}" min="0" max="10" step="0.5" title="테두리 굵기">${opr}`; break;
   }
@@ -1348,7 +1355,7 @@ function renderAdmLines(level, force){
   const fc = { type: 'FeatureCollection', features: [...cache.values()].filter(e => e.geom).map(e => ({ type: 'Feature', geometry: e.geom, properties: {} })) };
   admLineSyms[level].forEach(s => {
     if (s.k !== 'stroke') return;
-    const da = dashArr(s.dash, s.w);
+    const da = dashArr(s.dash, s.w, s.gapk);
     g.addLayer(L.geoJSON(fc, { renderer: admRenderer, interactive: false,
       style: { stroke: true, color: s.color, weight: s.w, opacity: s.op / 100, dashArray: da ? da.join(' ') : null, fill: false, lineJoin: 'round' } }));
   });
@@ -2093,8 +2100,17 @@ function renderLayer(o){
   if (o.group) map.removeLayer(o.group);
   if (o.src && o.src.kind === 'ecobank'){ o.group = L.layerGroup(); return; }   // 이전 버전(그림 방식) 자료는 표시하지 않음
   if (o.src && o.src.kind === 'lc'){
-    o.group = L.layerGroup([L.tileLayer.wms('https://api.mcee.go.kr/geoserver/gwc/service/wms', { layers: o.src.layer, format: 'image/png', transparent: true, tiled: true,
-      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 5, opacity: (o.src.op != null ? o.src.op : 0.7), crossOrigin: 'anonymous' })]);
+    const WL = L.TileLayer.WMS.extend({ getTileUrl(c){ const u = L.TileLayer.WMS.prototype.getTileUrl.call(this, c); return o.src.relay ? relayWrap(u) : u; } });
+    const tl = new WL('https://api.mcee.go.kr/geoserver/gwc/service/wms', { layers: o.src.layer, format: 'image/png', transparent: true, tiled: true,
+      version: '1.1.1', tileSize: 256, maxZoom: 20, zIndex: 5, opacity: (o.src.op != null ? o.src.op : 0.7) });
+    let bad = 0, ok = 0;
+    tl.on('tileload', () => { ok++; });
+    tl.on('tileerror', () => {
+      if (ok || ++bad < 3) return;
+      if (!o.src.relay && relayUrl){ o.src.relay = true; bad = 0; showToast('토지피복지도를 직접 받지 못해 중계 서버로 다시 시도합니다.'); renderLayer(o); refreshOrder(); }
+      else if (!o._lcWarn){ o._lcWarn = true; showToast(`토지피복지도 그림을 받지 못했습니다. 레이어명(${o.src.layer})이 맞는지 확인해 주세요.`); }
+    });
+    o.group = L.layerGroup([tl]);
     return;
   }
   if (o.src && o.src.mode === 'wms'){
@@ -2114,7 +2130,7 @@ function renderLayer(o){
     else if (s.k === 'pattern' && polys.features.length)
       g.addLayer(L.geoJSON(polys, { renderer, interactive: false, style: { stroke: false, fill: true, fillColor: makePattern(s), fillOpacity: s.op / 100 } }));
     else if (s.k === 'stroke'){
-      const da = dashArr(s.dash, s.w);
+      const da = dashArr(s.dash, s.w, s.gapk);
       const st = { stroke: true, color: s.color, weight: s.w, opacity: s.op / 100, dashArray: da ? da.join(' ') : null, fill: false, lineCap: 'butt', lineJoin: 'round' };
       [polys, lines].forEach(fc => { if (fc.features.length) g.addLayer(L.geoJSON(fc, { renderer, interactive: false, style: st })); });
     } else if (s.k === 'marker' && pts.features.length)
@@ -3015,10 +3031,10 @@ Object.keys(DRAW_PRE).forEach(k => { DRAW_PRE[k] = Object.assign({}, DRAW_TXT, D
 const draws = []; let drawSeq = 0, selDraw = null, drawing = null;
 let drawDraft = Object.assign({}, DRAW_PRE.dim);
 const drawGroup = L.layerGroup().addTo(map), vtxGroup = L.layerGroup().addTo(map);
-function drawFromForm(){ return { color: $('#dColor').value, w: +$('#dW').value || 2, dash: $('#dDash').value, start: $('#dStart').value, end: $('#dEnd').value, cap: +$('#dCap').value || 12, halo: $('#dHalo').checked,
+function drawFromForm(){ return { color: $('#dColor').value, w: +$('#dW').value || 2, dash: $('#dDash').value, gapk: +$('#dGapK').value || 1, start: $('#dStart').value, end: $('#dEnd').value, cap: +$('#dCap').value || 12, halo: $('#dHalo').checked,
   top: $('#dTop').value, bot: $('#dBot').value, tSize: +$('#dTSize').value || 15, tWeight: +$('#dTWeight').value, tColor: $('#dTColor').value, tFont: $('#dTFont').value, tHalo: $('#dTHalo').checked, tAlong: $('#dTAlong').checked, lenU: $('#dLenU').value, lenD: $('#dLenD').value }; }
 function formFromDraw(d){ d = Object.assign({}, DRAW_TXT, d);
-  $('#dColor').value = d.color; $('#dW').value = d.w; $('#dDash').value = d.dash; $('#dStart').value = d.start; $('#dEnd').value = d.end; $('#dCap').value = d.cap; $('#dHalo').checked = !!d.halo;
+  $('#dColor').value = d.color; $('#dW').value = d.w; $('#dDash').value = d.dash; $('#dGapK').value = d.gapk || 1; $('#dStart').value = d.start; $('#dEnd').value = d.end; $('#dCap').value = d.cap; $('#dHalo').checked = !!d.halo;
   $('#dTop').value = d.top || ''; $('#dBot').value = d.bot || ''; $('#dTSize').value = d.tSize; $('#dTWeight').value = d.tWeight; $('#dTColor').value = d.tColor; $('#dTFont').value = d.tFont; $('#dTHalo').checked = !!d.tHalo; $('#dTAlong').checked = !!d.tAlong; $('#dLenU').value = d.lenU || 'auto'; $('#dLenD').value = d.lenD || 'auto'; }
 const drawLen = d => { let m = 0; for (let i = 1; i < d.pts.length; i++) m += map.distance(d.pts[i - 1], d.pts[i]); return m; };
 function fmtLen(m, unit, dec){
@@ -3081,7 +3097,7 @@ function renderDraw(d){
   if (d.group) drawGroup.removeLayer(d.group);
   const g = L.layerGroup(); d.group = g;
   if (!d.visible || !$('#drawShowAll').checked || d.pts.length < 2) return;
-  const c = capShapes(d, d.pts), da = dashArr(d.dash, d.w), dash = da ? da.join(' ') : null;
+  const c = capShapes(d, d.pts), da = dashArr(d.dash, d.w, d.gapk), dash = da ? da.join(' ') : null;
   const base = { renderer: drawRenderer, interactive: false, lineCap: 'butt', lineJoin: 'round' };
   if (d.halo){
     g.addLayer(L.polyline(c.line, Object.assign({}, base, { color: '#ffffff', weight: d.w + 4, opacity: 0.95 })));
@@ -3150,7 +3166,7 @@ function buildDrawList(){
   });
 }
 ['#dColor', '#dDash', '#dStart', '#dEnd', '#dHalo', '#dTWeight', '#dTColor', '#dTFont', '#dTHalo', '#dTAlong', '#dLenU', '#dLenD'].forEach(s => $(s).addEventListener('change', onDrawForm));
-['#dW', '#dCap', '#dTop', '#dBot', '#dTSize'].forEach(s => $(s).addEventListener('input', onDrawForm));
+['#dGapK', '#dW', '#dCap', '#dTop', '#dBot', '#dTSize'].forEach(s => $(s).addEventListener('input', onDrawForm));
 $('#dLen').onclick = () => {
   if (!selDraw){ alert('먼저 길이를 넣을 선을 눌러 선택해 주세요.'); return; }
   if (/\{길이\}/.test($('#dBot').value + $('#dTop').value)){ showToast('이미 {길이}가 들어 있습니다. 단위는 \'길이 단위\'에서 바꿉니다.'); return; }
@@ -4502,8 +4518,8 @@ document.addEventListener('dblclick', e => {
   secs.forEach(sc => {
     const h = sc.querySelector(':scope>h2'), sh = sc.closest('.sheet'), key = (sh ? sh.id : '') + '|' + h.textContent.trim();
     h.classList.add('fold');
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'tgl'; h.appendChild(b);
-    const apply = f => { sc.classList.toggle('folded', f); b.textContent = f ? '＋' : '－'; b.title = f ? '펴기' : '접기'; };
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'tgl'; h.insertBefore(b, h.firstChild);
+    const apply = f => { sc.classList.toggle('folded', f); b.textContent = f ? '∨' : '∧'; b.title = f ? '펴기' : '접기'; };
     sc._fold = apply; apply(key in fs ? !!fs[key] : !OPEN_DEF.has(key));
     h.addEventListener('click', e => {
       if (e.target.closest('input,select,a') && e.target !== b) return;
@@ -4512,7 +4528,7 @@ document.addEventListener('dblclick', e => {
     sc._key = key;
   });
   const bar = document.createElement('div'); bar.id = 'foldBar';
-  bar.innerHTML = '<span>섹션</span><button type="button" data-f="0">모두 펴기 ＋</button><button type="button" data-f="1">모두 접기 －</button>';
+  bar.innerHTML = '<span>섹션</span><button type="button" data-f="0">모두 펴기 ∧</button><button type="button" data-f="1">모두 접기 ∨</button>';
   $('#tabs').insertAdjacentElement('afterend', bar);
   bar.querySelectorAll('button').forEach(bt => bt.onclick = () => {
     const f = bt.dataset.f === '1';
@@ -4532,7 +4548,7 @@ document.addEventListener('dblclick', e => {
     const prev = x.previousElementSibling, h2 = x.closest('.sec') && x.closest('.sec').querySelector(':scope>h2');
     if (x.closest('.srch') && x.parentElement.querySelector('b')) x.parentElement.querySelector('b').after(ic);
     else if (prev && !prev.matches('input,select,textarea,button')) (prev.querySelector('label,summary,b') || prev).appendChild(ic);
-    else if (h2) h2.insertBefore(ic, h2.querySelector('.tgl'));
+    else if (h2) h2.appendChild(ic);
     else x.before(ic);
   });
   const showTip = e => { const t = e.target.closest && e.target.closest('.hi'); if (!t){ tip.style.display = 'none'; return; } tip.textContent = t.dataset.tip; tip.style.display = 'block';
@@ -4575,6 +4591,90 @@ document.addEventListener('dblclick', e => {
     }
     box.style.display = 'none';
   }, true);
+})();
+
+/* ================= v2.8: Ctrl+휠 미세 확대·축소 ================= */
+(function(){
+  map.getContainer().addEventListener('wheel', e => {
+    if (!e.ctrlKey) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const sn = map.options.zoomSnap; map.options.zoomSnap = 0;
+    const lo = map.getMinZoom ? map.getMinZoom() : 0, hi = map.getMaxZoom ? map.getMaxZoom() : 22;
+    const z = Math.min(hi, Math.max(lo, map.getZoom() + (e.deltaY < 0 ? 0.1 : -0.1)));
+    map.setZoomAround(map.mouseEventToContainerPoint(e), z, { animate: false });
+    map.options.zoomSnap = sn;
+  }, { capture: true, passive: false });
+})();
+
+/* ================= v2.8: 삽입 ＋/－ 통일 · 삽입물 레이어 행 ================= */
+(function(){
+  const sec = t => [...document.querySelectorAll('#side .sec>h2')].find(h => h.textContent.replace(/^[∧∨\s]+/, '').startsWith(t));
+  const mk = (t, plus, minus, plusEl) => {
+    const h = sec(t); if (!h) return;
+    const w = document.createElement('span'); w.className = 'hact';
+    w.innerHTML = '<button type="button" data-p title="삽입 (＋)">＋</button><button type="button" data-m title="삭제 (－)">－</button>';
+    h.appendChild(w);
+    w.querySelector('[data-p]').onclick = e => { e.stopPropagation(); plus(); };
+    w.querySelector('[data-m]').onclick = e => { e.stopPropagation(); minus(); };
+    w.addEventListener('click', e => e.stopPropagation());
+    if (plusEl){ const sync = () => w.querySelector('[data-p]').classList.toggle('on', plusEl.classList.contains('on') || /그만|끝내기|완료|취소/.test(plusEl.textContent)); new MutationObserver(sync).observe(plusEl, { attributes: true, childList: true, characterData: true, subtree: true }); }
+  };
+  mk('3. 버퍼', () => $('#bufMake').click(), () => {
+    const L0 = layers.filter(o => o.buf); if (!L0.length){ showToast('지울 버퍼가 없습니다.'); return; }
+    if (confirm(`버퍼 레이어 ${L0.length}개를 모두 지울까요?`)){ deleteLayers(L0); refreshOrder(); buildPanel(); renderLegendAll(); schedCheckpoint(); }
+  });
+  mk('4. 글자 삽입', () => $('#annPlace').click(), () => {
+    if (selAnn){ if (confirm(`'${selAnn.text}' 글자를 지울까요?`)) delAnn(selAnn); }
+    else if (anns.length && confirm(`삽입한 글자 ${anns.length}개를 모두 지울까요?`)) anns.slice().forEach(delAnn);
+    else if (!anns.length) showToast('지울 글자가 없습니다.');
+  }, $('#annPlace'));
+  mk('5. 선', () => $('#drawStart').click(), () => {
+    if (selDraw){ if (confirm('선택한 선을 지울까요?')) delDraw(selDraw); }
+    else if (draws.length && confirm(`그린 선 ${draws.length}개를 모두 지울까요?`)) draws.slice().forEach(delDraw);
+    else if (!draws.length) showToast('지울 선이 없습니다.');
+  }, $('#drawStart'));
+  /* 삽입한 글자·선을 레이어 창 맨 위에 한 줄씩 */
+  const host = document.createElement('div'); host.id = 'insRows'; $('#layerList').before(host);
+  const goSec = t => { showSheet && showSheet(1); const h = sec(t); if (h){ const sc = h.parentElement; sc._fold && sc._fold(false); h.scrollIntoView({ block: 'start' }); } };
+  function build(){
+    host.innerHTML = '';
+    const row = (name, n, chk, t) => {
+      if (!n) return;
+      const d = document.createElement('div'); d.className = 'insrow';
+      d.innerHTML = `<input type="checkbox" ${chk.checked ? 'checked' : ''} title="보이기/숨기기"><b>${name} <small>${n}개</small></b><button type="button">편집</button>`;
+      d.querySelector('input').onchange = e => { chk.checked = e.target.checked; chk.dispatchEvent(new Event('change')); };
+      d.querySelector('button').onclick = () => goSec(t);
+      host.appendChild(d);
+    };
+    row('✎ 삽입한 글자', anns.length, $('#annShowAll'), '4. 글자 삽입');
+    row('╱ 삽입한 선·화살표', draws.length, $('#drawShowAll'), '5. 선');
+  }
+  window.buildInsRows = build;
+  const wrap = n => { const f = window[n] || eval(n); const g = function(){ const r = f.apply(this, arguments); build(); return r; }; try { eval(n + ' = g'); } catch(e){} };
+  wrap('buildAnnList'); wrap('buildDrawList'); build();
+})();
+
+/* v2.8: 겨울철 조류 동시센서스·총량 단위유역 — 내 PC 파일(GeoJSON/SHP zip)을 바로 올리기 */
+(function(){
+  const box = $('#fileBox'); if (!box) return;
+  const w = document.createElement('div'); w.className = 'row';
+  w.innerHTML = `<select id="flPick">${FILES.map(f => `<option value="${f[0]}">${f[1]}</option>`).join('')}</select><button type="button" id="flLoad">＋ 내 파일 올리기</button><input type="file" id="flIn" accept=".geojson,.json,.zip" hidden>`;
+  box.querySelector('#fl_msg').before(w);
+  $('#flLoad').onclick = () => $('#flIn').click();
+  $('#flIn').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const def = FILES.find(x => x[0] === $('#flPick').value), msg = $('#fl_msg');
+    try {
+      let gj;
+      if (/\.zip$/i.test(f.name)){ if (!window.shp) throw new Error('SHP 도구를 불러오지 못했습니다'); gj = await shp(await f.arrayBuffer()); if (Array.isArray(gj)) gj = { type: 'FeatureCollection', features: gj.flatMap(x => x.features) }; }
+      else gj = JSON.parse(await f.text());
+      if (gj.type === 'Feature') gj = { type: 'FeatureCollection', features: [gj] };
+      if (!gj.features || !gj.features.length) throw new Error('도형이 없는 파일입니다');
+      gj = toWgs(gj); const type = detectType(gj);
+      addLayer(def[1], gj, { type, style: themeStyle(type, def[3]) });
+      msg.textContent = `${def[1]}: ${gj.features.length}개를 올렸습니다 (레이어 창에서 확인).`;
+    } catch(err){ msg.textContent = '파일을 읽지 못했습니다: ' + err.message; }
+  };
 })();
 </script>
 </body>
