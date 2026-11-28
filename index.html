@@ -346,7 +346,7 @@ body .hlp{display:none!important}
 </head>
 <body>
 <div id="side">
-  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.3</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
+  <h1>환경영향평가 도면 작성기 <small style="font-weight:400;opacity:.7">v2.8.4</small><button id="helpTgl" class="hbtn" title="출처·설명 글을 보이거나 숨깁니다">ⓘ 도움말</button><button id="openSettings" class="hbtn" title="인증키 등 설정">⚙ 설정</button></h1>
   <div id="tabs"><button class="tab on" data-sheet="1">① 작업</button><button class="tab" data-sheet="2">② 주제도</button><button class="tab" data-sheet="4">③ 출력</button></div>
   <div class="sheet" id="sheet1">
 
@@ -2326,7 +2326,8 @@ function layerRow(o, list){
         ${o.src ? '' : `<button data-a="sketch" class="sk ${sketch && sketch.o === o ? 'on' : ''}" title="이 레이어에 직접 그리기 (${({ point: '점', line: '선', polygon: '면' })[o.type]})">✏</button>`}
         <button data-a="zoom" title="이 레이어로 이동">◎</button><button data-a="del" title="삭제">✕</button>
       </div>
-      ${o.src && o.src.kind === 'lc' ? `<div class="row"><label>토지피복 투명도</label><input type="range" min="10" max="100" value="${Math.round((o.src.op != null ? o.src.op : 0.7) * 100)}" data-lcop> <small>${esc(o.src.layer)}</small></div>` : ''}
+      ${o.src && o.src.kind === 'lc' ? `<div class="row"><label>토지피복 투명도</label><input type="range" min="10" max="100" value="${Math.round((o.src.op != null ? o.src.op : 0.7) * 100)}" data-lcop> <small>${esc(o.src.layer)}</small></div>
+      <details class="lcleg"><summary>범례 보기 (환경부 제공)</summary><img alt="범례" style="max-width:100%;background:#fff;padding:4px;border:1px solid #ccc;margin-top:4px" referrerpolicy="no-referrer" src="https://api.mcee.go.kr/geoserver/wms?service=WMS&version=1.1.0&request=GetLegendGraphic&format=image/png&width=20&height=20&legend_options=fontAntiAliasing:true;fontSize:13&layer=${encodeURIComponent(o.src.layer)}" onerror="this.outerHTML='<div class=hint>서버에서 범례 그림을 받지 못했습니다.</div>'"></details>` : ''}
       ${o.src && o.src.mode === 'wms' ? '<div class="hint">브이월드 그림(WMS)으로 표시 중이라 스타일을 바꿀 수 없습니다.</div>' : ''}
       <details class="dsym" ${o._openSym ? 'open' : ''}><summary>기호 (색·선·패턴) · ${({ point: '점', line: '선', polygon: '면' })[o.type]} <span class="fcount">${o.gj.features.length}개</span></summary>
         <div class="row"><label>종류</label><select data-type>${opts([['polygon', '면'], ['line', '선'], ['point', '점']], o.type)}</select>
